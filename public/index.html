@@ -72,8 +72,21 @@
   }
   .menu a:hover { background: #26262b; }
   .menu a.activo { background: var(--acento); color: #fff; font-weight: 600; }
-  .menu .sub a { padding-left: 22px; color: var(--suave); }
+  /* Grupos desplegables: cada función (ruleta, y las que vengan) es un grupo */
+  .menu .grupo + .grupo, .menu .grupo + a, .menu a + .grupo { margin-top: 2px; }
+  .menu .grupo-titulo {
+    width: 100%; height: auto; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 8px 10px; border: 0; border-radius: 6px; background: none; color: var(--texto);
+    font: inherit; text-align: left; cursor: pointer;
+  }
+  .menu .grupo-titulo:hover { background: #26262b; }
+  .menu .grupo.activo > .grupo-titulo { background: var(--acento); color: #fff; font-weight: 600; }
+  .menu .grupo-titulo svg { width: 16px; height: 16px; transition: transform .2s ease; }
+  .menu .grupo-titulo[aria-expanded="true"] svg { transform: rotate(90deg); }
+  .menu .sub { padding: 2px 0 4px; }
+  .menu .sub a { padding: 6px 10px 6px 22px; color: var(--suave); }
   .menu .sub a:hover { color: var(--texto); }
+  @media (prefers-reduced-motion: reduce) { .menu .grupo-titulo svg { transition: none; } }
   .menu .nota-menu { margin: 16px 6px 0; padding: 10px; border-radius: 8px; background: #26262b; color: var(--suave); font-size: 12px; }
 
   /* ---------- Contenido ---------- */
@@ -179,12 +192,20 @@
 </nav>
 
 <aside class="menu" aria-label="Menú">
-  <a href="#ruleta" class="activo">Ruleta de regalos</a>
-  <div class="sub">
-    <a href="#ruleta">Widget y URL</a>
-    <a href="#premiosTarjeta">Premios</a>
-    <a href="#regaloTarjeta">Regalo que activa</a>
+  <!-- Cada función es un .grupo desplegable. Para agregar una nueva, copia este bloque
+       con otro id (data-grupo) y sus enlaces; el script lo hace desplegable solo. -->
+  <div class="grupo activo" data-grupo="ruleta">
+    <button class="grupo-titulo" aria-expanded="true" aria-controls="sub-ruleta">
+      Ruleta de regalos
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+    </button>
+    <div class="sub" id="sub-ruleta">
+      <a href="#ruleta">Widget y URL</a>
+      <a href="#premiosTarjeta">Premios</a>
+      <a href="#regaloTarjeta">Regalo que activa</a>
+    </div>
   </div>
+
   <a href="#conexion">Conexión con TikTok</a>
   <a href="#regalosRecibidos">Regalos recibidos</a>
   <p class="nota-menu">Las URLs funcionan en <b>OBS (Fuente de navegador)</b> y en <b>LIVE Studio (Enlace)</b>, a 1080 × 1920.</p>
@@ -448,6 +469,26 @@
       { tipo: 'simular', usuario: $('nombrePrueba').value, cantidad: Number(b.dataset.cantidad) },
       location.origin,
     );
+  });
+
+  // ---------- Menú lateral: grupos desplegables (se recuerda cuáles quedaron cerrados) ----------
+  let gruposCerrados = [];
+  try { gruposCerrados = JSON.parse(localStorage.getItem('ruleta-menu-cerrados') || '[]'); } catch { /* sin almacenamiento */ }
+  document.querySelectorAll('.menu .grupo').forEach((grupo) => {
+    const boton = grupo.querySelector('.grupo-titulo');
+    const sub = grupo.querySelector('.sub');
+    const abrir = (abierto) => {
+      boton.setAttribute('aria-expanded', String(abierto));
+      sub.hidden = !abierto;
+    };
+    abrir(!gruposCerrados.includes(grupo.dataset.grupo));
+    boton.onclick = () => {
+      const abierto = boton.getAttribute('aria-expanded') !== 'true';
+      abrir(abierto);
+      gruposCerrados = gruposCerrados.filter((g) => g !== grupo.dataset.grupo);
+      if (!abierto) gruposCerrados.push(grupo.dataset.grupo);
+      try { localStorage.setItem('ruleta-menu-cerrados', JSON.stringify(gruposCerrados)); } catch { /* sin almacenamiento */ }
+    };
   });
 
   $('btnTest').onclick = () => document.querySelector('[data-cantidad="1"]').click();
