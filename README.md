@@ -13,9 +13,50 @@ Cada vez que alguien envía una **Rosa** en el LIVE, aparece una ruleta en panta
 
 ## Qué incluye
 
-- `public/index.html`: **generador de URL**. Se llena usuario, clave, regalo y premios, y entrega la URL de la ruleta.
-- `public/ruleta.html`: el overlay que se pone en OBS o TikTok LIVE Studio (fondo transparente, formato vertical).
-  Si la URL trae `#c=…` funciona sola; si no, espera los giros de `server.js`.
+### El panel (`public/index.html`)
+
+| Categoría | Grupo | Función |
+|---|---|---|
+| Superposiciones | Ruletas | Ruleta de regalos (`ruleta.html`) |
+| | Metas | Likes, Seguidores, Compartidos, Monedas (`meta.html`) |
+| | Alertas | Alertas de regalos, follows y compartidos (`alertas.html`) |
+| Actividad | En vivo | Eventos en tiempo real, contadores y tabla con el ID de cada regalo |
+| Ajustes | Cuenta | Usuario de TikTok y clave de Euler Stream (compartidos por todos los widgets) |
+
+### Estructura del código
+
+```
+public/
+├── index.html            esqueleto del panel
+├── ruleta.html           widgets para OBS: cada uno lee su configuración de #c=…
+├── meta.html
+├── alertas.html
+├── css/panel.css         estilos del panel
+├── css/widget.css        base común de los widgets (fondo transparente, píldora de estado)
+└── js/
+    ├── comun.js          conexión con TikTok (Euler Stream), eventos normalizados, utilidades
+    └── panel/
+        ├── app.js        arma el menú y la navegación (#/id-de-vista)
+        ├── registro.js   ← MAPA DEL PANEL: categorías → grupos → vistas
+        ├── almacen.js    lo que el panel guarda en el navegador
+        ├── envivo.js     conexión del panel al LIVE (vista Actividad)
+        ├── ui.js         componentes: tarjeta, campo, casilla, tarjetaWidget…
+        └── vistas/       una vista por archivo
+```
+
+Todos los eventos llegan a los widgets con la misma forma (ver `normalizar` en `js/comun.js`):
+`regalo`, `like`, `follow`, `share`, `chat` y `espectadores`.
+
+### Agregar una función nueva
+
+1. **Widget para OBS** (si lleva): copia `alertas.html` o `meta.html` a un archivo nuevo. Lo importante es
+   `iniciarWidget({ cfg, alEvento })`: recibe cada evento del LIVE (y los de prueba del panel) en `alEvento`.
+2. **Vista del panel**: copia `js/panel/vistas/alertas.js`. `tarjetaWidget(...)` te da la URL, los botones
+   Copy URL / Test / Personalizar y la vista previa; tú solo defines los campos y `config()`.
+3. **Menú**: impórtala en `js/panel/registro.js` y agrégala a un grupo (o crea un grupo o una categoría nueva).
+
+### Otros archivos
+
 - `server.js`: (modo local) se conecta al LIVE, detecta las rosas y decide el premio.
 - `public/panel.html`: (modo local) panel para conectar la cuenta, probar sin LIVE, editar premios y ver el historial.
 - `config.json`: (modo local) regalo que activa la ruleta, premios y límites.

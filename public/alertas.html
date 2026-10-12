@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alertas — overlay</title>
+<link rel="stylesheet" href="css/widget.css">
+<style>
+  .escena { height: 100%; display: grid; place-items: center; padding: 4vmin; box-sizing: border-box; }
+  .alerta {
+    display: flex; align-items: center; gap: 3vmin;
+    max-width: 92vw; padding: 2.4vmin 4vmin 2.4vmin 2.4vmin;
+    background: var(--ciruela); color: var(--crema);
+    border-radius: 999px; box-shadow: 0 .8vmin 0 var(--rosa);
+    opacity: 0; transform: translateY(30%) scale(.9);
+    transition: opacity .35s ease, transform .45s cubic-bezier(.2, 1.5, .4, 1);
+  }
+  .alerta.visible { opacity: 1; transform: none; }
+  .icono {
+    width: clamp(48px, 13vmin, 150px); aspect-ratio: 1; flex: none;
+    display: grid; place-items: center; border-radius: 50%;
+    background: var(--rubor); font-size: clamp(28px, 8vmin, 90px);
+  }
+  .icono img { width: 80%; height: 80%; object-fit: contain; }
+  .quien { font-weight: 800; font-size: clamp(20px, 6.5vmin, 72px); line-height: 1.05; }
+  .que { font-weight: 500; font-size: clamp(16px, 4.5vmin, 50px); color: var(--rubor); }
+  @media (prefers-reduced-motion: reduce) { .alerta { transition: opacity .2s; transform: none; } }
+</style>
+</head>
+<body>
+  <main class="escena">
+    <div class="alerta" id="alerta" role="status" aria-live="polite">
+      <div class="icono" id="icono"></div>
+      <div><div class="quien" id="quien"></div><div class="que" id="que"></div></div>
+    </div>
+  </main>
+
+<script type="module">
+  import { leerConfig, iniciarWidget, sonar, esperar } from './js/comun.js';
+
+  // Claves de #c=: ev = eventos activos { regalo, follow, share }, min = monedas mínimas
+  //                para alertar un regalo, d = segundos en pantalla, s = sonido (0/1)
+  const cfg = leerConfig() || {};
+  const activos = { regalo: true, follow: true, share: false, ...(cfg.ev || {}) };
+  const minimoMonedas = Math.max(0, Number(cfg.min) || 0);
+  const duracion = Math.min(15, Math.max(2, Number(cfg.d) || 5)) * 1000;
+
+  // Qué muestra cada tipo de evento. Para alertar un evento nuevo, se agrega aquí.
+  const PLANTILLAS = {
+    regalo: (e) => ({
+      icono: e.imagen ? { imagen: e.imagen } : '🎁',
+      texto: `envió ${e.cantidad > 1 ? e.cantidad + '× ' : ''}${e.nombre || 'un regalo'}`,
+      pasa: () => e.diamantes * e.cantidad >= minimoMonedas,
+    }),
+    follow: () => ({ icono: '💖', texto: 'te empezó a seguir', pasa: () => true }),
+    share:  () => ({ icono: '📣', texto: 'compartió el LIVE', pasa: () => true }),
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const cola = [];
+  let mostrando = false;
+
+  async function mostrarSiguiente() {
+    if (mostrando) return;
+    mostrando = true;
+    while (cola.length) {
+      const { evento, vista } = cola.shift();
+      $('icono').replaceChildren();
+      if (typeof vista.icono === 'string') $('icono').textContent = vista.icono;
+      else $('icono').append(Object.assign(document.createElement('img'), { src: vista.icono.imagen, alt: '' }));
+      $('quien').textContent = evento.usuario;
+      $('que').textContent = vista.texto;
+      $('alerta').classList.add('visible');
+      if (cfg.s !== 0) sonar();
+      await esperar(duracion);
+      $('alerta').classList.remove('visible');
+      await esperar(500);
+    }
+    mostrando = false;
+  }
+
+  iniciarWidget({
+    cfg,
+    alEvento(evento) {
+      const plantilla = PLANTILLAS[evento.tipo];
+      if (!plantilla || !activos[evento.tipo]) return;
+      const vista = plantilla(evento);
+      if (!vista.pasa()) return;
+      // Un tope para que una lluvia de follows no deje alertas en cola durante media hora.
+      if (cola.length >= 30) cola.shift();
+      cola.push({ evento, vista });
+      mostrarSiguiente();
+    },
+  });
+</script>
+</body>
+</html>
