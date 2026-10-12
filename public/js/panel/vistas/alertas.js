@@ -1,25 +1,42 @@
+// =============================================================================
+// vistas/alertas.js — Superposiciones → Alertas → Alertas de eventos
+//
+// Configura el widget alertas.html: qué eventos se alertan, monedas mínimas,
+// duración y sonido. Para alertar un evento nuevo: su plantilla en
+// js/widgets/alertas.js y su casilla aquí.
+// =============================================================================
+
 import * as almacen from '../almacen.js';
 import { tarjetaWidget, campo, casilla, nota } from '../ui.js';
+
+const POR_DEFECTO = {
+  eventos: { regalo: true, follow: true, share: false },
+  minimo: 0,      // monedas mínimas para alertar un regalo (los regalos sin precio se alertan siempre)
+  duracion: 5,    // segundos en pantalla
+  sonido: true,
+};
 
 export default {
   id: 'alertas',
   titulo: 'Alertas de eventos',
   descripcion: 'Un aviso animado en pantalla cuando alguien te sigue, comparte el LIVE o envía un regalo.',
 
-  render() {
-    const cfg = almacen.widget('alertas', {
-      eventos: { regalo: true, follow: true, share: false },
-      minimo: 1,
-      duracion: 5,
-      sonido: true,
-    });
-    const cambio = () => { almacen.guardar(); widget.actualizar(); };
-    const activar = (tipo) => (v) => { cfg.eventos[tipo] = v; cambio(); };
+  render({ senal }) {
+    const cfg = almacen.widget('alertas', POR_DEFECTO);
+    const cambio = () => {
+      almacen.guardar();
+      widget.actualizar();
+    };
+    const activar = (tipo) => (marcada) => {
+      cfg.eventos[tipo] = marcada;
+      cambio();
+    };
 
     const widget = tarjetaWidget({
       titulo: 'Alertas de eventos',
       archivo: 'alertas.html',
       forma: 'cuadrado',
+      senal,
       config: () => ({
         ev: cfg.eventos,
         min: Math.max(0, Number(cfg.minimo) || 0),
@@ -46,7 +63,8 @@ export default {
 
     return [
       widget.elemento,
-      nota('Tamaño recomendado de la fuente en OBS: 1280 × 720. Las alertas hacen fila: se muestran una tras otra.'),
+      nota('Tamaño recomendado de la fuente en OBS: 1280 × 720. Las alertas hacen fila: se muestran una tras otra. ',
+        'TikTok casi nunca manda el precio de los regalos: los que lleguen sin precio se alertan sin importar el mínimo.'),
     ];
   },
 };

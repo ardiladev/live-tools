@@ -1,10 +1,20 @@
-// Mapa del panel: categorías (íconos de la izquierda) → grupos desplegables → vistas.
+// =============================================================================
+// registro.js — Mapa del panel: categorías (íconos de la izquierda) → grupos → vistas
+//
+// El menú, la navegación y los íconos se arman solos a partir de esta lista.
+//
+// Una vista es un objeto:
+//   { id, titulo, descripcion, render({ senal }) → [nodos] }
+// `id` es la dirección (#/id) y debe ser único. `senal` es un AbortSignal que se cancela
+// al salir de la vista: úsalo para suscripciones y addEventListener.
 //
 // Para agregar una función nueva:
 //   1. Crea su vista en js/panel/vistas/ (copia una parecida, por ejemplo alertas.js).
-//   2. Si es un widget para OBS, crea su .html en public/ (copia meta.html o alertas.html).
-//   3. Agrégala aquí, en el grupo que corresponda (o en un grupo nuevo).
-// El menú, la navegación y los íconos se arman solos a partir de esta lista.
+//   2. Si es un widget para OBS: su .html en public/, su CSS en css/widgets/ y su
+//      lógica en js/widgets/ (copia los de alertas).
+//   3. Agrégala aquí, en el grupo que corresponda (o en un grupo o categoría nuevos).
+//      Íconos disponibles: ver ICONOS en js/panel/ui.js.
+// =============================================================================
 
 import ruleta from './vistas/ruleta.js';
 import { metaLikes, metaSeguidores, metaCompartidos, metaMonedas } from './vistas/metas.js';

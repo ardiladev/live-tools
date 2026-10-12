@@ -1,0 +1,131 @@
+/* ==========================================================================
+   panel-local.css — Panel del modo local (panel.html, solo con `npm start`)
+   Tema claro por defecto y oscuro según el sistema.
+   ========================================================================== */
+
+/* ---------- Paleta ---------- */
+:root {
+  --fondo: #FBF4F6;
+  --superficie: #FFFFFF;
+  --texto: #2A0F33;
+  --suave: #6E5874;
+  --borde: #EAD7DE;
+  --acento: #E5386F;
+  --acento-texto: #FFFFFF;
+  --ok: #1F9D6B;
+  --mal: #C2410C;
+  --fuente: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #1B0A21;
+    --superficie: #26112D;
+    --texto: #FBEFF3;
+    --suave: #C6AFC9;
+    --borde: #43264B;
+    --acento: #F0558A;
+    --ok: #3CCB91;
+    --mal: #FB8A5A;
+  }
+}
+
+/* ---------- Base ---------- */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--fuente);
+  line-height: 1.45;
+}
+
+/* ---------- Estructura: columna principal + vista previa ---------- */
+.marco {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 28px;
+  align-items: start;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px 20px 48px;
+}
+header { grid-column: 1 / -1; }
+h1 { margin: 0 0 .2rem; font-size: 2rem; font-weight: 800; letter-spacing: -.01em; }
+header p { margin: 0; color: var(--suave); }
+h2 { margin: 0 0 .75rem; font-size: 1.15rem; font-weight: 800; }
+section {
+  margin-bottom: 18px;
+  padding: 18px;
+  border: 1px solid var(--borde);
+  border-radius: 14px;
+  background: var(--superficie);
+}
+
+/* ---------- Controles ---------- */
+.fila { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.fila.separada { margin-top: 10px; }
+.fila .crece { flex: 1 1 200px; }
+input {
+  min-width: 0;
+  padding: .55rem .75rem;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  font: inherit;
+  color: var(--texto);
+  background: var(--fondo);
+}
+button {
+  padding: .55rem 1rem;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--texto);
+  background: var(--superficie);
+  cursor: pointer;
+}
+button.principal { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
+button:disabled { opacity: .5; cursor: not-allowed; }
+input:focus-visible,
+button:focus-visible,
+a:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+
+/* ---------- Estado y notas ---------- */
+.estado { display: flex; align-items: center; gap: .5rem; margin-top: .75rem; color: var(--suave); }
+.punto { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--mal); }
+.punto.ok { background: var(--ok); }
+.nota { margin: .6rem 0 0; font-size: .9rem; color: var(--suave); }
+.aviso { min-height: 1.4em; margin-top: .5rem; font-size: .9rem; color: var(--acento); }
+
+/* ---------- Premios ---------- */
+.premio,
+.encabezado-premios { display: grid; grid-template-columns: minmax(0, 1fr) 76px 40px; gap: 8px; }
+.premio { margin-bottom: 4px; }
+.premio button { padding: 0; }
+.encabezado-premios { margin-bottom: 4px; font-size: .85rem; color: var(--suave); }
+.probabilidad { margin: 0 0 8px; font-size: .85rem; color: var(--suave); }
+
+/* ---------- Historial ---------- */
+ol.historial { max-height: 260px; margin: 0; padding: 0; overflow: auto; list-style: none; }
+ol.historial li { display: flex; justify-content: space-between; gap: 12px; padding: .45rem 0; border-bottom: 1px solid var(--borde); }
+ol.historial li:last-child { border-bottom: 0; }
+.etiqueta { font-size: .8rem; color: var(--suave); white-space: nowrap; }
+.vacio { color: var(--suave); }
+
+/* ---------- Vista previa ---------- */
+.vista { position: sticky; top: 20px; }
+.vista iframe { display: block; width: 100%; aspect-ratio: 9 / 16; border: 0; border-radius: 14px; background: #6b6b6b; }
+code {
+  padding: .1rem .35rem;
+  border: 1px solid var(--borde);
+  border-radius: 6px;
+  font-size: .9em;
+  word-break: break-all;
+  background: var(--fondo);
+}
+
+/* ---------- Pantallas angostas ---------- */
+@media (max-width: 860px) {
+  .marco { grid-template-columns: 1fr; }
+  .vista { position: static; max-width: 360px; }
+}

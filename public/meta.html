@@ -1,106 +1,36 @@
 <!doctype html>
+<!--
+  meta.html — Widget "Meta" para OBS / TikTok LIVE Studio (recomendado 1200 × 400).
+  Una barra de progreso de likes, seguidores, compartidos o monedas.
+  Estilos: css/widget.css + css/widgets/meta.css · Lógica: js/widgets/meta.js
+  Se configura por la URL (#c=…), que genera el panel (index.html).
+-->
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Meta — overlay</title>
-<link rel="stylesheet" href="css/widget.css">
-<style>
-  /* Barra inclinada: el fondo es el color de la meta y el relleno avanza con el progreso */
-  .escena { height: 100%; display: grid; place-items: center; padding: 4vmin; box-sizing: border-box; }
-  .meta { width: min(92vw, 1400px); filter: drop-shadow(0 .6vmin 0 rgba(0,0,0,.35)); }
-  .barra {
-    position: relative; height: clamp(34px, 9vh, 110px);
-    background: color-mix(in srgb, var(--color) 45%, #10131a);
-    transform: skewX(-18deg); overflow: hidden;
-    border: .45vmin solid var(--color);
-  }
-  .relleno {
-    position: absolute; inset: 0 auto 0 0; width: 0%;
-    background: var(--color);
-    transition: width .6s cubic-bezier(.2, .9, .3, 1);
-  }
-  .porcentaje {
-    position: absolute; inset: 0; display: grid; place-items: center;
-    transform: skewX(18deg);
-    font-weight: 800; color: #fff; font-size: clamp(18px, 5.5vh, 64px);
-    text-shadow: 0 2px 0 rgba(0,0,0,.35);
-  }
-  .etiqueta {
-    display: inline-block; margin-left: 4%;
-    padding: .25em 1.2em .3em .8em;
-    background: color-mix(in srgb, var(--color) 70%, #10131a);
-    color: #fff; font-weight: 800; font-size: clamp(16px, 4.6vh, 54px);
-    transform: skewX(-18deg);
-  }
-  .etiqueta span { display: inline-block; transform: skewX(18deg); }
-  .meta.lograda .barra { animation: brillo 1.2s ease-in-out 3; }
-  @keyframes brillo { 50% { filter: brightness(1.6); } }
-  @media (prefers-reduced-motion: reduce) { .relleno { transition: none; } .meta.lograda .barra { animation: none; } }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Meta — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/meta.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/meta.js"></script>
 </head>
 <body>
   <main class="escena">
     <div class="meta" id="meta">
-      <div class="barra"><div class="relleno" id="relleno"></div><div class="porcentaje" id="porcentaje">0%</div></div>
+      <!-- Barra con el porcentaje encima -->
+      <div class="barra">
+        <div class="relleno" id="relleno"></div>
+        <div class="porcentaje" id="porcentaje">0%</div>
+      </div>
+      <!-- "Título - actual / objetivo Unidad" -->
       <div class="etiqueta"><span id="texto"></span></div>
     </div>
   </main>
-
-<script type="module">
-  import { leerConfig, iniciarWidget, sonar } from './js/comun.js';
-
-  // Claves de #c=: t = tipo (likes | follows | shares | monedas), o = objetivo, ti = título,
-  //                col = color, al = al alcanzar (nada | duplicar | reiniciar), s = sonido (0/1)
-  const cfg = leerConfig() || {};
-  const TIPOS = {
-    likes:   { unidad: 'Likes',       cuenta: (e) => (e.tipo === 'like' ? e.cantidad : 0) },
-    follows: { unidad: 'Seguidores',  cuenta: (e) => (e.tipo === 'follow' ? 1 : 0) },
-    shares:  { unidad: 'Compartidos', cuenta: (e) => (e.tipo === 'share' ? 1 : 0) },
-    monedas: { unidad: 'Monedas',     cuenta: (e) => (e.tipo === 'regalo' ? e.diamantes * e.cantidad : 0) },
-  };
-  const tipo = TIPOS[cfg.t] ? cfg.t : 'likes';
-  const titulo = String(cfg.ti || 'Meta');
-  const alAlcanzar = cfg.al || 'nada';
-  let objetivo = Math.max(1, Number(cfg.o) || 100);
-  let actual = 0;
-
-  const $ = (id) => document.getElementById(id);
-  document.documentElement.style.setProperty('--color', /^#[0-9a-f]{6}$/i.test(cfg.col) ? cfg.col : '#3aa0d8');
-  const formato = new Intl.NumberFormat('es-CO');
-
-  function pintar() {
-    const pct = Math.min(100, Math.floor((actual / objetivo) * 100));
-    $('relleno').style.width = pct + '%';
-    $('porcentaje').textContent = pct + '%';
-    $('texto').textContent = `${titulo} - ${formato.format(actual)} / ${formato.format(objetivo)} ${TIPOS[tipo].unidad}`;
-  }
-
-  function celebrar() {
-    $('meta').classList.remove('lograda'); void $('meta').offsetWidth; $('meta').classList.add('lograda');
-    if (cfg.s !== 0) sonar({ frecuencia: 660, duracion: 0.6 });
-  }
-
-  pintar();
-  iniciarWidget({
-    cfg,
-    alEvento(evento) {
-      const suma = TIPOS[tipo].cuenta(evento);
-      if (!suma) return;
-      const antes = actual;
-      actual += suma;
-      if (antes < objetivo && actual >= objetivo) {
-        celebrar();
-        // Se deja ver la barra llena un momento antes de aplicar la acción.
-        setTimeout(() => {
-          if (alAlcanzar === 'duplicar') objetivo *= 2;
-          if (alAlcanzar === 'reiniciar') actual = 0;
-          pintar();
-        }, 3500);
-      }
-      pintar();
-    },
-  });
-</script>
 </body>
 </html>

@@ -1,33 +1,46 @@
 <!doctype html>
+<!--
+  index.html — Panel principal (es la página que publica GitHub Pages).
+  Aquí solo está el esqueleto: el contenido de cada sección lo arma js/panel/app.js
+  a partir del mapa js/panel/registro.js.
+  Estilos: css/panel.css
+-->
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Panel LIVE</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/panel.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Panel LIVE</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="css/panel.css">
+
+  <!-- Lógica (módulo: se ejecuta cuando el HTML ya está listo) -->
+  <script type="module" src="js/panel/app.js"></script>
 </head>
 <body>
-<!-- Esqueleto del panel. Todo el contenido lo arma js/panel/app.js a partir de js/panel/registro.js -->
-<header class="barra">
-  <button class="btn-menu" id="btnMenu" aria-label="Abrir menú">☰</button>
-  <div class="logo" aria-hidden="true">R</div>
-  <nav class="ruta" id="ruta" aria-label="Ruta"></nav>
-  <div class="derecha">
-    <a class="pastilla-live" id="pastillaLive" href="#/actividad" style="text-decoration:none">LIVE</a>
-    <a class="usuario-chip" href="#/conexion" style="color:inherit;text-decoration:none">
-      <span class="avatar" id="avatar">?</span>
-      <div><span id="nombreUsuario">Sin cuenta</span><small id="subUsuario">configura la conexión</small></div>
-    </a>
-  </div>
-</header>
+  <!-- Barra superior: menú (pantallas angostas), ruta, estado LIVE y cuenta -->
+  <header class="barra">
+    <button class="btn-menu" id="btnMenu" aria-label="Abrir menú">☰</button>
+    <div class="logo" aria-hidden="true">R</div>
+    <nav class="ruta" id="ruta" aria-label="Ruta"></nav>
+    <div class="derecha">
+      <a class="pastilla-live" id="pastillaLive" href="#/actividad">LIVE</a>
+      <a class="usuario-chip" href="#/conexion">
+        <span class="avatar" id="avatar">?</span>
+        <div><span id="nombreUsuario">Sin cuenta</span><small id="subUsuario">configura la conexión</small></div>
+      </a>
+    </div>
+  </header>
 
-<nav class="riel" id="riel" aria-label="Categorías"></nav>
-<aside class="menu" id="menu" aria-label="Menú"></aside>
-<main id="contenido"></main>
+  <!-- Columna de categorías y menú de la categoría activa (los llena app.js) -->
+  <nav class="riel" id="riel" aria-label="Categorías"></nav>
+  <aside class="menu" id="menu" aria-label="Menú"></aside>
 
-<noscript><p style="margin-left:280px;padding-top:80px">Este panel necesita JavaScript.</p></noscript>
-<script type="module" src="js/panel/app.js"></script>
+  <!-- Contenido de la vista activa (lo llena app.js) -->
+  <main id="contenido">
+    <noscript>Este panel necesita JavaScript.</noscript>
+  </main>
 </body>
 </html>

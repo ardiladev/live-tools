@@ -1,5 +1,17 @@
-// Arranque del panel: arma el riel de categorías, el menú desplegable y la navegación
-// entre vistas (#/id-de-la-vista), a partir de registro.js.
+// =============================================================================
+// app.js — Arranque del panel (index.html)
+//
+// Arma, a partir de registro.js:
+//   - el riel de categorías (íconos de la izquierda)
+//   - el menú con los grupos desplegables de la categoría activa
+//   - la navegación entre vistas, con direcciones del tipo  #/id-de-la-vista
+//
+// Ciclo de vida de una vista: al entrar se llama `vista.render({ senal })`; al salir se
+// cancela `senal` (AbortSignal), y todo lo que la vista suscribió con ella se suelta solo.
+//
+// Secciones: 1. Arranque · 2. Riel · 3. Menú · 4. Navegación · 5. Barra superior
+//            6. Compatibilidad con el generador anterior · 7. Eventos y conexión automática
+// =============================================================================
 
 import { decodificar } from '../comun.js';
 import * as almacen from './almacen.js';
@@ -9,77 +21,121 @@ import { el, icono } from './ui.js';
 
 const $ = (id) => document.getElementById(id);
 const VISTA_INICIAL = 'ruleta';
+let controladorVista = null; // AbortController de la vista abierta
+
+
+// -----------------------------------------------------------------------------
+// 1. Arranque
+// -----------------------------------------------------------------------------
 
 almacen.cargar();
 importarUrlVieja();
 
-// ---------- Riel de categorías ----------
+
+// -----------------------------------------------------------------------------
+// 2. Riel de categorías
+// -----------------------------------------------------------------------------
+
 function pintarRiel(categoriaActiva) {
-  $('riel').replaceChildren(...CATEGORIAS.map((c) =>
-    el('a', { href: `#/${c.grupos[0].vistas[0].id}`, class: c.id === categoriaActiva.id ? 'activo' : '', 'aria-current': c.id === categoriaActiva.id ? 'page' : null },
-      el('span', { class: 'icono' }, icono(c.icono)), c.corto)));
+  $('riel').replaceChildren(...CATEGORIAS.map((categoria) => {
+    const activa = categoria === categoriaActiva;
+    return el('a', {
+      href: `#/${categoria.grupos[0].vistas[0].id}`, // cada categoría abre su primera vista
+      class: activa ? 'activo' : '',
+      'aria-current': activa ? 'page' : null,
+    }, el('span', { class: 'icono' }, icono(categoria.icono)), categoria.corto);
+  }));
 }
 
-// ---------- Menú: grupos desplegables de la categoría activa ----------
+
+// -----------------------------------------------------------------------------
+// 3. Menú: grupos desplegables de la categoría activa
+// -----------------------------------------------------------------------------
+
+function grupoDelMenu(grupo, vistaActiva) {
+  const abierto = !almacen.menuCerrados().includes(grupo.id);
+  const sub = el('div', { class: 'sub', id: `sub-${grupo.id}`, hidden: !abierto },
+    ...grupo.vistas.map((vista) => el('a', {
+      href: `#/${vista.id}`,
+      'aria-current': vista === vistaActiva ? 'page' : null,
+    }, vista.titulo)));
+
+  const boton = el('button', {
+    class: 'grupo-titulo',
+    'aria-expanded': String(abierto),
+    'aria-controls': sub.id,
+    onclick: () => {
+      const ahoraAbierto = boton.getAttribute('aria-expanded') !== 'true';
+      boton.setAttribute('aria-expanded', String(ahoraAbierto));
+      sub.hidden = !ahoraAbierto;
+      almacen.cambiarGrupoMenu(grupo.id, ahoraAbierto);
+    },
+  }, grupo.titulo, icono('flecha'));
+
+  const contieneActiva = grupo.vistas.includes(vistaActiva);
+  return el('div', { class: contieneActiva ? 'grupo activo' : 'grupo' }, boton, sub);
+}
+
 function pintarMenu(categoria, vistaActiva) {
-  const cerrados = almacen.obtener().menuCerrados;
-  const grupos = categoria.grupos.map((g) => {
-    const abierto = !cerrados.includes(g.id);
-    const sub = el('div', { class: 'sub', id: `sub-${g.id}`, hidden: !abierto },
-      ...g.vistas.map((v) => el('a', { href: `#/${v.id}`, 'aria-current': v.id === vistaActiva.id ? 'page' : null,
-        style: v.id === vistaActiva.id ? 'color:var(--texto);font-weight:600' : null }, v.titulo)));
-    const boton = el('button', {
-      class: 'grupo-titulo', 'aria-expanded': String(abierto), 'aria-controls': `sub-${g.id}`,
-      onclick: () => {
-        const ahora = boton.getAttribute('aria-expanded') !== 'true';
-        boton.setAttribute('aria-expanded', String(ahora));
-        sub.hidden = !ahora;
-        const lista = almacen.obtener().menuCerrados.filter((x) => x !== g.id);
-        if (!ahora) lista.push(g.id);
-        almacen.obtener().menuCerrados = lista;
-        almacen.guardar();
-      },
-    }, g.titulo, icono('flecha'));
-    const contieneActiva = g.vistas.some((v) => v.id === vistaActiva.id);
-    return el('div', { class: 'grupo' + (contieneActiva ? ' activo' : '') }, boton, sub);
-  });
   $('menu').replaceChildren(
-    el('div', { style: 'padding:2px 10px 10px;color:var(--suave);font-size:12px;text-transform:uppercase;letter-spacing:.04em' }, categoria.titulo),
-    ...grupos,
-    el('p', { class: 'nota-menu', html: 'Las URLs funcionan en <b>OBS (Fuente de navegador)</b> y en <b>LIVE Studio (Enlace)</b>.' }));
+    el('div', { class: 'menu-titulo' }, categoria.titulo),
+    ...categoria.grupos.map((grupo) => grupoDelMenu(grupo, vistaActiva)),
+    el('p', { class: 'nota-menu' },
+      'Las URLs funcionan en ', el('b', {}, 'OBS (Fuente de navegador)'), ' y en ', el('b', {}, 'LIVE Studio (Enlace)'), '.'));
 }
 
-// ---------- Navegación ----------
+
+// -----------------------------------------------------------------------------
+// 4. Navegación
+// -----------------------------------------------------------------------------
+
 function navegar() {
   const id = location.hash.startsWith('#/') ? location.hash.slice(2) : VISTA_INICIAL;
-  const encontrada = buscarVista(id) || buscarVista(VISTA_INICIAL);
-  const { categoria, grupo, vista } = encontrada;
+  const { categoria, grupo, vista } = buscarVista(id) || buscarVista(VISTA_INICIAL);
+
+  // Se cierra la vista anterior: sus suscripciones y oyentes se sueltan aquí.
+  controladorVista?.abort();
+  controladorVista = new AbortController();
 
   pintarRiel(categoria);
   pintarMenu(categoria, vista);
-  $('ruta').replaceChildren(icono(CATEGORIAS.find((c) => c === categoria).icono),
-    el('span', {}, categoria.titulo), el('span', {}, '/'), el('span', {}, grupo.titulo), el('span', {}, '/'), el('strong', {}, vista.titulo));
+  $('ruta').replaceChildren(
+    icono(categoria.icono),
+    el('span', {}, categoria.titulo), el('span', {}, '/'),
+    el('span', {}, grupo.titulo), el('span', {}, '/'),
+    el('strong', {}, vista.titulo));
   document.title = `${vista.titulo} — Panel LIVE`;
 
   $('contenido').replaceChildren(
     el('h1', { class: 'vista-titulo' }, vista.titulo),
     el('p', { class: 'intro' }, vista.descripcion || ''),
-    el('div', { class: 'rejilla' }, ...vista.render()));
+    el('div', { class: 'rejilla' }, ...vista.render({ senal: controladorVista.signal })));
+
   document.body.classList.remove('menu-abierto');
   scrollTo(0, 0);
 }
 
-// ---------- Barra superior ----------
+
+// -----------------------------------------------------------------------------
+// 5. Barra superior: cuenta y estado LIVE
+// -----------------------------------------------------------------------------
+
 function pintarCuenta() {
   const { usuario, clave } = almacen.conexion();
+  const { conectado, mensaje } = envivo.estado;
   $('nombreUsuario').textContent = usuario || 'Sin cuenta';
   $('avatar').textContent = usuario ? usuario[0].toUpperCase() : '?';
-  $('subUsuario').textContent = envivo.estado.conectado ? 'LIVE' : usuario ? (clave ? 'listo' : 'falta la clave') : 'configura la conexión';
-  $('pastillaLive').classList.toggle('ok', envivo.estado.conectado);
-  $('pastillaLive').title = envivo.estado.mensaje;
+  $('subUsuario').textContent = conectado ? 'LIVE' : usuario ? (clave ? 'listo' : 'falta la clave') : 'configura la conexión';
+  $('pastillaLive').classList.toggle('ok', conectado);
+  $('pastillaLive').title = mensaje;
 }
 
-// Una URL del generador anterior (index.html#c=…) se convierte en la config de la ruleta.
+
+// -----------------------------------------------------------------------------
+// 6. Compatibilidad: URL del generador anterior (index.html#c=…)
+// -----------------------------------------------------------------------------
+// Si alguien abre el panel con una URL vieja, su configuración pasa a la ruleta.
+
 function importarUrlVieja() {
   const c = new URLSearchParams(location.hash.slice(1)).get('c');
   if (!c) return;
@@ -88,17 +144,27 @@ function importarUrlVieja() {
     const con = almacen.conexion();
     if (cfg.u) con.usuario = cfg.u;
     if (cfg.k) con.clave = cfg.k;
-    const ruleta = almacen.widget('ruleta', {});
+    const ruleta = almacen.widget('ruleta');
     Object.assign(ruleta, {
-      giftId: cfg.g ?? ruleta.giftId, regalo: cfg.r ?? ruleta.regalo, gpr: cfg.gpr ?? ruleta.gpr, max: cfg.max ?? ruleta.max,
+      giftId: cfg.g ?? ruleta.giftId,
+      regalo: cfg.r ?? ruleta.regalo,
+      gpr: cfg.gpr ?? ruleta.gpr,
+      max: cfg.max ?? ruleta.max,
       ...(Array.isArray(cfg.p) && cfg.p.length ? { premios: cfg.p.map(([texto, peso]) => ({ texto, peso })) } : {}),
     });
     almacen.guardar();
-  } catch { /* URL dañada: se ignora */ }
-  history.replaceState(null, '', location.pathname + location.search + '#/ruleta');
+  } catch {
+    // URL dañada: se ignora y el panel abre normal.
+  }
+  history.replaceState(null, '', `${location.pathname}${location.search}#/ruleta`);
 }
 
-$('btnMenu').onclick = () => document.body.classList.toggle('menu-abierto');
+
+// -----------------------------------------------------------------------------
+// 7. Eventos globales y conexión automática
+// -----------------------------------------------------------------------------
+
+$('btnMenu').addEventListener('click', () => document.body.classList.toggle('menu-abierto'));
 addEventListener('hashchange', navegar);
 almacen.alCambiar(pintarCuenta);
 envivo.alCambiar((cambio) => { if (cambio.estado) pintarCuenta(); });

@@ -1,7 +1,7 @@
 {
-  "name": "ruleta-tiktok-live",
+  "name": "panel-tiktok-live",
   "version": "1.0.0",
-  "description": "Demo: ruleta que gira cuando llega una rosa en TikTok LIVE",
+  "description": "Panel y widgets para TikTok LIVE (ruleta, metas, alertas) que funcionan por URL en OBS; con modo local opcional",
   "type": "module",
   "main": "server.js",
   "scripts": {

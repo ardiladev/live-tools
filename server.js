@@ -1,6 +1,15 @@
-// Demo: Ruleta activada por regalos de TikTok LIVE
-// Escucha los regalos de un LIVE y, cuando llega el regalo configurado
-// (por defecto la Rosa), manda un giro de ruleta al overlay.
+// =============================================================================
+// server.js — MODO LOCAL (npm start)
+//
+// Escucha los regalos de un LIVE con la librería tiktok-live-connector y, cuando llega
+// el regalo configurado (por defecto la rosa), manda un giro a la ruleta (ruleta.html)
+// por socket.io. Se controla desde http://localhost:3000/panel (panel.html).
+//
+// No hace falta para el modo por URL (GitHub Pages): ahí los widgets se conectan solos.
+//
+// Secciones: 1. Configuración · 2. Servidor web · 3. Estado · 4. Lógica de la ruleta
+//            5. Conexión con TikTok · 6. Comunicación con el panel · 7. Arranque
+// =============================================================================
 
 import express from 'express';
 import { createServer } from 'node:http';
@@ -10,11 +19,15 @@ import { Server } from 'socket.io';
 import { TikTokLiveConnection, WebcastEvent, ControlEvent } from 'tiktok-live-connector';
 import { crearRastreadorRegalos } from './public/js/comun.js';
 
+// -----------------------------------------------------------------------------
+// 1. Configuración (config.json)
+// -----------------------------------------------------------------------------
+
 const CONFIG_PATH = new URL('./config.json', import.meta.url);
 // config.json no se sube al repositorio (lleva usuario, premios y clave): en una copia
 // nueva se arranca desde el ejemplo.
 if (!existsSync(CONFIG_PATH)) copyFileSync(new URL('./config.example.json', import.meta.url), CONFIG_PATH);
-let config = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
+const config = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 const guardarConfig = () => writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
 
 // La librería fija un timeout de 10 s por petición HTTP y descarta cualquier
@@ -23,17 +36,25 @@ const guardarConfig = () => writeFileSync(CONFIG_PATH, JSON.stringify(config, nu
 // frío (DNS + TLS + servidor de firmas) puede pasar de 10 s y tumbaba el connect.
 process.env.TIKTOK_CLIENT_TIMEOUT ||= String(config.timeoutMs || 30000);
 
+// -----------------------------------------------------------------------------
+// 2. Servidor web: sirve public/ y socket.io
+// -----------------------------------------------------------------------------
+
 const app = express();
 const http = createServer(app);
 const io = new Server(http);
 
 const PUBLIC_DIR = fileURLToPath(new URL('./public', import.meta.url));
-// La redirección va ANTES del estático: si no, `/` serviría index.html (el generador
+// La redirección va ANTES del estático: si no, `/` serviría index.html (el panel
 // para GitHub Pages) en lugar del panel del servidor local.
 app.get('/', (_req, res) => res.redirect('/panel'));
 app.use(express.static(PUBLIC_DIR, { extensions: ['html'] }));
 
-// ---------- Estado ----------
+// -----------------------------------------------------------------------------
+// 3. Estado (se reenvía al panel en cada cambio)
+// -----------------------------------------------------------------------------
+
+const MAX_HISTORIAL = 50;
 let conexion = null;
 let estado = { conectado: false, usuario: config.usuario || '', mensaje: 'Sin conexión' };
 const historial = [];
@@ -44,7 +65,11 @@ function emitirEstado(cambios) {
   console.log(`[estado] ${estado.mensaje}`);
 }
 
-// ---------- Lógica de la ruleta ----------
+// -----------------------------------------------------------------------------
+// 4. Lógica de la ruleta
+// -----------------------------------------------------------------------------
+
+/** Índice de un premio al azar, respetando los pesos. */
 function elegirPremio() {
   const premios = config.premios;
   const total = premios.reduce((s, p) => s + (p.peso > 0 ? p.peso : 0), 0);
@@ -56,6 +81,7 @@ function elegirPremio() {
   return premios.length - 1;
 }
 
+/** Decide los premios de `cantidadRegalos` regalos y los manda a la ruleta. */
 function lanzarGiros(usuario, cantidadRegalos, origen) {
   const giros = Math.min(cantidadRegalos * config.girosPorRegalo, config.maxGirosPorEvento);
   for (let i = 0; i < giros; i++) {
@@ -69,25 +95,30 @@ function lanzarGiros(usuario, cantidadRegalos, origen) {
       hora: new Date().toISOString(),
     };
     historial.unshift(giro);
-    historial.length = Math.min(historial.length, 50);
+    historial.length = Math.min(historial.length, MAX_HISTORIAL);
     io.emit('giro', giro);
   }
   console.log(`[giro] ${usuario} → ${giros} giro(s) (${origen})`);
 }
 
-function esRegaloObjetivo(data) {
+/** ¿Este regalo es el que activa la ruleta? */
+function esRegaloObjetivo(giftId, nombreRegalo) {
+  const objetivo = config.regalo || {};
   // TikTok manda `giftId` como CADENA ("5655"), aunque los tipos de la librería lo
-  // declaren `number`. El `===` contra el número de config.json daba siempre false,
-  // y por eso ninguna rosa real activaba la ruleta. Se comparan como texto.
-  if (config.regalo.giftId && String(data.giftId) === String(config.regalo.giftId)) return true;
+  // declaren `number`. Se comparan siempre como texto.
+  if (objetivo.giftId && String(giftId) === String(objetivo.giftId)) return true;
 
-  // Respaldo por nombre. En los eventos reales `giftDetails` no llega, así que esto
-  // casi nunca entra; se conserva por si TikTok vuelve a incluirlo. El id manda.
-  const nombre = (data.giftDetails?.giftName || '').trim().toLowerCase();
-  return !!nombre && config.regalo.nombres.some((n) => String(n).trim().toLowerCase() === nombre);
+  // Respaldo por nombre. En los eventos reales el nombre casi nunca llega; se conserva
+  // por si TikTok vuelve a incluirlo. El id manda.
+  const nombre = String(nombreRegalo || '').trim().toLowerCase();
+  const nombres = Array.isArray(objetivo.nombres) ? objetivo.nombres : [];
+  return !!nombre && nombres.some((n) => String(n).trim().toLowerCase() === nombre);
 }
 
-// ---------- Conexión con TikTok ----------
+
+// -----------------------------------------------------------------------------
+// 5. Conexión con TikTok
+// -----------------------------------------------------------------------------
 const REINTENTOS = 2;
 const ESPERA_REINTENTO_MS = 3000;
 const esperar = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -125,8 +156,7 @@ function crearConexion(usuario, miGeneracion) {
 
   // OJO: no activar `enableExtendedGiftInfo`. Esa opción pide la lista de regalos
   // de la sala a través de un endpoint de firma que Euler Stream reserva al plan
-  // Business, y la conexión falla entera. No hace falta: el nombre y el tipo del
-  // regalo ya vienen dentro del propio evento, en `data.giftDetails`.
+  // Business, y la conexión falla entera. Basta con el giftId, que siempre llega.
   const c = new TikTokLiveConnection(usuario, {
     processInitialData: false,
     ...(config.signApiKey ? { signApiKey: config.signApiKey } : {}),
@@ -137,7 +167,7 @@ function crearConexion(usuario, miGeneracion) {
   // `giftDetails`, todo regalo se trataba como combo y los sueltos nunca activaban la ruleta.
   const alRegalo = crearRastreadorRegalos((evento) => {
     if (!vigente()) return;
-    const coincide = esRegaloObjetivo({ giftId: evento.giftId, giftDetails: { giftName: evento.nombre } });
+    const coincide = esRegaloObjetivo(evento.giftId, evento.nombre);
     // Rastro de TODOS los regalos, no solo de los que activan la ruleta: si un día
     // no gira, aquí se ve si el regalo llegó y por qué se descartó.
     console.log(
@@ -223,7 +253,12 @@ async function desconectar() {
   emitirEstado({ conectado: false, mensaje: 'Desconectado' });
 }
 
-// ---------- Comunicación con el panel y el overlay ----------
+// -----------------------------------------------------------------------------
+// 6. Comunicación con el panel y la ruleta (socket.io)
+// -----------------------------------------------------------------------------
+//   recibe:  conectar · desconectar · simular · guardarPremios
+//   envía:   config · estado · historial · giro · aviso
+
 io.on('connection', (socket) => {
   socket.emit('config', config);
   socket.emit('estado', estado);
@@ -250,6 +285,10 @@ io.on('connection', (socket) => {
     socket.emit('aviso', 'Premios guardados.');
   });
 });
+
+// -----------------------------------------------------------------------------
+// 7. Arranque
+// -----------------------------------------------------------------------------
 
 const PUERTO = Number(process.env.PORT) || config.puerto || 3000;
 http.listen(PUERTO, () => {

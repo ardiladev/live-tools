@@ -1,40 +1,84 @@
-// Piezas de interfaz que reusan todas las vistas del panel.
+// =============================================================================
+// ui.js — Piezas de interfaz que reusan todas las vistas del panel
+//
+// Secciones:
+//   1. el()            crear elementos sin innerHTML
+//   2. Íconos
+//   3. Bloques básicos tarjeta · campo · casilla · nota · numero
+//   4. tarjetaWidget   la tarjeta estándar de un widget de OBS (URL, pruebas, vista previa)
+// =============================================================================
 
 import { codificar } from '../comun.js';
 import * as almacen from './almacen.js';
 
-/** Crea un elemento: el('div', { class: 'x', onclick }, hijo1, 'texto', …) */
+
+// -----------------------------------------------------------------------------
+// 1. Crear elementos
+// -----------------------------------------------------------------------------
+
+/**
+ * Crea un elemento:  el('div', { class: 'x', onclick: fn, 'aria-label': '…' }, hijo1, 'texto', …)
+ *  - `on…`   → addEventListener
+ *  - `class` → className
+ *  - propiedades del elemento (value, checked, hidden…) → se asignan como propiedad
+ *  - el resto → setAttribute
+ * Los hijos de texto se insertan como texto (nunca como HTML), así que es seguro usar
+ * datos que vienen de TikTok (nombres, comentarios del chat…).
+ */
 export function el(etiqueta, atributos = {}, ...hijos) {
   const nodo = document.createElement(etiqueta);
-  for (const [k, v] of Object.entries(atributos || {})) {
-    if (v === undefined || v === null || v === false) continue;
-    if (k.startsWith('on')) nodo.addEventListener(k.slice(2), v);
-    else if (k === 'class') nodo.className = v;
-    else if (k === 'html') nodo.innerHTML = v;            // solo con texto propio, nunca de TikTok
-    else if (k in nodo && k !== 'list') nodo[k] = v;
-    else nodo.setAttribute(k, v === true ? '' : v);
+  for (const [clave, valor] of Object.entries(atributos || {})) {
+    if (valor === undefined || valor === null || valor === false) continue;
+    if (clave.startsWith('on')) nodo.addEventListener(clave.slice(2), valor);
+    else if (clave === 'class') nodo.className = valor;
+    else if (clave in nodo) nodo[clave] = valor;
+    else nodo.setAttribute(clave, valor === true ? '' : valor);
   }
   nodo.append(...hijos.flat().filter((h) => h !== null && h !== undefined && h !== false));
   return nodo;
 }
 
-export const ICONOS = {
-  enlace: '<svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>',
-  flecha: '<svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>',
-  engrane: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>',
-  monitor: '<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>',
-  pulso: '<svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>',
-  ajustes: '<svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
-};
-export const icono = (nombre) => el('span', { html: ICONOS[nombre] || '', 'aria-hidden': 'true', style: 'display:contents' });
 
-export function tarjeta(titulo, { ancha = false, id } = {}, ...contenido) {
-  return el('section', { class: 'tarjeta' + (ancha ? ' ancha' : ''), id },
-    el('h2', {}, titulo), ...contenido);
+// -----------------------------------------------------------------------------
+// 2. Íconos (SVG de trazo, heredan el color del texto)
+// -----------------------------------------------------------------------------
+
+const ICONOS = {
+  enlace: 'M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1',
+  flecha: 'm9 6 6 6-6 6',
+  engrane: 'M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0',
+  monitor: 'M5 4h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM8 20h8M12 16v4',
+  pulso: 'M3 12h4l3-8 4 16 3-8h4',
+  ajustes: 'M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M18 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0M12 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0M20 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0',
+};
+
+/** Un ícono SVG por nombre (ver ICONOS). Se construye con la API del DOM, sin innerHTML. */
+export function icono(nombre) {
+  const NS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  const trazo = document.createElementNS(NS, 'path');
+  trazo.setAttribute('d', ICONOS[nombre] || '');
+  svg.append(trazo);
+  return svg;
 }
 
-/** Campo con etiqueta. `tipo` puede ser text, number, password, color, select (con `opciones`). */
-export function campo(etiqueta, { valor = '', tipo = 'text', opciones, alCambiar, ...resto } = {}) {
+
+// -----------------------------------------------------------------------------
+// 3. Bloques básicos
+// -----------------------------------------------------------------------------
+
+/** Tarjeta con título. `ancha` ocupa todo el ancho de la rejilla. */
+export function tarjeta(titulo, { ancha = false, id } = {}, ...contenido) {
+  return el('section', { class: ancha ? 'tarjeta ancha' : 'tarjeta', id }, el('h2', {}, titulo), ...contenido);
+}
+
+/**
+ * Campo con etiqueta. `tipo`: text | number | password | color | select (con `opciones`
+ * como [[valor, texto], …]). `alCambiar(valor)` se llama en cada cambio.
+ */
+export function campo(etiqueta, { valor = '', tipo = 'text', opciones = [], alCambiar, ...resto } = {}) {
   let control;
   if (tipo === 'select') {
     control = el('select', resto, ...opciones.map(([v, t]) => el('option', { value: v, selected: String(v) === String(valor) }, t)));
@@ -46,60 +90,82 @@ export function campo(etiqueta, { valor = '', tipo = 'text', opciones, alCambiar
   return el('label', {}, etiqueta, control);
 }
 
+/** Casilla de verificación con texto. */
 export function casilla(texto, { marcada = false, alCambiar } = {}) {
   const control = el('input', { type: 'checkbox', checked: marcada });
   control.addEventListener('change', () => alCambiar?.(control.checked));
   return el('label', { class: 'casilla' }, control, ' ', texto);
 }
 
-export function nota(...contenido) {
-  return el('p', { class: 'nota' }, ...contenido);
+/** Párrafo de ayuda en gris. */
+export const nota = (...contenido) => el('p', { class: 'nota' }, ...contenido);
+
+/** Número con separadores de miles (12.345). */
+const FORMATO_NUMERO = new Intl.NumberFormat('es-CO');
+export const numero = (n) => FORMATO_NUMERO.format(n);
+
+/** Mensaje temporal dentro de un elemento (se borra solo). */
+export function crearAviso(elemento, duracionMs = 4500) {
+  let temporizador;
+  return (texto, { error = false } = {}) => {
+    elemento.textContent = texto;
+    elemento.classList.toggle('error', error);
+    clearTimeout(temporizador);
+    temporizador = setTimeout(() => { elemento.textContent = ''; }, duracionMs);
+  };
 }
 
-/** Convierte un número a texto con separadores (12.345). */
-export const numero = (n) => new Intl.NumberFormat('es-CO').format(n);
+
+// -----------------------------------------------------------------------------
+// 4. Tarjeta de widget
+// -----------------------------------------------------------------------------
+
+const RETRASO_VISTA_PREVIA_MS = 400; // no reiniciar la vista previa en cada tecla
 
 /**
- * La tarjeta estándar de un widget de OBS, al estilo de los paneles de superposiciones:
- * campos propios arriba, fila de URL (Copy URL / Test / Personalizar) y vista previa con pruebas.
+ * La tarjeta estándar de un widget de OBS: campos propios arriba, fila de URL
+ * (Copy URL / Test / Personalizar) y vista previa con botones de prueba.
  *
- *   archivo:     'meta.html'
- *   config():    objeto con la configuración propia del widget (va en #c=…)
- *   parametros(): parámetros visibles de la URL ({ ocultar: '1' })
- *   campos:      nodos que van arriba de la URL
- *   personalizar: nodos del panel desplegable "Personalizar"
- *   pruebas:     [{ texto, evento: (nombre) => eventoNormalizado }]
- *   validar():   texto con el problema, o '' si se puede copiar
- *   forma:       'vertical' (9:16) | 'horizontal' (16:5) | 'cuadrado' (16:9)
+ *   titulo        texto de la tarjeta
+ *   archivo       'meta.html'
+ *   config()      configuración propia del widget (va en #c=…, junto a usuario y clave)
+ *   parametros()  parámetros visibles de la URL, p. ej. { ocultar: '1' }
+ *   campos        nodos que van arriba de la URL
+ *   personalizar  nodos del desplegable "Personalizar"
+ *   pruebas       [{ texto, evento: (nombre) => eventoNormalizado }]  (la primera es "Test")
+ *   validar()     texto con el problema, o '' si la URL se puede copiar
+ *   forma         'vertical' (9:16) | 'horizontal' (16:5) | 'cuadrado' (16:9)
+ *   senal         AbortSignal de la vista: al cancelarse se dejan de escuchar mensajes
  *
  * Devuelve { elemento, actualizar } — llama `actualizar()` cuando cambie la configuración.
  */
-export function tarjetaWidget({ titulo, archivo, config, parametros = () => ({}), campos = [], personalizar = [], pruebas = [], validar = () => '', forma = 'vertical', ancha = true }) {
-  const url = el('input', { readonly: true, 'aria-label': `URL de ${titulo}` });
+export function tarjetaWidget({
+  titulo, archivo, config, parametros = () => ({}), campos = [], personalizar = [],
+  pruebas = [], validar = () => '', forma = 'vertical', ancha = true, senal,
+}) {
+  // ---------- Elementos ----------
+  const url = el('input', { readOnly: true, 'aria-label': `URL de ${titulo}` });
   const aviso = el('div', { class: 'aviso', role: 'status' });
   const opciones = el('div', { class: 'opciones', hidden: true }, ...personalizar);
   const iframe = el('iframe', { title: `Vista previa de ${titulo}` });
   const punto = el('span', { class: 'punto' });
   const mensaje = el('span', {}, 'Cargando…');
   const nombrePrueba = el('input', { value: 'Valentina', 'aria-label': 'Nombre para las pruebas' });
+  const avisar = crearAviso(aviso);
 
+  // ---------- URL ----------
+  /** La URL del widget. Con `previa`, la versión de prueba para el iframe (sin conexión). */
   function construirUrl({ previa = false } = {}) {
     const { usuario, clave } = almacen.conexion();
-    const u = new URL(archivo, location.href);
+    const destino = new URL(archivo, location.href);
     const visibles = previa ? { fondo: '1', prueba: '1' } : parametros();
-    for (const [k, v] of Object.entries(visibles)) if (v !== undefined && v !== null && v !== '') u.searchParams.set(k, v);
-    u.hash = 'c=' + codificar({ u: usuario.replace(/^@/, '').trim(), k: clave.trim(), ...config() });
-    return u.href;
+    Object.entries(visibles)
+      .filter(([, v]) => v !== undefined && v !== null && v !== '')
+      .forEach(([k, v]) => destino.searchParams.set(k, v));
+    destino.hash = `c=${codificar({ u: usuario.replace(/^@/, '').trim(), k: clave.trim(), ...config() })}`;
+    return destino.href;
   }
 
-  function avisar(texto, error = false) {
-    aviso.textContent = texto;
-    aviso.classList.toggle('error', error);
-    clearTimeout(avisar.t);
-    avisar.t = setTimeout(() => { aviso.textContent = ''; }, 4500);
-  }
-
-  // La vista previa se recarga con un pequeño retraso para no reiniciarla en cada tecla.
   let temporizador;
   function actualizar() {
     url.value = construirUrl();
@@ -107,11 +173,7 @@ export function tarjetaWidget({ titulo, archivo, config, parametros = () => ({})
     temporizador = setTimeout(() => {
       const nueva = construirUrl({ previa: true });
       if (iframe.src !== nueva) iframe.src = nueva;
-    }, 400);
-  }
-
-  function probar(prueba) {
-    iframe.contentWindow?.postMessage({ tipo: 'simular', evento: prueba.evento(nombrePrueba.value || 'Espectador') }, location.origin);
+    }, RETRASO_VISTA_PREVIA_MS);
   }
 
   async function copiar() {
@@ -119,7 +181,7 @@ export function tarjetaWidget({ titulo, archivo, config, parametros = () => ({})
     const problema = !usuario.trim() || !clave.trim()
       ? 'Falta el usuario o la clave de Euler Stream: complétalos en Ajustes → Conexión.'
       : validar();
-    if (problema) return avisar(problema, true);
+    if (problema) return avisar(problema, { error: true });
     try {
       await navigator.clipboard.writeText(url.value);
       avisar('URL copiada. Pégala en la fuente de navegador.');
@@ -129,6 +191,20 @@ export function tarjetaWidget({ titulo, archivo, config, parametros = () => ({})
     }
   }
 
+  // ---------- Pruebas ----------
+  function probar(prueba) {
+    const evento = prueba.evento(nombrePrueba.value || 'Espectador');
+    iframe.contentWindow?.postMessage({ tipo: 'simular', evento }, location.origin);
+  }
+
+  // Estado que reporta el widget de la vista previa (comun.js → avisarPadre).
+  addEventListener('message', (ev) => {
+    if (ev.origin !== location.origin || ev.source !== iframe.contentWindow || ev.data?.tipo !== 'estado') return;
+    mensaje.textContent = ev.data.mensaje;
+    punto.classList.toggle('ok', ev.data.ok);
+  }, { signal: senal });
+
+  // ---------- Estructura ----------
   const botonPersonalizar = el('button', {
     'aria-expanded': 'false',
     onclick: () => {
@@ -136,15 +212,6 @@ export function tarjetaWidget({ titulo, archivo, config, parametros = () => ({})
       botonPersonalizar.setAttribute('aria-expanded', String(!opciones.hidden));
     },
   }, icono('engrane'), 'Personalizar');
-
-  // Estado que reporta el widget de la vista previa (comun.js → avisarPadre).
-  addEventListener('message', function alMensaje(ev) {
-    // Al cambiar de sección la tarjeta sale de la página: ahí se deja de escuchar.
-    if (!elemento.isConnected && iframe.src) return removeEventListener('message', alMensaje);
-    if (ev.origin !== location.origin || ev.source !== iframe.contentWindow || ev.data?.tipo !== 'estado') return;
-    mensaje.textContent = ev.data.mensaje;
-    punto.classList.toggle('ok', ev.data.ok);
-  });
 
   const elemento = tarjeta(titulo, { ancha },
     campos.length ? el('div', { class: 'campos' }, ...campos) : null,
@@ -155,7 +222,7 @@ export function tarjetaWidget({ titulo, archivo, config, parametros = () => ({})
       botonPersonalizar),
     opciones,
     aviso,
-    el('div', { class: 'escenario ' + forma },
+    el('div', { class: `escenario ${forma}` },
       iframe,
       el('div', { class: 'pruebas' },
         el('div', { class: 'estado' }, punto, mensaje),

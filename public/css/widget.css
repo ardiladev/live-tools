@@ -1,6 +1,11 @@
-/* Base de todos los widgets que van en OBS / LIVE Studio */
-@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap");
+/* ==========================================================================
+   widget.css — Base común de todos los widgets que van en OBS / LIVE Studio
+   (ruleta.html, meta.html, alertas.html). Cada widget añade su propio CSS
+   en css/widgets/<nombre>.css.
+   La fuente se carga con <link> en cada HTML (más rápido que @import).
+   ========================================================================== */
 
+/* ---------- Paleta y tipografía ---------- */
 :root {
   --rosa: #E5386F;
   --ciruela: #3B1446;
@@ -10,21 +15,37 @@
   --crema: #FFF6F0;
   --fuente: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
 }
-html, body {
-  margin: 0; height: 100%;
-  background: transparent;          /* transparente para OBS */
+
+/* ---------- Lienzo ---------- */
+/* Fondo transparente: OBS dibuja el widget encima de la cámara. */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
   font-family: var(--fuente);
   overflow: hidden;
 }
-body.vista-previa { background: #6b6b6b; } /* solo en la vista previa del panel (?fondo=1) */
+
+/* Solo en la vista previa del panel (?fondo=1): un gris para ver el widget. */
+body.vista-previa { background: #6b6b6b; }
+
+/* El atributo hidden siempre gana, aunque una clase ponga display. */
 [hidden] { display: none !important; }
 
-/* Estado de la conexión: solo se ve en la vista previa, nunca en OBS */
+/* ---------- Píldora de estado de la conexión ---------- */
+/* La crea js/comun.js (iniciarWidget). Solo se ve en la vista previa, nunca en OBS. */
 .pildora-estado {
-  position: fixed; left: 12px; bottom: 12px; z-index: 50;
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 50;
+  max-width: calc(100vw - 24px);
+  padding: .35em .8em;
+  border-radius: 999px;
   font: 500 14px/1.3 var(--fuente);
-  color: var(--crema); background: rgba(59, 20, 70, .85);
-  padding: .35em .8em; border-radius: 999px; max-width: calc(100vw - 24px);
+  color: var(--crema);
+  background: rgba(59, 20, 70, .85);
 }
 .pildora-estado::before { content: "●"; margin-right: .4em; color: #FB8A5A; }
 .pildora-estado.ok::before { color: #3CCB91; }

@@ -1,0 +1,51 @@
+/* ==========================================================================
+   alertas.css — Widget "Alertas de eventos" (alertas.html)
+   Una tarjeta redondeada con ícono, quién y qué hizo. Entra y sale animada.
+   ========================================================================== */
+
+/* ---------- Escena ---------- */
+.escena {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 4vmin;
+  box-sizing: border-box;
+}
+
+/* ---------- Tarjeta de la alerta ---------- */
+.alerta {
+  display: flex;
+  align-items: center;
+  gap: 3vmin;
+  max-width: 92vw;
+  padding: 2.4vmin 4vmin 2.4vmin 2.4vmin;
+  border-radius: 999px;
+  background: var(--ciruela);
+  color: var(--crema);
+  box-shadow: 0 .8vmin 0 var(--rosa);
+  opacity: 0;
+  transform: translateY(30%) scale(.9);
+  transition: opacity .35s ease, transform .45s cubic-bezier(.2, 1.5, .4, 1);
+}
+.alerta.visible { opacity: 1; transform: none; }
+
+/* ---------- Ícono (emoji o imagen del regalo) ---------- */
+.icono {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: clamp(48px, 13vmin, 150px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--rubor);
+  font-size: clamp(28px, 8vmin, 90px);
+}
+.icono img { width: 80%; height: 80%; object-fit: contain; }
+
+/* ---------- Textos ---------- */
+.quien { font-weight: 800; font-size: clamp(20px, 6.5vmin, 72px); line-height: 1.05; }
+.que   { font-weight: 500; font-size: clamp(16px, 4.5vmin, 50px); color: var(--rubor); }
+
+@media (prefers-reduced-motion: reduce) {
+  .alerta { transform: none; transition: opacity .2s; }
+}
