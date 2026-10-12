@@ -13,6 +13,7 @@ con **Supabase** para los cambios en vivo: no hay servidor propio, ni Node.js, n
 
 - Panel publicado: `https://ardiladev.github.io/live-tools/`
 - Repositorio: `https://github.com/ardiladev/live-tools`
+- Documentación técnica completa (Word): [`Documentacion-Live-Tools.docx`](Documentacion-Live-Tools.docx)
 
 > El proyecto antes se llamaba `ruleta-tiktok-live`. Las URLs de widgets copiadas antes del cambio de
 > nombre apuntan a la dirección vieja: vuelve a copiarlas desde el panel y pégalas en OBS / LIVE Studio.
