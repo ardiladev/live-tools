@@ -10,9 +10,7 @@
 //   u, k = usuario y clave · g = id del regalo · r = texto en pantalla
 //   gpr = giros por regalo · max = tope por combo · p = premios [[texto, peso], …]
 //
-// Sin #c=… funciona con el servidor local (server.js), que decide los premios y los manda.
-//
-// Secciones: 1. Opciones · 2. Dibujo · 3. Giro y cola · 4. Modo directo · 5. Modo servidor · 6. Arranque
+// Secciones: 1. Opciones · 2. Dibujo · 3. Giro y cola · 4. Premios y regalos · 5. Arranque
 // =============================================================================
 
 import { leerConfig, iniciarWidget, sonar, esperar } from '../comun.js';
@@ -256,7 +254,7 @@ function encolar(giro) {
 
 
 // -----------------------------------------------------------------------------
-// 4. Modo directo: configuración en la URL (#c=…), sin servidor
+// 4. Premios y regalos: el widget sortea según la configuración de la URL (#c=…)
 // -----------------------------------------------------------------------------
 
 /** Índice de un premio al azar, respetando los pesos. */
@@ -270,7 +268,7 @@ function elegirPremio() {
   return premios.length - 1;
 }
 
-function iniciarModoDirecto(cfg) {
+function iniciarRuleta(cfg) {
   premios = (Array.isArray(cfg.p) ? cfg.p : [])
     .map(([texto, peso]) => ({ texto: String(texto || ''), peso: Math.max(0, Number(peso) || 0) }))
     .filter((p) => p.texto);
@@ -297,35 +295,10 @@ function iniciarModoDirecto(cfg) {
 
 
 // -----------------------------------------------------------------------------
-// 5. Modo servidor: los giros los decide server.js (npm start)
+// 5. Arranque
 // -----------------------------------------------------------------------------
 
-function iniciarModoServidor() {
-  if (params.get('fondo') === '1') document.body.classList.add('vista-previa');
-
-  // El cliente de socket.io lo sirve el propio server.js; si no está, no hay servidor.
-  const script = document.createElement('script');
-  script.src = '/socket.io/socket.io.js';
-  script.onerror = () => console.warn('[ruleta] No hay servidor local: abre la ruleta con la URL del panel (incluye #c=…).');
-  script.onload = () => {
-    const socket = window.io();
-    socket.on('config', (cfg) => {
-      premios = cfg.premios;
-      if (!girando) dibujar();
-    });
-    socket.on('giro', encolar);
-  };
-  document.head.append(script);
-}
-
-
-// -----------------------------------------------------------------------------
-// 6. Arranque
-// -----------------------------------------------------------------------------
-
-const cfg = leerConfig();
-if (cfg) iniciarModoDirecto(cfg);
-else iniciarModoServidor();
+iniciarRuleta(leerConfig() || {});
 
 if (OCULTAR_EN_REPOSO) escena.classList.add('oculta');
 // La fuente llega después del primer dibujo: se redibuja para que el texto la use.

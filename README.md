@@ -1,43 +1,51 @@
-# Panel LIVE para TikTok
+# Live Tools
 
-Panel y widgets para transmisiones de TikTok LIVE, al estilo de TikFinity: una **ruleta de regalos**,
+Herramientas para transmisiones de TikTok LIVE, al estilo de TikFinity: una **ruleta de regalos**,
 **metas** con barra de progreso, **alertas** animadas y herramientas para ver la **actividad** del LIVE
 y armar un **catálogo con el ID de cada regalo**.
 
 Los widgets se pegan como **URL** en OBS o en TikTok LIVE Studio y funcionan solos: no hay que dejar
-ningún programa abierto en el computador.
+ningún programa abierto en el computador. Todo funciona desde **GitHub Pages** + **Euler Stream**:
+no hay servidor propio, ni Node.js, ni nada que instalar.
 
-- Panel publicado: `https://ardiladev.github.io/ruleta-tiktok-live/`
-- Repositorio: `https://github.com/ardiladev/ruleta-tiktok-live`
+- Panel publicado: `https://ardiladev.github.io/live-tools/`
+- Repositorio: `https://github.com/ardiladev/live-tools`
+
+> El proyecto antes se llamaba `ruleta-tiktok-live`. Las URLs de widgets copiadas antes del cambio de
+> nombre apuntan a la dirección vieja: vuelve a copiarlas desde el panel y pégalas en OBS / LIVE Studio.
 
 ---
 
 ## Índice
 
-1. [Dos formas de usarlo](#1-dos-formas-de-usarlo)
+1. [Qué se necesita](#1-qué-se-necesita)
 2. [Guía rápida](#2-guía-rápida)
 3. [Qué hace cada sección del panel](#3-qué-hace-cada-sección-del-panel)
 4. [Cómo funciona por dentro](#4-cómo-funciona-por-dentro)
 5. [Estructura de archivos](#5-estructura-de-archivos)
 6. [Agregar una función nueva](#6-agregar-una-función-nueva)
-7. [Modo local (`npm start`)](#7-modo-local-npm-start)
-8. [Publicación en GitHub Pages](#8-publicación-en-github-pages)
-9. [Límites y cosas que conviene saber](#9-límites-y-cosas-que-conviene-saber)
-10. [Seguridad y privacidad](#10-seguridad-y-privacidad)
-11. [Cómo probar los cambios](#11-cómo-probar-los-cambios)
+7. [Publicación en GitHub Pages](#7-publicación-en-github-pages)
+8. [Límites y cosas que conviene saber](#8-límites-y-cosas-que-conviene-saber)
+9. [Seguridad y privacidad](#9-seguridad-y-privacidad)
+10. [Cómo probar los cambios](#10-cómo-probar-los-cambios)
 
 ---
 
-## 1. Dos formas de usarlo
+## 1. Qué se necesita
 
-| | **Por URL (recomendado)** | **Modo local** |
-|---|---|---|
-| Qué hay que abrir | Nada: solo la URL en OBS / LIVE Studio | `npm start` y dejar la terminal abierta |
-| Dónde se configura | `index.html`, publicado en GitHub Pages | `http://localhost:3000/panel` |
-| Quién se conecta a TikTok | Cada widget, desde el navegador, vía Euler Stream | `server.js`, con `tiktok-live-connector` |
-| Qué incluye | Ruleta, metas, alertas, actividad, buscador de regalos | Solo la ruleta |
-| Necesita | API key gratuita de Euler Stream | Node.js 20+ |
-| Cambiar la configuración | Copiar la URL nueva y pegarla en la fuente | Se guarda en el panel y la ruleta cambia sola |
+| Pieza | Para qué |
+|---|---|
+| **GitHub Pages** | Publica el panel y los widgets (carpeta `public/`). Es solo una web estática: no ejecuta código en el servidor. |
+| **Euler Stream** (plan gratuito) | Lee el LIVE de TikTok y entrega los eventos por WebSocket. Hace falta una **API key**. |
+| **OBS** o **TikTok LIVE Studio** | Muestra los widgets como fuente de navegador / enlace. |
+| Un navegador | Para abrir el panel y configurar. |
+
+| Pregunta | Respuesta |
+|---|---|
+| ¿Hay que dejar algo abierto? | No: solo la URL en OBS / LIVE Studio. |
+| ¿Dónde se configura? | En el panel (`index.html`, publicado en GitHub Pages). |
+| ¿Quién se conecta a TikTok? | Cada widget, desde el navegador, vía Euler Stream. |
+| ¿Cómo se cambia la configuración? | Se ajusta en el panel, se copia la URL nueva y se pega en la fuente. |
 
 ---
 
@@ -162,7 +170,7 @@ Como TikTok casi nunca dice de qué tipo es, `crearRastreadorRegalos` (en `js/co
 2. Si la espera se cumple sin mensajes nuevos, **cuenta lo acumulado** (así un regalo suelto se cuenta a los ~2 s).
 3. Si después llega el fin de racha, **solo suma lo que faltaba**: un combo nunca se cuenta doble.
 
-El mismo rastreador lo usan los widgets, el panel y `server.js`.
+El mismo rastreador lo usan los widgets y el panel.
 
 ### 4.5 Conexión y reintentos
 
@@ -227,16 +235,14 @@ seguro mostrar nombres y mensajes del chat que vienen de TikTok.
 ## 5. Estructura de archivos
 
 ```
-ruleta-tiktok-live/
+live-tools/
 ├── public/                         ← lo que publica GitHub Pages
 │   ├── index.html                  panel principal (esqueleto; lo arma js/panel/app.js)
 │   ├── ruleta.html                 widget ruleta     ┐
 │   ├── meta.html                   widget meta       ├ solo estructura HTML
 │   ├── alertas.html                widget alertas    ┘
-│   ├── panel.html                  panel del modo local (npm start)
 │   ├── css/
 │   │   ├── panel.css               estilos del panel
-│   │   ├── panel-local.css         estilos del panel del modo local
 │   │   ├── widget.css              base común de los widgets (transparencia, píldora de estado)
 │   │   └── widgets/
 │   │       ├── ruleta.css
@@ -245,9 +251,8 @@ ruleta-tiktok-live/
 │   └── js/
 │       ├── comun.js                URL ↔ config, eventos normalizados, rastreador de regalos,
 │       │                           conexión con Euler Stream, arranque de widgets, sonido
-│       ├── panel-local.js          lógica del panel del modo local
 │       ├── widgets/
-│       │   ├── ruleta.js           dibujo, giro, cola; modo directo y modo servidor
+│       │   ├── ruleta.js           dibujo, giro, cola y sorteo de premios
 │       │   ├── meta.js
 │       │   └── alertas.js
 │       └── panel/
@@ -263,9 +268,7 @@ ruleta-tiktok-live/
 │               ├── actividad.js
 │               ├── regalos.js
 │               └── conexion.js
-├── server.js                       modo local: tiktok-live-connector + socket.io
-├── config.example.json             plantilla de config.json (modo local)
-├── package.json
+├── README.md                       esta documentación
 └── .github/workflows/pages.yml     publica public/ en GitHub Pages
 ```
 
@@ -301,50 +304,22 @@ Ejemplo: un widget **“Último seguidor”**.
 
 ---
 
-## 7. Modo local (`npm start`)
-
-Es la versión original: un servidor en el computador que se conecta al LIVE y controla la ruleta.
-Solo incluye la ruleta.
-
-```bash
-npm install
-npm start
-```
-
-- Panel: `http://localhost:3000/panel`
-- Ruleta para OBS: `http://localhost:3000/ruleta` (1080 × 1920). Admite `?ocultar=1` y `?sonido=0`.
-
-`config.json` se crea solo a partir de `config.example.json` y **no se sube al repositorio**:
-
-| Campo | Para qué sirve |
-|---|---|
-| `usuario` | Último usuario conectado |
-| `regalo.giftId` | **El que manda**: ID del regalo que activa la ruleta (la rosa es 5655) |
-| `regalo.nombres` | Respaldo por nombre (TikTok casi nunca manda el nombre) |
-| `girosPorRegalo` | Giros por cada regalo |
-| `maxGirosPorEvento` | Tope de giros por combo |
-| `premios` | `[{ texto, peso }]`; también se editan desde el panel |
-| `timeoutMs` | Espera por petición HTTP (la librería trae 10 s, poco para el primer intento) |
-| `signApiKey` | Opcional: API key de Euler Stream para el servidor de firmas |
-| `puerto` | Puerto del servidor (3000 por defecto; también `PORT=…`) |
-
-La terminal deja un rastro de cada regalo (`[regalo] … · id XXXX · …`), útil para averiguar IDs.
-
----
-
-## 8. Publicación en GitHub Pages
+## 7. Publicación en GitHub Pages
 
 - Cada `git push` a `main` ejecuta `.github/workflows/pages.yml`, que publica **solo la carpeta `public/`**.
-  `server.js`, `config.json` y `node_modules` nunca se publican.
 - En el repositorio: **Settings → Pages → Source: GitHub Actions** (ya configurado).
+- La dirección publicada sale del nombre del repositorio: `https://ardiladev.github.io/live-tools/`.
+  Si algún día se renombra el repositorio, la dirección cambia y hay que volver a copiar las URLs de
+  los widgets. Lo guardado en el panel (`localStorage`) se conserva, porque el dominio
+  `ardiladev.github.io` es el mismo.
 - La publicación tarda uno o dos minutos. GitHub puede servir la versión anterior hasta unos 10 minutos
   por caché: en OBS, usa **“Actualizar la caché de la página actual”** en las propiedades de la fuente.
 
 ---
 
-## 9. Límites y cosas que conviene saber
+## 8. Límites y cosas que conviene saber
 
-- **No es una API oficial de TikTok.** Euler Stream y `tiktok-live-connector` leen el servicio interno de
+- **No es una API oficial de TikTok.** Euler Stream lee el servicio interno de
   TikTok. Funciona, pero puede fallar cuando TikTok cambia algo.
 - **Plan gratuito de Euler Stream:** 60 solicitudes por minuto, 500 por hora y 2500 por día, y conexiones
   limitadas. Cada widget en OBS y el panel conectado gastan conexiones por separado.
@@ -361,22 +336,23 @@ La terminal deja un rastro de cada regalo (`[regalo] … · id XXXX · …`), ú
 
 ---
 
-## 10. Seguridad y privacidad
+## 9. Seguridad y privacidad
 
 - La **API key va dentro de las URLs** de los widgets (en el fragmento `#`, que no se envía a ningún servidor).
   Cualquiera que vea la URL completa puede usar tu clave: **no la muestres en pantalla ni la compartas**.
   Si se filtra, bórrala en el panel de Euler Stream y crea otra.
 - El panel guarda usuario, clave, configuración y catálogo **solo en tu navegador** (`localStorage`).
-- `config.json` (modo local) está en `.gitignore`.
+- El repositorio no guarda claves: la API key solo vive en el navegador y en las URLs que copias.
 - Los datos que vienen de TikTok (nombres, chat) se muestran siempre como texto, nunca como HTML.
 - La comunicación panel ↔ vista previa usa `postMessage` restringido al mismo origen.
 
 ---
 
-## 11. Cómo probar los cambios
+## 10. Cómo probar los cambios
 
-1. **Sin conexión:** sirve `public/` con cualquier servidor estático (o `npm start` y abre
-   `http://localhost:3000/index.html`) y usa los botones de prueba de cada tarjeta.
+1. **Sin conexión:** sirve `public/` con cualquier servidor estático (por ejemplo
+   `python -m http.server 8080 -d public` y abre `http://localhost:8080`) y usa los botones de prueba de
+   cada tarjeta. Abrir `index.html` con doble clic no sirve: los módulos JS necesitan `http://`.
 2. **Eventos simulados en Actividad:** en la consola del navegador:
    ```js
    const envivo = await import('./js/panel/envivo.js');
@@ -384,4 +360,5 @@ La terminal deja un rastro de cada regalo (`[regalo] … · id XXXX · …`), ú
    ```
 3. **Con el LIVE real:** Actividad → Eventos en vivo → **Conectar al LIVE**, y pide que te envíen regalos,
    likes y follows.
-4. **Modo local:** `npm start`, abre `/panel` y usa “Enviar 1 rosa”.
+4. **Publicado:** después del `git push`, espera la publicación (pestaña *Actions* del repositorio) y
+   recarga el panel en `https://ardiladev.github.io/live-tools/`.

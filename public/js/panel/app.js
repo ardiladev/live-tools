@@ -104,7 +104,7 @@ function navegar() {
     el('span', {}, categoria.titulo), el('span', {}, '/'),
     el('span', {}, grupo.titulo), el('span', {}, '/'),
     el('strong', {}, vista.titulo));
-  document.title = `${vista.titulo} — Panel LIVE`;
+  document.title = `${vista.titulo} — Live Tools`;
 
   $('contenido').replaceChildren(
     el('h1', { class: 'vista-titulo' }, vista.titulo),

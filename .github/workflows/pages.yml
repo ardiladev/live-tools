@@ -1,5 +1,5 @@
 # Publica la carpeta public/ en GitHub Pages cada vez que se sube un cambio a main.
-# Solo sale public/: server.js, config.json y node_modules nunca se publican.
+# Solo sale public/: el README y la documentación se quedan en el repositorio.
 name: Publicar en GitHub Pages
 
 on:

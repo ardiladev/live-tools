@@ -1,6 +1,5 @@
 // =============================================================================
-// comun.js — Piezas compartidas por los widgets (ruleta, metas, alertas…), el panel
-// y el servidor local (server.js importa crearRastreadorRegalos).
+// comun.js — Piezas compartidas por los widgets (ruleta, metas, alertas…) y el panel.
 //
 // Un widget es una página .html que se pone en OBS. Toda su configuración viaja en la
 // propia URL, después de "#c=", así que funciona sin servidor: se conecta a TikTok desde
