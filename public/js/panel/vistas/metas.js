@@ -34,7 +34,7 @@ const TIPOS = {
   },
   monedas: {
     titulo: 'Monedas', meta: 500, color: '#f59e0b', etiqueta: 'Meta de monedas',
-    aviso: 'TikTok casi nunca manda el precio de los regalos; los que lleguen sin precio no suman monedas.',
+    aviso: 'TikTok no siempre manda el precio de los regalos; los que lleguen sin precio no suman monedas.',
     pruebas: [
       { texto: 'Rosa (1)', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '5655', nombre: 'Rose', cantidad: 1, diamantes: 1 }) },
       { texto: 'Regalo de 100', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '0', nombre: 'Regalo', cantidad: 1, diamantes: 100 }) },

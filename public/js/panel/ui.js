@@ -137,7 +137,8 @@ const RETRASO_VISTA_PREVIA_MS = 400; // no reiniciar la vista previa en cada tec
  *   personalizar  nodos del desplegable "Personalizar"
  *   pruebas       [{ texto, evento: (nombre) => eventoNormalizado }]  (la primera es "Test")
  *   forma         'vertical' (9:16) | 'horizontal' (16:5) | 'cuadrado' (16:9)
- *   senal         AbortSignal de la vista: al cancelarse se dejan de escuchar mensajes
+ *   ancha         true (por defecto) = ocupa todo el ancho de la rejilla
+ *   senal        AbortSignal de la vista: al cancelarse se dejan de escuchar mensajes
  *
  * La URL para OBS:
  *   - con Supabase: #c= lleva solo usuario, clave e identificador → se copia UNA vez y los

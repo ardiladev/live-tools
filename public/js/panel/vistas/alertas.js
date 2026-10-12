@@ -75,7 +75,7 @@ export default {
     return [
       widget.elemento,
       nota('Tamaño recomendado de la fuente en OBS: 1280 × 720. Las alertas hacen fila: se muestran una tras otra. ',
-        'TikTok casi nunca manda el precio de los regalos: los que lleguen sin precio se alertan sin importar el mínimo.'),
+        'TikTok no siempre manda el precio de los regalos: los que lleguen sin precio se alertan sin importar el mínimo.'),
     ];
   },
 };

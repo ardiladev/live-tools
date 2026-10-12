@@ -128,9 +128,14 @@ export const regalos = () => estado.regalos;
 export const nombreRegalo = (r) => r?.nombrePropio || r?.nombre || '';
 const mismoNombre = (a, b) => !!a && !!b && a.trim().toLowerCase() === b.trim().toLowerCase();
 
-/** El regalo guardado con OTRO código que se llama igual, si existe. */
+/**
+ * El regalo guardado con OTRO código que se llama igual, si existe. Cuenta tanto el nombre
+ * propio como el de TikTok: si la persona renombró "Rose" a "Rosa" y llega "Rose" con otro
+ * código, se sigue reconociendo como posible cambio de código.
+ */
 export function buscarPorNombre(nombre, excepto) {
-  return Object.values(estado.regalos).find((r) => r.giftId !== excepto && mismoNombre(nombreRegalo(r), nombre)) || null;
+  return Object.values(estado.regalos).find((r) => r.giftId !== excepto
+    && (mismoNombre(nombreRegalo(r), nombre) || mismoNombre(r.nombre, nombre))) || null;
 }
 
 /** Agrega o corrige un regalo a mano (por ejemplo, un ID visto en otra página). */

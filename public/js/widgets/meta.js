@@ -24,7 +24,7 @@ const TIPOS = {
   likes:   { unidad: 'Likes',       cuenta: (e) => (e.tipo === 'like' ? e.cantidad : 0) },
   follows: { unidad: 'Seguidores',  cuenta: (e) => (e.tipo === 'follow' ? 1 : 0) },
   shares:  { unidad: 'Compartidos', cuenta: (e) => (e.tipo === 'share' ? 1 : 0) },
-  // Ojo: TikTok casi nunca manda el precio del regalo; sin precio, el regalo suma 0.
+  // Ojo: TikTok no siempre manda el precio del regalo; sin precio, el regalo suma 0.
   monedas: { unidad: 'Monedas',     cuenta: (e) => (e.tipo === 'regalo' ? e.diamantes * e.cantidad : 0) },
 };
 

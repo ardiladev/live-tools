@@ -6,6 +6,7 @@
 // Secciones: 1. Tipos de evento · 2. Vista (estado · contadores · lista · regalos)
 // =============================================================================
 
+import * as almacen from '../almacen.js';
 import * as envivo from '../envivo.js';
 import { el, tarjeta, casilla, nota, numero } from '../ui.js';
 
@@ -14,8 +15,11 @@ import { el, tarjeta, casilla, nota, numero } from '../ui.js';
 // 1. Tipos de evento que se muestran en la lista
 // -----------------------------------------------------------------------------
 
+// Nombre de un regalo: el del Buscador de regalos (si le pusiste uno), o el que mandó TikTok.
+const nombreRegalo = (r) => almacen.nombreRegalo(almacen.regalos()[r.giftId]) || r.nombre;
+
 const ETIQUETAS = {
-  regalo: { icono: '🎁', nombre: 'Regalos', texto: (e) => `envió ${e.cantidad}× ${e.nombre || 'regalo'} (id ${e.giftId})` },
+  regalo: { icono: '🎁', nombre: 'Regalos', texto: (e) => `envió ${e.cantidad}× ${nombreRegalo(e) || 'regalo'} (id ${e.giftId})` },
   follow: { icono: '💖', nombre: 'Seguidores', texto: () => 'te empezó a seguir' },
   share: { icono: '📣', nombre: 'Compartidos', texto: () => 'compartió el LIVE' },
   like: { icono: '👍', nombre: 'Likes', texto: (e) => `dio ${e.cantidad} likes` },
@@ -83,7 +87,7 @@ export default {
 
     function filaRegalo(r) {
       return el('tr', {},
-        el('td', {}, r.imagen ? el('img', { class: 'icono-regalo', src: r.imagen, alt: '' }) : null, r.nombre || '(sin nombre)'),
+        el('td', {}, r.imagen ? el('img', { class: 'icono-regalo', src: r.imagen, alt: '' }) : null, nombreRegalo(r) || '(sin nombre)'),
         el('td', {}, el('code', {}, r.giftId)),
         el('td', {}, r.diamantes ? numero(r.diamantes) : '—'),
         el('td', {}, numero(r.veces)));

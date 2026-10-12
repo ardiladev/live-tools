@@ -63,8 +63,9 @@ export function leerConfig() {
 //   { tipo: 'chat', usuario, texto }
 //   { tipo: 'espectadores', cantidad }
 //
-// Ojo: TikTok casi nunca manda los detalles del regalo (giftDetails), así que en los
-// regalos `nombre` suele llegar vacío y `diamantes` en 0. El giftId sí llega siempre.
+// Ojo: TikTok no siempre manda los detalles del regalo (giftDetails). Cuando los manda,
+// `nombre` llega en inglés ("Rose"); cuando no, llega vacío y `diamantes` en 0. El giftId
+// sí llega siempre, por eso todo se identifica por él.
 
 const nombreDe = (usuario) => usuario?.nickname || usuario?.uniqueId || 'Alguien';
 const imagenDe = (imagen) => (Array.isArray(imagen?.url) ? imagen.url[0] : imagen?.urlList?.[0]) || '';
@@ -101,10 +102,11 @@ export function normalizar({ type, data }) {
 // Un regalo en combo (la rosa) llega muchas veces mientras dura la racha, con repeatEnd = 0,
 // y al final una vez más con repeatEnd = 1 y la cantidad total. Un regalo sin combo (el
 // capibara) llega UNA sola vez, con repeatEnd = 0. Lo que los distingue es giftDetails.giftType
-// (1 = combo), pero TikTok casi nunca lo manda. Así que, cuando no se sabe el tipo:
+// (1 = combo), pero TikTok no siempre lo manda. Así que, cuando no se sabe el tipo:
 //   - cada mensaje reinicia una espera corta; si se cumple sin más mensajes, se cuenta lo que hay
 //     (así un regalo suelto se cuenta a los ~2 s);
-//   - si después llega el fin de racha, solo se suma lo que faltaba (un combo nunca se cuenta doble).
+//   - si después llega el fin de racha, solo se suma lo que faltaba (un combo nunca se cuenta doble);
+//   - si llega otra vez con una cantidad que ya se contó, es un regalo nuevo y se cuenta aparte.
 const ESPERA_RACHA_MS = 2000;   // silencio tras el cual se cuenta lo acumulado
 const RECUERDO_RACHA_MS = 60000; // cuánto se recuerda una racha por si llega su fin tarde
 
@@ -131,9 +133,13 @@ export function crearRastreadorRegalos(emitir) {
     if (tipo !== undefined && tipo !== 1) return emitir(evento);
 
     const clave = `${data.user?.userId || evento.usuario}|${evento.giftId}|${data.groupId || ''}`;
-    const racha = rachas.get(clave) || { emitidos: 0 };
+    let racha = rachas.get(clave) || { emitidos: 0 };
     clearTimeout(racha.espera);
     clearTimeout(racha.olvido);
+    // En una racha la cantidad solo crece. Si ya se contó y llega otra vez con la misma
+    // cantidad o menos (sin ser el fin), es un regalo NUEVO: dos capibaras seguidos de la
+    // misma persona deben contar dos veces.
+    if (!data.repeatEnd && racha.emitidos > 0 && evento.cantidad <= racha.emitidos) racha = { emitidos: 0 };
     racha.ultimo = evento;
     rachas.set(clave, racha);
 

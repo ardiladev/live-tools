@@ -43,7 +43,7 @@ const PLANTILLAS = {
   regalo: (e) => ({
     icono: e.imagen ? { imagen: e.imagen } : '🎁',
     texto: `envió ${e.cantidad > 1 ? `${e.cantidad}× ` : ''}${e.nombre || 'un regalo'}`,
-    // TikTok casi nunca manda el precio: si no se conoce (0), el regalo se alerta igual.
+    // TikTok no siempre manda el precio: si no se conoce (0), el regalo se alerta igual.
     pasa: () => !e.diamantes || e.diamantes * e.cantidad >= minimoMonedas,
   }),
   follow: () => ({ icono: '💖', texto: 'te empezó a seguir', pasa: () => true }),

@@ -188,9 +188,9 @@ Euler Stream entrega los mensajes de TikTok (`WebcastGiftMessage`, `WebcastLikeM
 
 Si algún día cambia la fuente de datos, solo hay que tocar `normalizar` y `crearRastreadorRegalos`.
 
-> **TikTok casi nunca manda los detalles del regalo** (`giftDetails`). Por eso, en los regalos,
-> `nombre` suele llegar vacío y `diamantes` en 0. **El `giftId` sí llega siempre**, y por eso todo se
-> identifica por ID.
+> **TikTok no siempre manda los detalles del regalo** (`giftDetails`). Cuando los manda, `nombre` llega
+> en inglés (“Rose”); cuando no, `nombre` llega vacío y `diamantes` en 0. **El `giftId` sí llega siempre**,
+> y por eso todo se identifica por ID.
 
 ### 4.5 Regalos en combo y regalos sueltos
 
@@ -198,11 +198,13 @@ Si algún día cambia la fuente de datos, solo hay que tocar `normalizar` y `cre
   última vez al terminar (`repeatEnd = 1`), con la cantidad total.
 - Un regalo **suelto** (el capibara) llega **una sola vez**, con `repeatEnd = 0`.
 
-Como TikTok casi nunca dice de qué tipo es, `crearRastreadorRegalos` (en `js/comun.js`) hace esto:
+Como TikTok no siempre dice de qué tipo es, `crearRastreadorRegalos` (en `js/comun.js`) hace esto:
 
 1. Cada mensaje de un mismo usuario + regalo + grupo reinicia una espera de **2 segundos**.
 2. Si la espera se cumple sin mensajes nuevos, **cuenta lo acumulado** (así un regalo suelto se cuenta a los ~2 s).
 3. Si después llega el fin de racha, **solo suma lo que faltaba**: un combo nunca se cuenta doble.
+4. En una racha la cantidad solo crece. Si el mismo regalo vuelve a llegar con una cantidad que **ya se contó**
+   (por ejemplo, la misma persona envía dos capibaras seguidos), es un **regalo nuevo** y se cuenta aparte.
 
 El mismo rastreador lo usan los widgets y el panel.
 
@@ -258,10 +260,12 @@ seguro mostrar nombres y mensajes del chat que vienen de TikTok.
 - **Nombre:** si TikTok manda el nombre del regalo (en inglés, por ejemplo “Rose”), queda puesto en el campo
   desde que llega. Puedes escribir otro (se guarda como nombre propio y debajo se recuerda el de TikTok);
   si borras el campo, vuelve el de TikTok. Si TikTok no manda el nombre, el campo queda vacío para escribirlo.
+- **Eventos en vivo** muestra los regalos con este mismo nombre (el tuyo, si le pusiste uno).
 - La lista se guarda en el navegador y **continúa en cada LIVE**. Con **Conectar automáticamente**, el panel
   se conecta solo al abrirse.
 - **Si un regalo cambia de código:**
-  - si TikTok manda el mismo **nombre y precio** que un regalo guardado, el código se reescribe solo;
+  - si TikTok manda el mismo **nombre y precio** que un regalo guardado, el código se reescribe solo
+    (el nombre se compara con el de TikTok y con el que le hayas puesto, así que renombrar no lo impide);
   - si coincide el nombre pero el precio es desconocido o distinto, el panel **pregunta**. Hay regalos distintos
     con el mismo nombre (por ejemplo, dos “Candy Bouquet” de 249 y 349 monedas);
   - si la persona le pone a un código nuevo un nombre que ya existe, el panel ofrece unirlos;
@@ -425,7 +429,7 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
   TikTok. Funciona, pero puede fallar cuando TikTok cambia algo.
 - **Plan gratuito de Euler Stream:** 60 solicitudes por minuto, 500 por hora y 2500 por día, y conexiones
   limitadas. Cada widget en OBS y el panel conectado gastan conexiones por separado.
-- **Nombre y precio de los regalos casi nunca llegan.** Consecuencias: la meta de **monedas** solo suma los
+- **Nombre y precio de los regalos no siempre llegan.** Consecuencias: la meta de **monedas** solo suma los
   regalos que traen precio; las **alertas** muestran “un regalo” si no llega el nombre (y no aplican el mínimo
   de monedas a los regalos sin precio); en el buscador, los regalos que llegan sin nombre lo esperan de ti (los que sí lo traen quedan con el
   nombre en inglés de TikTok, que puedes cambiar).
