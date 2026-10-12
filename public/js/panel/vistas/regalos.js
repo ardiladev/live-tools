@@ -7,6 +7,7 @@
 // Secciones: 1. Orden y formato · 2. Vista (conexión · avisos de código · tabla · formulario)
 // =============================================================================
 
+import { nubeActiva } from '../../nube.js';
 import * as almacen from '../almacen.js';
 import * as envivo from '../envivo.js';
 import { el, tarjeta, campo, casilla, nota, numero, crearAviso } from '../ui.js';
@@ -17,6 +18,11 @@ import { el, tarjeta, campo, casilla, nota, numero, crearAviso } from '../ui.js'
 // -----------------------------------------------------------------------------
 
 const nombreDe = almacen.nombreRegalo;
+
+// Con cambios en vivo (Supabase) la ruleta en OBS se entera sola; sin ellos hay que recopiar su URL.
+const despuesDeCambiarRuleta = () => (nubeActiva()
+  ? 'el cambio llega solo a la ruleta en OBS'
+  : 'vuelve a copiar su URL para OBS');
 
 const ORDENES = {
   recientes: (a, b) => (b.ultimo || 0) - (a.ultimo || 0),
@@ -138,7 +144,7 @@ export default {
         el('p', {}, el('b', {}, 'Códigos actualizados')),
         el('ul', {}, ...cambios.map((c) =>
           el('li', {}, `${c.nombre || 'Regalo'}: ${c.viejo} → ${c.nuevo}`,
-            c.enRuleta ? el('b', { class: 'texto-alerta' }, ' · la ruleta se actualizó: vuelve a copiar su URL para OBS') : null))),
+            c.enRuleta ? el('b', { class: 'texto-alerta' }, ` · la ruleta se actualizó: ${despuesDeCambiarRuleta()}`) : null))),
         el('button', { onclick: () => almacen.olvidarCambiosDeCodigo() }, 'Entendido'));
     }
 
@@ -226,7 +232,7 @@ export default {
             cuerpoTabla)),
         nota('La lista se guarda en este navegador y continúa en cada LIVE, pero solo anota regalos mientras el panel está abierto y conectado. ',
           'Si un regalo llega con un código nuevo, se reescribe solo cuando TikTok manda su nombre y su precio; si no, te lo preguntamos aquí arriba. ',
-          '“Usar en la ruleta” cambia el regalo de la ruleta: después vuelve a copiar su URL para OBS.')),
+          `“Usar en la ruleta” cambia el regalo de la ruleta: ${despuesDeCambiarRuleta()}.`)),
 
       tarjeta('Agregar un regalo a mano', { ancha: true },
         el('form', { class: 'campos formulario-en-linea', onsubmit: agregarAMano },

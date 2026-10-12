@@ -5,8 +5,11 @@ Herramientas para transmisiones de TikTok LIVE, al estilo de TikFinity: una **ru
 y armar un **catálogo con el ID de cada regalo**.
 
 Los widgets se pegan como **URL** en OBS o en TikTok LIVE Studio y funcionan solos: no hay que dejar
-ningún programa abierto en el computador. Todo funciona desde **GitHub Pages** + **Euler Stream**:
-no hay servidor propio, ni Node.js, ni nada que instalar.
+ningún programa abierto en el computador. Todo funciona desde **GitHub Pages** + **Euler Stream**,
+con **Supabase** para los cambios en vivo: no hay servidor propio, ni Node.js, ni nada que instalar.
+
+**Cambios en vivo:** la URL de cada widget se copia **una sola vez**. Lo que edites después en el panel
+(premios, metas, colores, alertas…) llega solo al widget en OBS en uno o dos segundos, sin recargarlo.
 
 - Panel publicado: `https://ardiladev.github.io/live-tools/`
 - Repositorio: `https://github.com/ardiladev/live-tools`
@@ -25,9 +28,10 @@ no hay servidor propio, ni Node.js, ni nada que instalar.
 5. [Estructura de archivos](#5-estructura-de-archivos)
 6. [Agregar una función nueva](#6-agregar-una-función-nueva)
 7. [Publicación en GitHub Pages](#7-publicación-en-github-pages)
-8. [Límites y cosas que conviene saber](#8-límites-y-cosas-que-conviene-saber)
-9. [Seguridad y privacidad](#9-seguridad-y-privacidad)
-10. [Cómo probar los cambios](#10-cómo-probar-los-cambios)
+8. [Supabase (cambios en vivo)](#8-supabase-cambios-en-vivo)
+9. [Límites y cosas que conviene saber](#9-límites-y-cosas-que-conviene-saber)
+10. [Seguridad y privacidad](#10-seguridad-y-privacidad)
+11. [Cómo probar los cambios](#11-cómo-probar-los-cambios)
 
 ---
 
@@ -37,6 +41,7 @@ no hay servidor propio, ni Node.js, ni nada que instalar.
 |---|---|
 | **GitHub Pages** | Publica el panel y los widgets (carpeta `public/`). Es solo una web estática: no ejecuta código en el servidor. |
 | **Euler Stream** (plan gratuito) | Lee el LIVE de TikTok y entrega los eventos por WebSocket. Hace falta una **API key**. |
+| **Supabase** (plan gratuito) | Guarda la configuración de cada widget y se la avisa al instante (Realtime). Ya está configurado: proyecto `live-tools`. |
 | **OBS** o **TikTok LIVE Studio** | Muestra los widgets como fuente de navegador / enlace. |
 | Un navegador | Para abrir el panel y configurar. |
 
@@ -45,7 +50,8 @@ no hay servidor propio, ni Node.js, ni nada que instalar.
 | ¿Hay que dejar algo abierto? | No: solo la URL en OBS / LIVE Studio. |
 | ¿Dónde se configura? | En el panel (`index.html`, publicado en GitHub Pages). |
 | ¿Quién se conecta a TikTok? | Cada widget, desde el navegador, vía Euler Stream. |
-| ¿Cómo se cambia la configuración? | Se ajusta en el panel, se copia la URL nueva y se pega en la fuente. |
+| ¿Cómo se cambia la configuración? | Se ajusta en el panel y el widget en OBS cambia solo. La URL no cambia. |
+| ¿Cuándo hay que volver a copiar la URL? | Solo si cambias el usuario de TikTok o la API key de Euler (van dentro de la URL). |
 
 ---
 
@@ -63,7 +69,9 @@ no hay servidor propio, ni Node.js, ni nada que instalar.
 5. Listo. Cuando la cuenta esté en vivo, el widget se conecta solo. Si el LIVE todavía no empieza
    o se corta, reintenta cada minuto.
 
-> Si cambias algo en el panel, **la URL cambia**: vuelve a copiarla y pégala en la fuente de OBS.
+> Después de copiar la URL, **todo lo que cambies en el panel llega solo al widget**. Debajo de la URL
+> verás el estado: “☁ Cambios en vivo: el widget en OBS ya tiene esta configuración”.
+> Solo hay que volver a copiarla si cambias el usuario de TikTok o la API key.
 
 ---
 
@@ -83,7 +91,9 @@ desplegables** (menú) → **vistas** (contenido).
 
 Cada widget tiene una tarjeta con:
 
-- **Copy URL**: copia la URL para OBS (avisa si falta el usuario, la clave o algún dato).
+- **Copy URL**: copia la URL para OBS (avisa si falta el usuario, la clave o algún dato). Se copia una vez.
+- **Estado de los cambios en vivo** (☁): si la configuración ya está en Supabase, si se está enviando o si
+  hubo un error (por ejemplo, una ruleta con menos de 2 premios no se envía hasta corregirla).
 - **Test**: lanza una prueba en la vista previa.
 - **Personalizar**: opciones adicionales.
 - **Vista previa**: el widget real en modo prueba; **nunca** se conecta al LIVE.
@@ -101,7 +111,11 @@ flowchart LR
   EU -->|eventos JSON| W2[meta.html]
   EU -->|eventos JSON| W3[alertas.html]
   EU -->|eventos JSON| P[Panel index.html<br/>Actividad / Buscador]
-  P -->|genera la URL con #c=…| W1
+  P -->|genera la URL fija #c=u,k,w| W1
+  P -->|guardar_widget| SB[Supabase<br/>tabla widgets + Realtime]
+  SB -->|configuración al instante| W1
+  SB -->|configuración al instante| W2
+  SB -->|configuración al instante| W3
   P -->|eventos de prueba postMessage| W1
   W1 --> OBS[OBS / LIVE Studio]
   W2 --> OBS
@@ -110,35 +124,54 @@ flowchart LR
 
 - **El panel no es un servidor.** Es una página estática que genera URLs. GitHub Pages solo sirve
   archivos; no ejecuta código.
+- **Supabase guarda la configuración** de cada widget. El panel la escribe y el widget la recibe al instante.
+  Ver la [sección 8](#8-supabase-cambios-en-vivo).
 - **Cada widget se conecta por su cuenta** a Euler Stream con el usuario y la clave que lleva en su URL.
 - **El panel también puede conectarse** (sección Actividad) para ver eventos y llenar el catálogo de regalos.
   Esa conexión es independiente de la de los widgets.
 
-### 4.2 La configuración viaja en la URL
+### 4.2 La URL del widget y su configuración
 
-Toda la configuración de un widget va en el **fragmento** de la URL (lo que está después de `#`):
+La URL lleva los datos en el **fragmento** (lo que está después de `#`), como `#c=…`:
+un JSON → UTF-8 → base64 "url-safe" (`codificar` / `decodificar` en `js/comun.js`). El navegador
+**nunca envía el fragmento a ningún servidor**: ni GitHub ni nadie ve la clave al cargar la página.
 
-```
-https://…/ruleta.html?ocultar=1#c=eyJ1IjoiYnlkYWhrbyIsImsiOi…
-                      └ opciones visibles └ configuración codificada
-```
+Hay dos formas de URL, y el widget entiende las dos:
 
-- `#c=…` es un JSON → UTF-8 → base64 "url-safe" (`codificar` / `decodificar` en `js/comun.js`).
-- El navegador **nunca envía el fragmento a ningún servidor**: ni GitHub ni nadie ve la clave al cargar la página.
-- Si el `#c=` cambia, el widget se recarga solo.
-
-Claves comunes a todos los widgets: `u` (usuario de TikTok) y `k` (API key).
-
-| Widget | Claves propias en `#c=` | Parámetros visibles (`?…`) |
+| Forma | Qué lleva `#c=` | De dónde sale la configuración |
 |---|---|---|
-| `ruleta.html` | `g` id del regalo · `r` texto en pantalla · `gpr` giros por regalo · `max` tope por combo · `p` premios `[[texto, peso], …]` | `ocultar=1` · `sonido=0` |
-| `meta.html` | `t` tipo (`likes`/`follows`/`shares`/`monedas`) · `o` objetivo · `ti` título · `col` color · `al` al alcanzar (`duplicar`/`reiniciar`/`nada`) · `s` sonido | — |
-| `alertas.html` | `ev` eventos `{regalo, follow, share}` · `min` monedas mínimas · `d` segundos · `s` sonido | — |
+| **Con cambios en vivo** (la que genera el panel) | `u` usuario · `k` API key · `w` identificador del widget | De Supabase, al abrir el widget y cada vez que cambia |
+| **Completa** (sin Supabase, o URLs viejas) | `u` · `k` · y toda la configuración (tabla de abajo) | De la propia URL; cambiarla = copiar otra URL |
 
-Parámetros que agrega el panel para la vista previa: `fondo=1` (fondo gris y píldora de estado) y
-`prueba=1` (no se conecta a TikTok).
+La configuración de cada widget (en Supabase o en la URL completa) usa estas claves cortas:
 
-### 4.3 Eventos normalizados
+| Widget | Claves de configuración |
+|---|---|
+| `ruleta.html` | `g` id del regalo · `r` texto en pantalla · `gpr` giros por regalo · `max` tope por combo · `p` premios `[[texto, peso], …]` · `oc` ocultar sin giros (1/0) · `so` sonido (1/0) |
+| `meta.html` | `t` tipo (`likes`/`follows`/`shares`/`monedas`) · `o` objetivo · `ti` título · `col` color · `al` al alcanzar (`duplicar`/`reiniciar`/`nada`) · `s` sonido |
+| `alertas.html` | `ev` eventos `{regalo, follow, share}` · `min` monedas mínimas · `d` segundos · `s` sonido |
+
+Además, el panel agrega `_v` (hora de guardado) a lo que sube a Supabase: si llegara tarde una versión
+vieja, el widget la ignora.
+
+Parámetros visibles (`?…`): `fondo=1` (fondo gris y píldora de estado) y `prueba=1` (no se conecta a TikTok),
+que usa la vista previa del panel. Por compatibilidad, la ruleta acepta también `?ocultar=1` y `?sonido=0`.
+
+### 4.3 Cómo aplica un widget los cambios en vivo
+
+`iniciarWidget({ cfg, alEvento, alConfig })` (en `js/comun.js`) llama `alConfig(config)` al arrancar y,
+si la URL tiene `w`, cada vez que llega una configuración nueva. Cada widget la aplica **sin recargarse**:
+
+- **Ruleta:** si está girando, los premios nuevos esperan a que se vacíe la cola, para que el premio
+  anunciado sea el mismo sobre el que se detuvo la rueda. El resto (regalo, giros, sonido…) cambia al instante.
+- **Meta:** conserva el conteo. Si cambias la meta, manda la tuya; si no, se respeta la que se duplicó
+  durante el LIVE. Solo vuelve a 0 si cambia el tipo de meta.
+- **Alertas:** cambian al instante; las alertas que ya estaban en fila se muestran igual.
+
+El widget guarda una copia de la última configuración en su navegador (`localStorage`, clave
+`live-tools:widget:<w>`): si al abrir OBS Supabase no responde, arranca con esa copia.
+
+### 4.4 Eventos normalizados
 
 Euler Stream entrega los mensajes de TikTok (`WebcastGiftMessage`, `WebcastLikeMessage`…).
 `js/comun.js` los convierte en objetos simples, y **los widgets y el panel solo conocen esta forma**:
@@ -158,7 +191,7 @@ Si algún día cambia la fuente de datos, solo hay que tocar `normalizar` y `cre
 > `nombre` suele llegar vacío y `diamantes` en 0. **El `giftId` sí llega siempre**, y por eso todo se
 > identifica por ID.
 
-### 4.4 Regalos en combo y regalos sueltos
+### 4.5 Regalos en combo y regalos sueltos
 
 - Un regalo **en combo** (la rosa) llega muchas veces mientras dura la racha (`repeatEnd = 0`) y una
   última vez al terminar (`repeatEnd = 1`), con la cantidad total.
@@ -172,7 +205,7 @@ Como TikTok casi nunca dice de qué tipo es, `crearRastreadorRegalos` (en `js/co
 
 El mismo rastreador lo usan los widgets y el panel.
 
-### 4.5 Conexión y reintentos
+### 4.6 Conexión y reintentos
 
 `conectarTikTok` (en `js/comun.js`) abre el WebSocket de Euler Stream y decide qué hacer cuando se cierra,
 según el código de cierre:
@@ -190,20 +223,21 @@ según el código de cierre:
 La espera de 1 minuto cuida el límite del plan gratuito (500 solicitudes por hora): cada widget
 abierto en OBS y el panel reintentan por separado.
 
-### 4.6 Vista previa y pruebas
+### 4.7 Vista previa y pruebas
 
 La vista previa de cada tarjeta es un `<iframe>` con el widget real en modo `prueba=1`. Los botones de prueba
 le mandan **eventos normalizados** por `postMessage`, y el widget los procesa igual que uno real. El widget
 responde con su estado (por ejemplo, “Modo prueba”), que el panel muestra junto al punto verde o naranja.
 Los mensajes solo se aceptan si vienen del mismo origen.
 
-### 4.7 El panel por dentro
+### 4.8 El panel por dentro
 
 | Archivo | Responsabilidad |
 |---|---|
 | `js/panel/app.js` | Arranque, riel, menú desplegable, navegación por `#/id-de-vista`, barra superior, conexión automática |
 | `js/panel/registro.js` | **Mapa del panel**: categorías → grupos → vistas. Agregar una función empieza aquí |
-| `js/panel/almacen.js` | Lo que el panel guarda en el navegador (`localStorage`, clave `panel-live`) |
+| `js/panel/almacen.js` | Lo que el panel guarda en el navegador (`localStorage`, clave `panel-live`), incluidos el identificador de cada widget y el secreto para Supabase |
+| `js/panel/sincronizar.js` | Cambios en vivo: cada vista de widget registra aquí su configuración; al guardar algo, la sube a Supabase si cambió |
 | `js/panel/envivo.js` | Conexión del panel al LIVE: contadores, lista de eventos, regalos de la sesión |
 | `js/panel/ui.js` | Componentes: `el()`, `icono()`, `tarjeta`, `campo`, `casilla`, `nota`, `tarjetaWidget` |
 | `js/panel/vistas/*.js` | Una vista por archivo |
@@ -216,7 +250,7 @@ todas las suscripciones (`almacen.alCambiar(fn, senal)`, `envivo.alCambiar(fn, s
 **Interfaz sin `innerHTML`.** Todo se construye con `el()`, que inserta el texto como texto. Por eso es
 seguro mostrar nombres y mensajes del chat que vienen de TikTok.
 
-### 4.8 Catálogo de regalos y cambios de código
+### 4.9 Catálogo de regalos y cambios de código
 
 - Cada regalo que llega mientras el panel está conectado se anota en `almacen.regalos`: ID, nombre de TikTok,
   nombre propio, precio, veces, primera y última vez.
@@ -228,7 +262,7 @@ seguro mostrar nombres y mensajes del chat que vienen de TikTok.
     con el mismo nombre (por ejemplo, dos “Candy Bouquet” de 249 y 349 monedas);
   - si la persona le pone a un código nuevo un nombre que ya existe, el panel ofrece unirlos;
   - al unir, se suman las veces, se guarda el código anterior (`antes: …`) y, si la ruleta usaba el código
-    viejo, se actualiza y aparece un aviso para volver a copiar su URL.
+    viejo, se actualiza y el cambio llega solo a la ruleta en OBS.
 
 ---
 
@@ -251,6 +285,7 @@ live-tools/
 │   └── js/
 │       ├── comun.js                URL ↔ config, eventos normalizados, rastreador de regalos,
 │       │                           conexión con Euler Stream, arranque de widgets, sonido
+│       ├── nube.js                 Supabase: proyecto, leer/guardar configuración, Realtime
 │       ├── widgets/
 │       │   ├── ruleta.js           dibujo, giro, cola y sorteo de premios
 │       │   ├── meta.js
@@ -259,6 +294,7 @@ live-tools/
 │           ├── app.js
 │           ├── registro.js
 │           ├── almacen.js
+│           ├── sincronizar.js      sube a Supabase la configuración de cada widget
 │           ├── envivo.js
 │           ├── ui.js
 │           └── vistas/
@@ -268,6 +304,8 @@ live-tools/
 │               ├── actividad.js
 │               ├── regalos.js
 │               └── conexion.js
+├── supabase/
+│   └── esquema.sql                 tabla, funciones y permisos de Supabase (se ejecuta una vez)
 ├── README.md                       esta documentación
 └── .github/workflows/pages.yml     publica public/ en GitHub Pages
 ```
@@ -287,18 +325,22 @@ Ejemplo: un widget **“Último seguidor”**.
    - `public/js/widgets/ultimo.js`: su lógica. La pieza clave es `iniciarWidget`:
      ```js
      import { leerConfig, iniciarWidget } from '../comun.js';
-     const cfg = leerConfig() || {};
+     let color = '#fff';
      iniciarWidget({
-       cfg,
+       cfg: leerConfig(),
+       alConfig(cfg) { color = cfg.col || '#fff'; },   // al arrancar y en cada cambio en vivo
        alEvento(evento) {
          if (evento.tipo === 'follow') document.getElementById('nombre').textContent = evento.usuario;
        },
      });
      ```
-     `alEvento` recibe los eventos reales del LIVE **y** los de prueba del panel.
-2. **La vista del panel**: `public/js/panel/vistas/ultimo.js`. Copia `vistas/alertas.js`;
-   `tarjetaWidget({ titulo, archivo: 'ultimo.html', config, pruebas, senal })` te da la URL, los botones y
-   la vista previa.
+     `alEvento` recibe los eventos reales del LIVE **y** los de prueba del panel. `alConfig` debe poder
+     llamarse muchas veces: aplica la configuración nueva sin perder el estado del widget.
+2. **La vista del panel**: `public/js/panel/vistas/ultimo.js`. Copia `vistas/alertas.js`:
+   - al cargar el módulo, `sincronizar.registrar('ultimo', { config, validar })` (así los cambios en vivo
+     funcionan aunque la vista no esté abierta);
+   - en `render`, `tarjetaWidget({ id: 'ultimo', titulo, archivo: 'ultimo.html', pruebas, senal })` te da la
+     URL, el estado de los cambios en vivo, los botones y la vista previa.
 3. **El menú**: impórtala en `public/js/panel/registro.js` y agrégala a un grupo, o crea un grupo o una
    categoría nueva. El menú y la navegación se arman solos.
 
@@ -317,7 +359,63 @@ Ejemplo: un widget **“Último seguidor”**.
 
 ---
 
-## 8. Límites y cosas que conviene saber
+## 8. Supabase (cambios en vivo)
+
+**Supabase** es una base de datos PostgreSQL en la nube, con API y **Realtime** (avisos al instante por
+WebSocket). Aquí se usa solo para guardar la configuración de cada widget y avisarle cuando cambia.
+
+- Proyecto: `live-tools` (organización `ardiladev`, región East US, plan gratuito).
+- Dashboard: `https://supabase.com/dashboard/project/sjiptivsxisnyleyanxk`
+- URL y clave pública: en `public/js/nube.js` (`SUPABASE_URL`, `SUPABASE_CLAVE`). Si se dejan vacías,
+  el proyecto vuelve a funcionar sin Supabase (configuración completa en la URL).
+
+### 8.1 Cómo viaja un cambio
+
+```mermaid
+sequenceDiagram
+  participant P as Panel (navegador)
+  participant S as Supabase
+  participant W as Widget (OBS)
+  W->>S: al abrir: se suscribe al canal "widget-<w>" y lee leer_widget(w)
+  P->>S: editas algo → guardar_widget(w, secreto, config) (0,6 s después de la última tecla)
+  S->>S: guarda en la tabla widgets y llama realtime.send(...)
+  S-->>W: Broadcast "config" con la configuración nueva
+  W->>W: alConfig(config): se aplica sin recargar
+```
+
+### 8.2 Base de datos (`supabase/esquema.sql`)
+
+| Pieza | Qué es |
+|---|---|
+| Tabla `widgets` | `id` (el `w` de la URL) · `secreto` · `config` (JSON, máx. 20 KB) · `actualizado` |
+| `leer_widget(id)` | Devuelve la configuración. Hay que conocer el `id`. |
+| `guardar_widget(id, secreto, config)` | La primera vez crea la fila con ese secreto; después solo deja cambiarla con el mismo secreto. Al guardar, avisa por Realtime. |
+
+- **RLS activo y sin políticas**, y sin permisos sobre la tabla: con la clave pública **no se puede leer ni
+  listar la tabla**, solo usar las dos funciones (`security definer`).
+- El **secreto** lo crea el panel la primera vez y se queda en su navegador. Quien vea la URL de un widget
+  puede leer su configuración (premios, colores), pero **no cambiarla**.
+- La **API key de Euler nunca se guarda en Supabase.**
+
+Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard → **SQL Editor** → pegar
+`supabase/esquema.sql` → **Run**, y poner la URL y la clave pública del proyecto nuevo en `public/js/nube.js`.
+
+### 8.3 Lo que conviene saber
+
+- **El panel y sus widgets van juntos.** Los identificadores y el secreto viven en el navegador donde abres
+  el panel. Si abres el panel en otro navegador (o en un dock de OBS), tendrá identificadores nuevos: copia
+  desde ahí las URLs de los widgets que quieras controlar desde ese navegador.
+- **Si borras los datos del navegador** del panel, se pierden el secreto y los identificadores: vuelve a
+  copiar las URLs (los widgets viejos dejarán de recibir cambios).
+- **Plan gratuito de Supabase:** de sobra para esto (unas cuantas filas pequeñas y pocos mensajes). Un proyecto
+  gratuito se **pausa tras una semana sin actividad**; se reactiva desde el dashboard. Mientras esté pausado,
+  los widgets usan la última configuración que recibieron.
+- La librería `@supabase/supabase-js` se carga desde jsDelivr con versión fija (`2.117.2`), solo en los widgets.
+  El panel usa `fetch` directo a la API.
+
+---
+
+## 9. Límites y cosas que conviene saber
 
 - **No es una API oficial de TikTok.** Euler Stream lee el servicio interno de
   TikTok. Funciona, pero puede fallar cuando TikTok cambia algo.
@@ -336,19 +434,22 @@ Ejemplo: un widget **“Último seguidor”**.
 
 ---
 
-## 9. Seguridad y privacidad
+## 10. Seguridad y privacidad
 
 - La **API key va dentro de las URLs** de los widgets (en el fragmento `#`, que no se envía a ningún servidor).
   Cualquiera que vea la URL completa puede usar tu clave: **no la muestres en pantalla ni la compartas**.
   Si se filtra, bórrala en el panel de Euler Stream y crea otra.
-- El panel guarda usuario, clave, configuración y catálogo **solo en tu navegador** (`localStorage`).
-- El repositorio no guarda claves: la API key solo vive en el navegador y en las URLs que copias.
+- El panel guarda usuario, clave, catálogo y el secreto de Supabase **solo en tu navegador** (`localStorage`).
+  En Supabase solo queda la configuración de los widgets (premios, títulos, colores…).
+- El repositorio no guarda claves privadas: la API key de Euler solo vive en el navegador y en las URLs que
+  copias. La clave de Supabase que está en `nube.js` es la **pública** (hecha para ir en páginas web); la tabla
+  está protegida como se explica en la sección 8.2. **Nunca** pongas en el código la clave secreta de Supabase.
 - Los datos que vienen de TikTok (nombres, chat) se muestran siempre como texto, nunca como HTML.
 - La comunicación panel ↔ vista previa usa `postMessage` restringido al mismo origen.
 
 ---
 
-## 10. Cómo probar los cambios
+## 11. Cómo probar los cambios
 
 1. **Sin conexión:** sirve `public/` con cualquier servidor estático (por ejemplo
    `python -m http.server 8080 -d public` y abre `http://localhost:8080`) y usa los botones de prueba de
@@ -360,5 +461,8 @@ Ejemplo: un widget **“Último seguidor”**.
    ```
 3. **Con el LIVE real:** Actividad → Eventos en vivo → **Conectar al LIVE**, y pide que te envíen regalos,
    likes y follows.
-4. **Publicado:** después del `git push`, espera la publicación (pestaña *Actions* del repositorio) y
+4. **Cambios en vivo:** abre la URL de un widget (la de **Copy URL**) en otra pestaña, cambia algo en el
+   panel y mira que el widget cambie en uno o dos segundos. Ojo: Chrome frena las animaciones en pestañas
+   de fondo, así que la ruleta solo gira con su pestaña visible (en OBS siempre gira).
+5. **Publicado:** después del `git push`, espera la publicación (pestaña *Actions* del repositorio) y
    recarga el panel en `https://ardiladev.github.io/live-tools/`.

@@ -1,7 +1,8 @@
 // =============================================================================
 // almacen.js — Todo lo que el panel recuerda, guardado en el navegador (localStorage)
 //
-// Nada de esto sale del computador: los widgets reciben su configuración por la URL.
+// Esto vive solo en este navegador. Los widgets reciben su configuración por la URL o, con
+// cambios en vivo, desde Supabase (js/panel/sincronizar.js).
 // Estructura de lo guardado (clave "panel-live"):
 //
 //   conexion:        { usuario, clave }            compartida por todos los widgets
@@ -12,13 +13,17 @@
 //   sugerencias:     [{ viejo, nuevo }]            posibles cambios de código por confirmar
 //   distintos:       ["a|b"]                       pares que la persona dijo que NO son el mismo
 //   cambiosDeCodigo: [{ nombre, viejo, nuevo, enRuleta, cuando }]  avisos de cambios hechos
+//   nube:            { secreto, ids: { <id>: w } } cambios en vivo: secreto para escribir en
+//                                                  Supabase e identificador de cada widget
 //
 //   Regalo = { giftId, nombre, nombrePropio, imagen, diamantes, veces, primero, ultimo,
 //              idsAnteriores?, cambiado? }
 //
 // Secciones: 1. Carga y guardado · 2. Conexión y widgets · 3. Catálogo de regalos
-//            4. Cambios de código · 5. Preferencias · 6. Suscripciones
+//            4. Cambios de código · 5. Preferencias · 6. Suscripciones · 7. Cambios en vivo
 // =============================================================================
+
+import { idAleatorio } from '../nube.js';
 
 const CLAVE = 'panel-live';
 const CLAVE_VIEJA = 'ruleta-generador'; // la primera versión del generador guardaba aquí
@@ -34,6 +39,7 @@ let estado = {
   sugerencias: [],
   distintos: [],
   cambiosDeCodigo: [],
+  nube: { secreto: '', ids: {} },
 };
 const oyentes = new Set();
 
@@ -269,4 +275,32 @@ export function alCambiar(fn, senal) {
   oyentes.add(fn);
   senal?.addEventListener('abort', () => oyentes.delete(fn), { once: true });
   return () => oyentes.delete(fn);
+}
+
+
+// -----------------------------------------------------------------------------
+// 7. Cambios en vivo (Supabase)
+// -----------------------------------------------------------------------------
+// Cada widget tiene un identificador fijo (va en su URL) y el panel un secreto (no sale de
+// este navegador) que Supabase exige para cambiar la configuración. Se crean la primera vez.
+
+/** El secreto de este panel para escribir en Supabase. */
+export function secretoNube() {
+  if (!estado.nube.secreto) {
+    estado.nube.secreto = idAleatorio(24);
+    guardar();
+  }
+  return estado.nube.secreto;
+}
+
+/** ¿El widget `id` ya tiene identificador? (si no, nunca se mostró su URL). */
+export const tieneIdNube = (id) => Boolean(estado.nube.ids[id]);
+
+/** El identificador fijo del widget `id` (por ejemplo 'ruleta' o 'meta-likes'). */
+export function idNube(id) {
+  if (!estado.nube.ids[id]) {
+    estado.nube.ids[id] = idAleatorio();
+    guardar();
+  }
+  return estado.nube.ids[id];
 }

@@ -5,11 +5,14 @@
 //   1. el()            crear elementos sin innerHTML
 //   2. Íconos
 //   3. Bloques básicos tarjeta · campo · casilla · nota · numero
-//   4. tarjetaWidget   la tarjeta estándar de un widget de OBS (URL, pruebas, vista previa)
+//   4. tarjetaWidget   la tarjeta estándar de un widget de OBS (URL, cambios en vivo, pruebas,
+//                      vista previa)
 // =============================================================================
 
 import { codificar } from '../comun.js';
+import { nubeActiva } from '../nube.js';
 import * as almacen from './almacen.js';
+import * as sincronizar from './sincronizar.js';
 
 
 // -----------------------------------------------------------------------------
@@ -124,25 +127,31 @@ const RETRASO_VISTA_PREVIA_MS = 400; // no reiniciar la vista previa en cada tec
 
 /**
  * La tarjeta estándar de un widget de OBS: campos propios arriba, fila de URL
- * (Copy URL / Test / Personalizar) y vista previa con botones de prueba.
+ * (Copy URL / Test / Personalizar), estado de los cambios en vivo y vista previa con
+ * botones de prueba.
  *
+ *   id            el del widget, ya registrado en sincronizar.js (de ahí salen config y validar)
  *   titulo        texto de la tarjeta
  *   archivo       'meta.html'
- *   config()      configuración propia del widget (va en #c=…, junto a usuario y clave)
- *   parametros()  parámetros visibles de la URL, p. ej. { ocultar: '1' }
  *   campos        nodos que van arriba de la URL
  *   personalizar  nodos del desplegable "Personalizar"
  *   pruebas       [{ texto, evento: (nombre) => eventoNormalizado }]  (la primera es "Test")
- *   validar()     texto con el problema, o '' si la URL se puede copiar
  *   forma         'vertical' (9:16) | 'horizontal' (16:5) | 'cuadrado' (16:9)
  *   senal         AbortSignal de la vista: al cancelarse se dejan de escuchar mensajes
+ *
+ * La URL para OBS:
+ *   - con Supabase: #c= lleva solo usuario, clave e identificador → se copia UNA vez y los
+ *     cambios llegan solos al widget (sincronizar.js los sube);
+ *   - sin Supabase: #c= lleva toda la configuración → hay que copiarla tras cada cambio.
  *
  * Devuelve { elemento, actualizar } — llama `actualizar()` cuando cambie la configuración.
  */
 export function tarjetaWidget({
-  titulo, archivo, config, parametros = () => ({}), campos = [], personalizar = [],
-  pruebas = [], validar = () => '', forma = 'vertical', ancha = true, senal,
+  id, titulo, archivo, campos = [], personalizar = [],
+  pruebas = [], forma = 'vertical', ancha = true, senal,
 }) {
+  const { config, validar } = sincronizar.definicion(id);
+
   // ---------- Elementos ----------
   const url = el('input', { readOnly: true, 'aria-label': `URL de ${titulo}` });
   const aviso = el('div', { class: 'aviso', role: 'status' });
@@ -151,18 +160,22 @@ export function tarjetaWidget({
   const punto = el('span', { class: 'punto' });
   const mensaje = el('span', {}, 'Cargando…');
   const nombrePrueba = el('input', { value: 'Valentina', 'aria-label': 'Nombre para las pruebas' });
+  const estadoNube = el('div', { class: 'estado-nube', role: 'status', hidden: !nubeActiva() });
   const avisar = crearAviso(aviso);
 
   // ---------- URL ----------
   /** La URL del widget. Con `previa`, la versión de prueba para el iframe (sin conexión). */
   function construirUrl({ previa = false } = {}) {
-    const { usuario, clave } = almacen.conexion();
     const destino = new URL(archivo, location.href);
-    const visibles = previa ? { fondo: '1', prueba: '1' } : parametros();
-    Object.entries(visibles)
-      .filter(([, v]) => v !== undefined && v !== null && v !== '')
-      .forEach(([k, v]) => destino.searchParams.set(k, v));
-    destino.hash = `c=${codificar({ u: usuario.replace(/^@/, '').trim(), k: clave.trim(), ...config() })}`;
+    if (previa) {
+      destino.search = new URLSearchParams({ fondo: '1', prueba: '1' });
+      destino.hash = `c=${codificar(config())}`;
+      return destino.href;
+    }
+    const { usuario, clave } = almacen.conexion();
+    const conexion = { u: usuario.replace(/^@/, '').trim(), k: clave.trim() };
+    const datos = nubeActiva() ? { ...conexion, w: almacen.idNube(id) } : { ...conexion, ...config() };
+    destino.hash = `c=${codificar(datos)}`;
     return destino.href;
   }
 
@@ -182,6 +195,10 @@ export function tarjetaWidget({
       ? 'Falta el usuario o la clave de Euler Stream: complétalos en Ajustes → Conexión.'
       : validar();
     if (problema) return avisar(problema, { error: true });
+    // Con cambios en vivo, el widget lee su configuración de Supabase: tiene que estar guardada.
+    if (nubeActiva() && !(await sincronizar.subir(id))) {
+      return avisar('No se pudo guardar la configuración en Supabase. Revisa tu conexión e inténtalo de nuevo.', { error: true });
+    }
     try {
       await navigator.clipboard.writeText(url.value);
       avisar('URL copiada. Pégala en la fuente de navegador.');
@@ -190,6 +207,15 @@ export function tarjetaWidget({
       avisar('Selecciona la URL y cópiala con Ctrl+C.');
     }
   }
+
+  // ---------- Cambios en vivo ----------
+  function pintarEstadoNube() {
+    const { tipo, mensaje } = sincronizar.estado(id);
+    estadoNube.className = `estado-nube ${tipo}`;
+    estadoNube.textContent = mensaje || 'Cambios en vivo: copia esta URL una sola vez; lo que edites aquí llega solo al widget en OBS.';
+  }
+  sincronizar.alCambiarEstado((cual) => { if (cual === id) pintarEstadoNube(); }, senal);
+  pintarEstadoNube();
 
   // ---------- Pruebas ----------
   function probar(prueba) {
@@ -221,6 +247,7 @@ export function tarjetaWidget({
       el('button', { onclick: () => pruebas[0] && probar(pruebas[0]), title: 'Lanza una prueba en la vista previa' }, icono('flecha'), 'Test'),
       botonPersonalizar),
     opciones,
+    estadoNube,
     aviso,
     el('div', { class: `escenario ${forma}` },
       iframe,

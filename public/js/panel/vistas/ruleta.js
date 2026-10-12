@@ -2,11 +2,13 @@
 // vistas/ruleta.js — Superposiciones → Ruletas → Ruleta de regalos
 //
 // Configura el widget ruleta.html: regalo que la activa, premios con su peso y opciones.
-// Lo que se guarda aquí viaja en la URL del widget (ver js/widgets/ruleta.js para las claves).
-// Secciones: 1. Valores por defecto · 2. Vista (tarjeta del widget · premios · regalo)
+// Lo que se guarda aquí llega al widget por su URL o, con cambios en vivo, por Supabase
+// (ver js/widgets/ruleta.js para las claves).
+// Secciones: 1. Valores por defecto · 2. Configuración del widget · 3. Vista (tarjeta · premios · regalo)
 // =============================================================================
 
 import * as almacen from '../almacen.js';
+import * as sincronizar from '../sincronizar.js';
 import { el, tarjeta, tarjetaWidget, campo, casilla, nota } from '../ui.js';
 
 
@@ -31,7 +33,37 @@ const MAX_TEXTO_PREMIO = 40;
 
 
 // -----------------------------------------------------------------------------
-// 2. Vista
+// 2. Configuración del widget (se registra al cargar, para que los cambios en vivo
+//    lleguen aunque esta vista no esté abierta: p. ej. "Usar en la ruleta")
+// -----------------------------------------------------------------------------
+
+const ajustes = () => almacen.widget('ruleta', POR_DEFECTO);
+const premiosValidos = () => ajustes().premios.filter((p) => String(p.texto).trim());
+
+sincronizar.registrar('ruleta', {
+  config: () => {
+    const cfg = ajustes();
+    return {
+      g: String(cfg.giftId).trim() || POR_DEFECTO.giftId,
+      r: String(cfg.regalo).trim() || POR_DEFECTO.regalo,
+      gpr: Math.max(1, Number(cfg.gpr) || 1),
+      max: Math.max(1, Number(cfg.max) || POR_DEFECTO.max),
+      p: premiosValidos().map((p) => [String(p.texto).trim().slice(0, MAX_TEXTO_PREMIO), Math.max(0, Number(p.peso) || 0)]),
+      oc: cfg.ocultar ? 1 : 0,
+      so: cfg.sonido ? 1 : 0,
+    };
+  },
+  validar: () => {
+    const premios = premiosValidos();
+    if (premios.length < 2) return 'La ruleta necesita al menos 2 premios.';
+    if (!premios.some((p) => Number(p.peso) > 0)) return 'Algún premio tiene que tener peso mayor a 0.';
+    return '';
+  },
+});
+
+
+// -----------------------------------------------------------------------------
+// 3. Vista
 // -----------------------------------------------------------------------------
 
 export default {
@@ -40,8 +72,7 @@ export default {
   descripcion: 'Cada vez que alguien envía el regalo configurado, la ruleta gira en tu transmisión y sortea un premio.',
 
   render({ senal }) {
-    const cfg = almacen.widget('ruleta', POR_DEFECTO);
-    const premiosValidos = () => cfg.premios.filter((p) => String(p.texto).trim());
+    const cfg = ajustes();
     const cambio = () => {
       almacen.guardar();
       widget.actualizar();
@@ -53,17 +84,10 @@ export default {
     });
 
     const widget = tarjetaWidget({
+      id: 'ruleta',
       titulo: 'Ruleta de regalos',
       archivo: 'ruleta.html',
       senal,
-      config: () => ({
-        g: String(cfg.giftId).trim() || POR_DEFECTO.giftId,
-        r: String(cfg.regalo).trim() || POR_DEFECTO.regalo,
-        gpr: Math.max(1, Number(cfg.gpr) || 1),
-        max: Math.max(1, Number(cfg.max) || POR_DEFECTO.max),
-        p: premiosValidos().map((p) => [String(p.texto).trim().slice(0, MAX_TEXTO_PREMIO), Math.max(0, Number(p.peso) || 0)]),
-      }),
-      parametros: () => ({ ocultar: cfg.ocultar ? '1' : '', sonido: cfg.sonido ? '' : '0' }),
       personalizar: [
         casilla('Ocultar la ruleta cuando no hay giros', { marcada: cfg.ocultar, alCambiar: (v) => { cfg.ocultar = v; cambio(); } }),
         casilla('Sonido de clic', { marcada: cfg.sonido, alCambiar: (v) => { cfg.sonido = v; cambio(); } }),
@@ -72,12 +96,6 @@ export default {
         { texto: 'Probar 1 regalo', evento: eventoDePrueba(1) },
         { texto: 'Combo de 3', evento: eventoDePrueba(3) },
       ],
-      validar: () => {
-        const premios = premiosValidos();
-        if (premios.length < 2) return 'La ruleta necesita al menos 2 premios.';
-        if (!premios.some((p) => Number(p.peso) > 0)) return 'Algún premio tiene que tener peso mayor a 0.';
-        return '';
-      },
     });
 
     // ---------- Premios ----------

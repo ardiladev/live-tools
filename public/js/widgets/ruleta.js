@@ -1,16 +1,15 @@
 // =============================================================================
 // ruleta.js — Lógica del widget "Ruleta de regalos" (ruleta.html)
 //
-// Opciones visibles en la URL:
-//   ?ocultar=1  → la ruleta solo aparece cuando hay giros
-//   ?sonido=0   → sin sonido de clic
-//   ?fondo=1    → fondo gris (vista previa)      ?prueba=1 → sin conexión a TikTok
-//
-// Configuración en #c=… (la genera el panel):
+// Configuración (la genera el panel; llega en #c=… o, con cambios en vivo, desde Supabase):
 //   u, k = usuario y clave · g = id del regalo · r = texto en pantalla
 //   gpr = giros por regalo · max = tope por combo · p = premios [[texto, peso], …]
+//   oc = ocultar cuando no hay giros (1/0) · so = sonido de clic (1/0)
 //
-// Secciones: 1. Opciones · 2. Dibujo · 3. Giro y cola · 4. Premios y regalos · 5. Arranque
+// Opciones visibles en la URL: ?fondo=1 (fondo gris, vista previa) · ?prueba=1 (sin conexión
+// a TikTok). Por compatibilidad con URLs viejas también se aceptan ?ocultar=1 y ?sonido=0.
+//
+// Secciones: 1. Opciones · 2. Dibujo · 3. Giro y cola · 4. Configuración y regalos · 5. Arranque
 // =============================================================================
 
 import { leerConfig, iniciarWidget, sonar, esperar } from '../comun.js';
@@ -21,8 +20,6 @@ import { leerConfig, iniciarWidget, sonar, esperar } from '../comun.js';
 // -----------------------------------------------------------------------------
 
 const params = new URLSearchParams(location.search);
-const OCULTAR_EN_REPOSO = params.get('ocultar') === '1';
-const SONIDO = params.get('sonido') !== '0';
 
 const MOVIMIENTO_REDUCIDO = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DURACION_GIRO_MS = MOVIMIENTO_REDUCIDO ? 1200 : 5200;
@@ -48,10 +45,21 @@ const resultado = $('resultado');
 const cola = $('cola');
 const puntero = $('puntero');
 
-let premios = [];        // [{ texto, peso }]
-let rotacion = 0;        // ángulo actual de la rueda, en radianes
+// Ajustes vigentes (los reemplaza aplicarConfig cada vez que llega una configuración).
+const ajustes = {
+  giftId: '5655',
+  textoRegalo: 'una rosa 🌹',
+  girosPorRegalo: 1,
+  maxGiros: 20,
+  ocultar: params.get('ocultar') === '1',
+  sonido: params.get('sonido') !== '0',
+};
+
+let premios = [];          // [{ texto, peso }]
+let premiosNuevos = null;  // premios que llegaron en medio de un giro: se aplican al terminar
+let rotacion = 0;          // ángulo actual de la rueda, en radianes
 let girando = false;
-const pendientes = [];   // giros esperando turno: { usuario, indice, premio, regalo }
+const pendientes = [];     // giros esperando turno: { usuario, indice, premio, regalo }
 
 
 // -----------------------------------------------------------------------------
@@ -171,7 +179,7 @@ function dibujar() {
 
 /** Al pasar por cada división: clic y "golpe" del puntero. */
 function clic() {
-  if (SONIDO) sonar({ frecuencia: 1400, duracion: 0.06, volumen: 0.12, onda: 'triangle', subida: 1 });
+  if (ajustes.sonido) sonar({ frecuencia: 1400, duracion: 0.06, volumen: 0.12, onda: 'triangle', subida: 1 });
   puntero.classList.remove('golpe');
   void puntero.offsetWidth; // fuerza a reiniciar la animación CSS
   puntero.classList.add('golpe');
@@ -243,7 +251,12 @@ async function procesar() {
   girando = false;
   aviso.classList.remove('visible');
   resultado.classList.remove('visible');
-  if (OCULTAR_EN_REPOSO) escena.classList.add('oculta');
+  if (premiosNuevos) {
+    premios = premiosNuevos;
+    premiosNuevos = null;
+    dibujar();
+  }
+  if (ajustes.ocultar) escena.classList.add('oculta');
 }
 
 function encolar(giro) {
@@ -254,7 +267,7 @@ function encolar(giro) {
 
 
 // -----------------------------------------------------------------------------
-// 4. Premios y regalos: el widget sortea según la configuración de la URL (#c=…)
+// 4. Configuración y regalos
 // -----------------------------------------------------------------------------
 
 /** Índice de un premio al azar, respetando los pesos. */
@@ -268,29 +281,44 @@ function elegirPremio() {
   return premios.length - 1;
 }
 
-function iniciarRuleta(cfg) {
-  premios = (Array.isArray(cfg.p) ? cfg.p : [])
+const hayPremiosValidos = () => premios.length >= 2 && premios.some((p) => p.peso > 0);
+
+/**
+ * Aplica una configuración. Puede llegar en cualquier momento (cambios en vivo): si la
+ * ruleta está girando, los premios nuevos esperan a que termine la cola, para que el
+ * premio anunciado sea el mismo sobre el que se detuvo la rueda.
+ */
+function aplicarConfig(cfg) {
+  const nuevos = (Array.isArray(cfg.p) ? cfg.p : [])
     .map(([texto, peso]) => ({ texto: String(texto || ''), peso: Math.max(0, Number(peso) || 0) }))
     .filter((p) => p.texto);
-  const giftId = String(cfg.g || '5655');
-  const textoRegalo = String(cfg.r || 'una rosa 🌹');
-  const girosPorRegalo = Math.max(1, Number(cfg.gpr) || 1);
-  const maxGiros = Math.max(1, Number(cfg.max) || 20);
-  const hayPremiosValidos = premios.length >= 2 && premios.some((p) => p.peso > 0);
-  dibujar();
 
-  iniciarWidget({
-    cfg,
-    alEvento(evento) {
-      if (evento.tipo !== 'regalo' || evento.giftId !== giftId || !hayPremiosValidos) return;
-      // Un combo de 50 rosas no puede dejar la pantalla ocupada media hora: hay un tope.
-      const giros = Math.min(evento.cantidad * girosPorRegalo, maxGiros);
-      for (let i = 0; i < giros; i++) {
-        const indice = elegirPremio();
-        encolar({ usuario: evento.usuario, indice, premio: premios[indice].texto, regalo: textoRegalo });
-      }
-    },
+  Object.assign(ajustes, {
+    giftId: String(cfg.g || '5655'),
+    textoRegalo: String(cfg.r || 'una rosa 🌹'),
+    girosPorRegalo: Math.max(1, Number(cfg.gpr) || 1),
+    maxGiros: Math.max(1, Number(cfg.max) || 20),
   });
+  if (cfg.oc !== undefined) ajustes.ocultar = Boolean(cfg.oc);
+  if (cfg.so !== undefined) ajustes.sonido = Boolean(cfg.so);
+
+  if (girando) {
+    premiosNuevos = nuevos;
+  } else {
+    premios = nuevos;
+    dibujar();
+    escena.classList.toggle('oculta', ajustes.ocultar);
+  }
+}
+
+function alEvento(evento) {
+  if (evento.tipo !== 'regalo' || evento.giftId !== ajustes.giftId || !hayPremiosValidos()) return;
+  // Un combo de 50 rosas no puede dejar la pantalla ocupada media hora: hay un tope.
+  const giros = Math.min(evento.cantidad * ajustes.girosPorRegalo, ajustes.maxGiros);
+  for (let i = 0; i < giros; i++) {
+    const indice = elegirPremio();
+    encolar({ usuario: evento.usuario, indice, premio: premios[indice].texto, regalo: ajustes.textoRegalo });
+  }
 }
 
 
@@ -298,8 +326,7 @@ function iniciarRuleta(cfg) {
 // 5. Arranque
 // -----------------------------------------------------------------------------
 
-iniciarRuleta(leerConfig() || {});
+iniciarWidget({ cfg: leerConfig(), alEvento, alConfig: aplicarConfig });
 
-if (OCULTAR_EN_REPOSO) escena.classList.add('oculta');
 // La fuente llega después del primer dibujo: se redibuja para que el texto la use.
 document.fonts.ready.then(() => { if (!girando) dibujar(); });

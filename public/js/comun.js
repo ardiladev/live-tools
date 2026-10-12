@@ -9,7 +9,7 @@
 //   1. Configuración en la URL       codificar · decodificar · leerConfig
 //   2. Eventos normalizados          normalizar · crearRastreadorRegalos
 //   3. Conexión con TikTok           conectarTikTok
-//   4. Arranque de widgets           iniciarWidget · avisarPadre
+//   4. Arranque de widgets           iniciarWidget · avisarPadre · configuración en vivo (Supabase)
 //   5. Utilidades                    sonar · esperar
 // =============================================================================
 
@@ -256,14 +256,64 @@ export function avisarPadre(datos) {
   if (window.parent !== window) window.parent.postMessage({ fuente: 'widget', ...datos }, location.origin);
 }
 
+const CLAVE_CACHE = 'live-tools:widget:';
+
+function leerCache(id) {
+  try {
+    return JSON.parse(localStorage.getItem(CLAVE_CACHE + id) || 'null');
+  } catch {
+    return null;
+  }
+}
+
+function guardarCache(id, config) {
+  try {
+    localStorage.setItem(CLAVE_CACHE + id, JSON.stringify(config));
+  } catch {
+    // Sin almacenamiento: el widget sigue funcionando, solo que sin copia de respaldo.
+  }
+}
+
 /**
- * Arranque común de un widget configurado por la URL (#c=…):
+ * Configuración en vivo: la URL solo trae usuario (u), clave (k) e identificador (w).
+ * Primero se usa la última configuración recibida (guardada en este navegador, por si
+ * Supabase no responde) y después la que llega de Supabase, cada vez que el panel cambia algo.
+ * `_v` es la hora en que el panel la guardó: una versión más vieja que llegue tarde se ignora.
+ */
+function sincronizarConfig(cfgUrl, alConfig) {
+  const propios = { u: cfgUrl.u, k: cfgUrl.k, w: cfgUrl.w };
+  let version = 0;
+
+  function aplicar(config) {
+    const v = Number(config?._v) || 0;
+    if (v && v <= version) return;
+    version = v;
+    alConfig({ ...config, ...propios });
+  }
+
+  aplicar(leerCache(cfgUrl.w) || {});
+
+  import('./nube.js')
+    .then(({ nubeActiva, escucharConfigNube }) => {
+      if (!nubeActiva()) return console.warn('[widget] Esta URL usa cambios en vivo, pero Supabase no está configurado.');
+      return escucharConfigNube(cfgUrl.w, (config) => {
+        guardarCache(cfgUrl.w, config);
+        aplicar(config);
+      }, (ok, mensaje) => console.log(`[widget] ${mensaje}`));
+    })
+    .catch((error) => console.warn(`[widget] Sin cambios en vivo: ${error.message}`));
+}
+
+/**
+ * Arranque común de un widget:
  *   ?fondo=1  → fondo gris y píldora de estado (vista previa del panel)
  *   ?prueba=1 → no se conecta a TikTok; solo recibe eventos de prueba del panel
  * Los eventos de prueba y los reales llegan por el mismo `alEvento`, así el widget
  * no necesita saber de dónde vienen.
+ * `alConfig(config)` recibe la configuración: una vez al arrancar (la de la URL) y, si la
+ * URL usa cambios en vivo (#c= con `w`), otra vez cada vez que se edite en el panel.
  */
-export function iniciarWidget({ cfg, alEvento }) {
+export function iniciarWidget({ cfg, alEvento, alConfig = () => {} }) {
   const params = new URLSearchParams(location.search);
   const vistaPrevia = params.get('fondo') === '1';
   if (vistaPrevia) document.body.classList.add('vista-previa');
@@ -291,6 +341,8 @@ export function iniciarWidget({ cfg, alEvento }) {
   });
 
   if (cfg?.error) return alEstado(false, 'La configuración de la URL está dañada. Cópiala de nuevo desde el panel.');
+  if (cfg?.w) sincronizarConfig(cfg, alConfig);
+  else alConfig(cfg || {});
   if (params.get('prueba') === '1') return alEstado(true, 'Modo prueba: sin conexión a TikTok');
   if (!cfg?.u || !cfg?.k) return alEstado(false, 'Falta el usuario de TikTok o la clave de Euler Stream en la URL.');
 

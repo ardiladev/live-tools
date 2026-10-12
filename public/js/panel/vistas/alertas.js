@@ -7,6 +7,7 @@
 // =============================================================================
 
 import * as almacen from '../almacen.js';
+import * as sincronizar from '../sincronizar.js';
 import { tarjetaWidget, campo, casilla, nota } from '../ui.js';
 
 const POR_DEFECTO = {
@@ -16,13 +17,29 @@ const POR_DEFECTO = {
   sonido: true,
 };
 
+const ajustes = () => almacen.widget('alertas', POR_DEFECTO);
+
+// Se registra al cargar, para que los cambios en vivo funcionen con o sin la vista abierta.
+sincronizar.registrar('alertas', {
+  config: () => {
+    const cfg = ajustes();
+    return {
+      ev: cfg.eventos,
+      min: Math.max(0, Number(cfg.minimo) || 0),
+      d: Math.min(15, Math.max(2, Number(cfg.duracion) || 5)),
+      s: cfg.sonido ? 1 : 0,
+    };
+  },
+  validar: () => (Object.values(ajustes().eventos).some(Boolean) ? '' : 'Activa al menos un tipo de evento.'),
+});
+
 export default {
   id: 'alertas',
   titulo: 'Alertas de eventos',
   descripcion: 'Un aviso animado en pantalla cuando alguien te sigue, comparte el LIVE o envía un regalo.',
 
   render({ senal }) {
-    const cfg = almacen.widget('alertas', POR_DEFECTO);
+    const cfg = ajustes();
     const cambio = () => {
       almacen.guardar();
       widget.actualizar();
@@ -33,16 +50,11 @@ export default {
     };
 
     const widget = tarjetaWidget({
+      id: 'alertas',
       titulo: 'Alertas de eventos',
       archivo: 'alertas.html',
       forma: 'cuadrado',
       senal,
-      config: () => ({
-        ev: cfg.eventos,
-        min: Math.max(0, Number(cfg.minimo) || 0),
-        d: Math.min(15, Math.max(2, Number(cfg.duracion) || 5)),
-        s: cfg.sonido ? 1 : 0,
-      }),
       campos: [
         casilla('Regalos', { marcada: cfg.eventos.regalo, alCambiar: activar('regalo') }),
         casilla('Nuevos seguidores', { marcada: cfg.eventos.follow, alCambiar: activar('follow') }),
@@ -58,7 +70,6 @@ export default {
         { texto: 'Seguidor', evento: (n) => ({ tipo: 'follow', usuario: n }) },
         { texto: 'Compartido', evento: (n) => ({ tipo: 'share', usuario: n }) },
       ],
-      validar: () => (Object.values(cfg.eventos).some(Boolean) ? '' : 'Activa al menos un tipo de evento.'),
     });
 
     return [

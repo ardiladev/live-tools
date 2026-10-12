@@ -8,6 +8,7 @@
 // =============================================================================
 
 import * as almacen from '../almacen.js';
+import * as sincronizar from '../sincronizar.js';
 import { tarjetaWidget, campo, casilla, nota } from '../ui.js';
 
 
@@ -55,6 +56,22 @@ const ACCIONES_AL_ALCANZAR = [
 function crearVista(tipo) {
   const t = TIPOS[tipo];
   const id = `meta-${tipo}`;
+  const ajustes = () => almacen.widget(id, { objetivo: t.meta, titulo: t.etiqueta, color: t.color, alAlcanzar: 'duplicar', sonido: true });
+
+  // Se registra al cargar, para que los cambios en vivo funcionen con o sin la vista abierta.
+  sincronizar.registrar(id, {
+    config: () => {
+      const cfg = ajustes();
+      return {
+        t: tipo,
+        o: Math.max(1, Number(cfg.objetivo) || t.meta),
+        ti: String(cfg.titulo).slice(0, 40),
+        col: cfg.color,
+        al: cfg.alAlcanzar,
+        s: cfg.sonido ? 1 : 0,
+      };
+    },
+  });
 
   return {
     id,
@@ -62,25 +79,18 @@ function crearVista(tipo) {
     descripcion: `Una barra de progreso que se llena con ${t.titulo.toLowerCase()} durante el LIVE. Cuenta desde que se abre la fuente en OBS.`,
 
     render({ senal }) {
-      const cfg = almacen.widget(id, { objetivo: t.meta, titulo: t.etiqueta, color: t.color, alAlcanzar: 'duplicar', sonido: true });
+      const cfg = ajustes();
       const cambio = () => {
         almacen.guardar();
         widget.actualizar();
       };
 
       const widget = tarjetaWidget({
+        id,
         titulo: `Meta de ${t.titulo.toLowerCase()}`,
         archivo: 'meta.html',
         forma: 'horizontal',
         senal,
-        config: () => ({
-          t: tipo,
-          o: Math.max(1, Number(cfg.objetivo) || t.meta),
-          ti: String(cfg.titulo).slice(0, 40),
-          col: cfg.color,
-          al: cfg.alAlcanzar,
-          s: cfg.sonido ? 1 : 0,
-        }),
         campos: [
           campo('Meta:', { tipo: 'number', valor: cfg.objetivo, min: 1, alCambiar: (v) => { cfg.objetivo = v; cambio(); } }),
           campo('Título:', { valor: cfg.titulo, maxLength: 40, alCambiar: (v) => { cfg.titulo = v; cambio(); } }),

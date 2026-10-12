@@ -1,7 +1,7 @@
 // =============================================================================
 // alertas.js — Lógica del widget "Alertas de eventos" (alertas.html)
 //
-// Configuración en #c=… (la genera el panel):
+// Configuración (la genera el panel; llega en #c=… o, con cambios en vivo, desde Supabase):
 //   u, k = usuario y clave · ev = eventos activos { regalo, follow, share }
 //   min = monedas mínimas para alertar un regalo · d = segundos en pantalla · s = sonido (1/0)
 //
@@ -16,12 +16,21 @@ import { leerConfig, iniciarWidget, sonar, esperar } from '../comun.js';
 // 1. Configuración
 // -----------------------------------------------------------------------------
 
-const cfg = leerConfig() || {};
-const activos = { regalo: true, follow: true, share: false, ...(cfg.ev || {}) };
-const minimoMonedas = Math.max(0, Number(cfg.min) || 0);
-const duracionMs = Math.min(15, Math.max(2, Number(cfg.d) || 5)) * 1000;
 const PAUSA_ENTRE_ALERTAS_MS = 500;
 const MAX_EN_COLA = 30; // una lluvia de follows no puede dejar alertas en cola media hora
+
+let activos = { regalo: true, follow: true, share: false };
+let minimoMonedas = 0;
+let duracionMs = 5000;
+let sonido = true;
+
+/** Aplica una configuración. Puede llegar en cualquier momento (cambios en vivo). */
+function aplicarConfig(cfg) {
+  activos = { regalo: true, follow: true, share: false, ...(cfg.ev || {}) };
+  minimoMonedas = Math.max(0, Number(cfg.min) || 0);
+  duracionMs = Math.min(15, Math.max(2, Number(cfg.d) || 5)) * 1000;
+  sonido = cfg.s !== 0;
+}
 
 
 // -----------------------------------------------------------------------------
@@ -70,7 +79,7 @@ async function mostrarSiguiente() {
   while (cola.length) {
     pintarAlerta(cola.shift());
     $('alerta').classList.add('visible');
-    if (cfg.s !== 0) sonar();
+    if (sonido) sonar();
     await esperar(duracionMs);
     $('alerta').classList.remove('visible');
     await esperar(PAUSA_ENTRE_ALERTAS_MS);
@@ -84,7 +93,8 @@ async function mostrarSiguiente() {
 // -----------------------------------------------------------------------------
 
 iniciarWidget({
-  cfg,
+  cfg: leerConfig(),
+  alConfig: aplicarConfig,
   alEvento(evento) {
     const plantilla = PLANTILLAS[evento.tipo];
     if (!plantilla || !activos[evento.tipo]) return;

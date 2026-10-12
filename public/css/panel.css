@@ -300,6 +300,10 @@ button.enlace { color: var(--enlace); }
 .nota { margin: 10px 0 0; color: var(--suave); font-size: 13px; }
 .aviso { min-height: 1.3em; color: var(--ok); font-size: 13px; }
 .aviso.error { color: var(--mal); }
+.estado-nube { margin-bottom: 6px; color: var(--suave); font-size: 13px; }
+.estado-nube::before { content: '☁ '; }
+.estado-nube.ok { color: var(--ok); }
+.estado-nube.error { color: var(--mal); }
 .vacio { color: var(--suave); }
 .hora { color: var(--suave); font-size: 12px; font-variant-numeric: tabular-nums; }
 .texto-alerta { color: var(--mal); }

@@ -17,6 +17,7 @@ import { decodificar } from '../comun.js';
 import * as almacen from './almacen.js';
 import * as envivo from './envivo.js';
 import { CATEGORIAS, buscarVista } from './registro.js';
+import * as sincronizar from './sincronizar.js';
 import { el, icono } from './ui.js';
 
 const $ = (id) => document.getElementById(id);
@@ -30,6 +31,7 @@ let controladorVista = null; // AbortController de la vista abierta
 
 almacen.cargar();
 importarUrlVieja();
+sincronizar.iniciar(); // cambios en vivo con Supabase (si está configurado)
 
 
 // -----------------------------------------------------------------------------

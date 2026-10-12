@@ -1,7 +1,9 @@
 /* ==========================================================================
    meta.css — Widget "Meta" (meta.html): barra de progreso inclinada
-   El color llega por la URL y se aplica en la variable --color (js/widgets/meta.js).
+   El color llega con la configuración y se aplica en la variable --color (js/widgets/meta.js).
    ========================================================================== */
+
+:root { --color: #3aa0d8; } /* hasta que llegue la configuración */
 
 /* ---------- Escena ---------- */
 .escena {
