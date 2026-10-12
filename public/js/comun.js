@@ -39,26 +39,61 @@ export function leerConfig() {
 const nombreDe = (u) => u?.nickname || u?.uniqueId || 'Alguien';
 const imagenDe = (img) => (Array.isArray(img?.url) ? img.url[0] : img?.urlList?.[0]) || '';
 
+// ---------- Regalos: combos y regalos sueltos ----------
+// Un regalo en combo (la rosa) llega muchas veces mientras dura la racha, con repeatEnd = 0,
+// y al final una vez más con repeatEnd = 1 y la cantidad total. Un regalo sin combo (el
+// capibara) llega UNA sola vez, con repeatEnd = 0. Lo que los distingue es giftDetails.giftType
+// (1 = combo), pero TikTok casi nunca lo manda. Así que, cuando no se sabe el tipo:
+//   - cada mensaje reinicia una espera corta; si se cumple sin más mensajes, se cuenta lo que hay
+//     (así un regalo suelto se cuenta a los ~2 s);
+//   - si después llega el fin de racha, solo se suma lo que faltaba (un combo nunca se cuenta doble).
+const ESPERA_RACHA_MS = 2000;
+const RECUERDO_RACHA_MS = 60000;
+
+export function crearRastreadorRegalos(emitir) {
+  const rachas = new Map(); // clave → { ultimo, emitidos, espera, olvido }
+
+  return function alRegalo(data) {
+    const evento = {
+      tipo: 'regalo',
+      usuario: nombreDe(data.user),
+      giftId: String(data.giftId),            // llega a veces como número y a veces como texto
+      nombre: data.giftDetails?.giftName || '',
+      cantidad: Number(data.repeatCount) || 1,
+      diamantes: Number(data.giftDetails?.diamondCount) || 0,
+      imagen: imagenDe(data.giftDetails?.giftImage),
+    };
+    const tipo = data.giftDetails?.giftType;
+    if (tipo !== undefined && tipo !== 1) return emitir(evento); // se sabe que no es combo
+
+    const clave = `${data.user?.userId || evento.usuario}|${evento.giftId}|${data.groupId || ''}`;
+    const racha = rachas.get(clave) || { emitidos: 0 };
+    clearTimeout(racha.espera);
+    clearTimeout(racha.olvido);
+    racha.ultimo = evento;
+    rachas.set(clave, racha);
+
+    const emitirFaltante = () => {
+      const falta = racha.ultimo.cantidad - racha.emitidos;
+      if (falta > 0) {
+        racha.emitidos += falta;
+        emitir({ ...racha.ultimo, cantidad: falta });
+      }
+    };
+
+    if (data.repeatEnd) {
+      emitirFaltante();
+      rachas.delete(clave);
+      return;
+    }
+    racha.espera = setTimeout(emitirFaltante, ESPERA_RACHA_MS);
+    racha.olvido = setTimeout(() => rachas.delete(clave), RECUERDO_RACHA_MS);
+  };
+}
+
 export function normalizar({ type, data }) {
   if (!data) return null;
   switch (type) {
-    case 'WebcastGiftMessage': {
-      // Los regalos en racha (como la rosa) llegan muchas veces mientras dura el combo; solo
-      // cuenta el mensaje final (repeatEnd), que trae la cantidad total. El id llega a veces
-      // como número y a veces como texto, por eso se pasa siempre a texto.
-      const tipo = data.giftDetails?.giftType;
-      const enRacha = (tipo === undefined || tipo === 1) && !data.repeatEnd;
-      if (enRacha) return null;
-      return {
-        tipo: 'regalo',
-        usuario: nombreDe(data.user),
-        giftId: String(data.giftId),
-        nombre: data.giftDetails?.giftName || '',
-        cantidad: Number(data.repeatCount) || 1,
-        diamantes: Number(data.giftDetails?.diamondCount) || 0,
-        imagen: imagenDe(data.giftDetails?.giftImage),
-      };
-    }
     case 'WebcastLikeMessage':
       return { tipo: 'like', usuario: nombreDe(data.user), cantidad: Number(data.likeCount) || 1, total: Number(data.totalLikeCount) || 0 };
     case 'WebcastSocialMessage': {
@@ -101,6 +136,7 @@ export function conectarTikTok({ usuario, clave, alEvento, alEstado }) {
   let temporizador = null;
   let cerrado = false;
   let espera = 3000;
+  const alRegalo = crearRastreadorRegalos((evento) => alEvento(evento));
 
   function conectar() {
     alEstado(false, `Conectando con @${usuario}…`);
@@ -115,6 +151,10 @@ export function conectarTikTok({ usuario, clave, alEvento, alEstado }) {
         if (m.type === 'tiktok.connect' || m.type === 'roomInfo') {
           espera = 3000;
           alEstado(true, `Conectado al LIVE de @${usuario}`);
+          continue;
+        }
+        if (m.type === 'WebcastGiftMessage') {
+          if (m.data) alRegalo(m.data);
           continue;
         }
         const evento = normalizar(m);

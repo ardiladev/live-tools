@@ -8,6 +8,7 @@ import { readFileSync, writeFileSync, existsSync, copyFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { Server } from 'socket.io';
 import { TikTokLiveConnection, WebcastEvent, ControlEvent } from 'tiktok-live-connector';
+import { crearRastreadorRegalos } from './public/js/comun.js';
 
 const CONFIG_PATH = new URL('./config.json', import.meta.url);
 // config.json no se sube al repositorio (lleva usuario, premios y clave): en una copia
@@ -131,29 +132,23 @@ function crearConexion(usuario, miGeneracion) {
     ...(config.signApiKey ? { signApiKey: config.signApiKey } : {}),
   });
 
-  c.on(WebcastEvent.GIFT, (data) => {
+  // Combos (la rosa) y regalos sueltos (el capibara) se distinguen con el mismo rastreador
+  // que usan los widgets: ver crearRastreadorRegalos en public/js/comun.js. Antes, sin
+  // `giftDetails`, todo regalo se trataba como combo y los sueltos nunca activaban la ruleta.
+  const alRegalo = crearRastreadorRegalos((evento) => {
     if (!vigente()) return;
-    // Los regalos en combo llegan varias veces: `repeatEnd` 0 mientras dura la racha
-    // y 1 al terminar. Lo normal sería mirar `giftDetails.giftType === 1`, pero en los
-    // eventos reales `giftDetails` no viene, así que con el tipo desconocido nos guiamos
-    // solo por `repeatEnd`. Verificado con una rosa real: llega un 0 y luego un 1.
-    const tipo = data.giftDetails?.giftType;
-    const enRacha = (tipo === undefined || tipo === 1) && !data.repeatEnd;
-    const coincide = esRegaloObjetivo(data);
-
+    const coincide = esRegaloObjetivo({ giftId: evento.giftId, giftDetails: { giftName: evento.nombre } });
     // Rastro de TODOS los regalos, no solo de los que activan la ruleta: si un día
-    // no gira, aquí se ve si el regalo llegó y por qué se descartó (otro nombre,
-    // otro id, o una racha que todavía no terminó).
+    // no gira, aquí se ve si el regalo llegó y por qué se descartó.
     console.log(
-      `[regalo] ${data.giftDetails?.giftName || '(sin nombre)'} · id ${data.giftId} · x${data.repeatCount || 1}` +
-      ` · de ${data.user?.nickname || data.user?.uniqueId || '(desconocido)'}` +
-      ` → ${coincide ? 'activa la ruleta' : 'NO coincide con config.regalo'}` +
-      `${enRacha ? ' (racha en curso, se espera al final)' : ''}`
+      `[regalo] ${evento.nombre || '(sin nombre)'} · id ${evento.giftId} · x${evento.cantidad}` +
+      ` · de ${evento.usuario} → ${coincide ? 'activa la ruleta' : 'NO coincide con config.regalo'}`
     );
+    if (coincide) lanzarGiros(evento.usuario, evento.cantidad, 'tiktok');
+  });
 
-    if (enRacha || !coincide) return;
-    const quien = data.user?.nickname || data.user?.uniqueId || 'Alguien';
-    lanzarGiros(quien, data.repeatCount || 1, 'tiktok');
+  c.on(WebcastEvent.GIFT, (data) => {
+    if (vigente()) alRegalo(data);
   });
 
   // Sin este listener, un 'error' del emisor tumbaría el proceso de Node en medio del LIVE.
