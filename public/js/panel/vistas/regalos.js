@@ -50,7 +50,7 @@ let orden = 'recientes';
 export default {
   id: 'regalos',
   titulo: 'Buscador de regalos',
-  descripcion: 'Cada regalo que te envían queda guardado aquí con su ID. TikTok casi nunca manda el nombre: escríbelo tú para encontrarlo después.',
+  descripcion: 'Cada regalo que te envían queda guardado aquí con su ID. Si TikTok manda su nombre (en inglés), queda puesto; puedes cambiarlo por el que quieras.',
 
   render({ senal }) {
     const cuerpoTabla = el('tbody');
@@ -80,21 +80,36 @@ export default {
     }
 
     // ---------- Tabla ----------
+    /**
+     * El campo muestra el nombre propio o, si no hay, el que mandó TikTok (en inglés), así el
+     * regalo queda nombrado desde que llega. Escribir otro lo cambia; dejar el de TikTok (o
+     * borrar el campo) vuelve al de TikTok, que se sigue actualizando si TikTok lo cambia.
+     */
+    function cambiarNombre(r, texto) {
+      const propio = texto === r.nombre ? '' : texto;
+      if (propio !== (r.nombrePropio || '')) almacen.nombrarRegalo(r.giftId, propio);
+    }
+
     function filaRegalo(r) {
       const nombre = el('input', {
-        value: r.nombrePropio || '',
-        placeholder: r.nombre || 'Escribe un nombre…',
+        value: nombreDe(r),
+        placeholder: 'Escribe un nombre…',
         maxLength: 40,
+        title: r.nombre ? `Nombre en TikTok: ${r.nombre}` : 'TikTok no mandó el nombre de este regalo',
         'aria-label': `Nombre del regalo ${r.giftId}`,
-        onchange: (e) => almacen.nombrarRegalo(r.giftId, e.target.value.trim()),
+        onchange: (e) => cambiarNombre(r, e.target.value.trim()),
       });
+      // Si la persona le puso otro nombre, se recuerda el original de TikTok debajo.
+      const original = r.nombrePropio && r.nombre && r.nombrePropio !== r.nombre
+        ? el('div', { class: 'hora' }, `TikTok: ${r.nombre}`)
+        : null;
       const anteriores = r.idsAnteriores?.length
         ? el('div', { class: 'hora', title: 'Códigos que tuvo antes este regalo' }, `antes: ${r.idsAnteriores.join(', ')}`)
         : null;
 
       return el('tr', {},
         el('td', { class: 'celda-icono' }, r.imagen ? el('img', { class: 'icono-regalo grande', src: r.imagen, alt: '' }) : el('span', { 'aria-hidden': 'true' }, '🎁')),
-        el('td', { class: 'celda-nombre' }, nombre),
+        el('td', { class: 'celda-nombre' }, nombre, original),
         el('td', {}, el('code', {}, r.giftId), anteriores),
         el('td', {}, r.diamantes ? numero(r.diamantes) : '—'),
         el('td', {}, numero(r.veces || 0)),

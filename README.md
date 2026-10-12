@@ -255,6 +255,9 @@ seguro mostrar nombres y mensajes del chat que vienen de TikTok.
 
 - Cada regalo que llega mientras el panel está conectado se anota en `almacen.regalos`: ID, nombre de TikTok,
   nombre propio, precio, veces, primera y última vez.
+- **Nombre:** si TikTok manda el nombre del regalo (en inglés, por ejemplo “Rose”), queda puesto en el campo
+  desde que llega. Puedes escribir otro (se guarda como nombre propio y debajo se recuerda el de TikTok);
+  si borras el campo, vuelve el de TikTok. Si TikTok no manda el nombre, el campo queda vacío para escribirlo.
 - La lista se guarda en el navegador y **continúa en cada LIVE**. Con **Conectar automáticamente**, el panel
   se conecta solo al abrirse.
 - **Si un regalo cambia de código:**
@@ -424,7 +427,8 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
   limitadas. Cada widget en OBS y el panel conectado gastan conexiones por separado.
 - **Nombre y precio de los regalos casi nunca llegan.** Consecuencias: la meta de **monedas** solo suma los
   regalos que traen precio; las **alertas** muestran “un regalo” si no llega el nombre (y no aplican el mínimo
-  de monedas a los regalos sin precio); en el buscador, el nombre lo pones tú.
+  de monedas a los regalos sin precio); en el buscador, los regalos que llegan sin nombre lo esperan de ti (los que sí lo traen quedan con el
+  nombre en inglés de TikTok, que puedes cambiar).
 - **El catálogo de regalos vive en un solo navegador** y solo anota mientras el panel está abierto y conectado.
   Puedes poner el panel en OBS como **dock de navegador** para que esté abierto siempre que transmites.
   Ese dock tendrá su propia lista, separada de la de Chrome.
