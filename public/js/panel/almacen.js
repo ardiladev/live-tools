@@ -4,11 +4,13 @@
 //   conexion: { usuario, clave }           → compartida por todos los widgets
 //   widgets:  { <id del widget>: {...} }   → la configuración propia de cada uno
 //   menuCerrados: [ids de grupos del menú que el usuario dejó cerrados]
+//   regalos:  { <giftId>: { giftId, nombre, nombrePropio, imagen, diamantes, veces, primero, ultimo } }
+//             → catálogo de los regalos que han llegado al LIVE (o que se agregaron a mano)
 
 const CLAVE = 'panel-live';
 const CLAVE_VIEJA = 'ruleta-generador'; // la versión anterior del generador guardaba aquí
 
-let estado = { conexion: { usuario: '', clave: '' }, widgets: {}, menuCerrados: [] };
+let estado = { conexion: { usuario: '', clave: '' }, widgets: {}, menuCerrados: [], regalos: {} };
 const oyentes = new Set();
 
 function leer(clave) {
@@ -19,6 +21,7 @@ export function cargar() {
   const guardado = leer(CLAVE);
   if (guardado) {
     estado = { ...estado, ...guardado };
+    estado.regalos ||= {};
     return;
   }
   // Primera vez con este panel: se traen los datos del generador anterior, si los hay,
@@ -50,6 +53,40 @@ export function widget(id, porDefecto) {
   }
   estado.widgets[id] = actual;
   return actual;
+}
+
+// ---------- Catálogo de regalos ----------
+export const regalos = () => estado.regalos;
+
+/** Anota un regalo que llegó del LIVE. El guardado se agrupa para no escribir en cada rosa. */
+let guardadoPendiente;
+export function registrarRegalo(evento) {
+  const ahora = Date.now();
+  const r = estado.regalos[evento.giftId] || { giftId: evento.giftId, veces: 0, primero: ahora };
+  Object.assign(r, {
+    nombre: evento.nombre || r.nombre || '',
+    imagen: evento.imagen || r.imagen || '',
+    diamantes: evento.diamantes || r.diamantes || 0,
+    veces: (r.veces || 0) + (evento.cantidad || 1),
+    ultimo: ahora,
+  });
+  estado.regalos[evento.giftId] = r;
+  clearTimeout(guardadoPendiente);
+  guardadoPendiente = setTimeout(guardar, 1000);
+}
+
+/** Agrega o corrige un regalo a mano (por ejemplo, un ID visto en otra página). */
+export function anotarRegalo(giftId, cambios) {
+  giftId = String(giftId).trim();
+  if (!giftId) return;
+  const r = estado.regalos[giftId] || { giftId, veces: 0, primero: Date.now(), ultimo: 0 };
+  estado.regalos[giftId] = Object.assign(r, cambios);
+  guardar();
+}
+
+export function quitarRegalo(giftId) {
+  delete estado.regalos[giftId];
+  guardar();
 }
 
 export function alCambiar(fn) {

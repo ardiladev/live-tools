@@ -43,6 +43,7 @@ function registrar(evento) {
         veces: visto.veces + evento.cantidad,
       });
       estado.regalosVistos.set(evento.giftId, visto);
+      almacen.registrarRegalo(evento); // catálogo permanente (Actividad → Buscador de regalos)
       break;
     }
   }

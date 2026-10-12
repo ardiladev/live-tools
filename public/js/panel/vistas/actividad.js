@@ -100,7 +100,7 @@ export default {
           el('table', { class: 'tabla' },
             el('thead', {}, el('tr', {}, el('th', {}, 'Regalo'), el('th', {}, 'ID'), el('th', {}, 'Monedas c/u'), el('th', {}, 'Veces'))),
             tablaRegalos)),
-        nota('Usa el ID para configurar qué regalo activa la ruleta.')),
+        nota('Solo los de esta conexión. Todos los que te han llegado quedan guardados en el ', el('a', { href: '#/regalos' }, 'Buscador de regalos'), '.')),
     ];
   },
 };

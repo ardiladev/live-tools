@@ -20,7 +20,8 @@ Cada vez que alguien envía una **Rosa** en el LIVE, aparece una ruleta en panta
 | Superposiciones | Ruletas | Ruleta de regalos (`ruleta.html`) |
 | | Metas | Likes, Seguidores, Compartidos, Monedas (`meta.html`) |
 | | Alertas | Alertas de regalos, follows y compartidos (`alertas.html`) |
-| Actividad | En vivo | Eventos en tiempo real, contadores y tabla con el ID de cada regalo |
+| Actividad | En vivo | Eventos en tiempo real, contadores y regalos de la sesión |
+| | Regalos | Buscador de regalos: catálogo guardado con el ID de cada regalo recibido, nombres propios y “Usar en la ruleta” |
 | Ajustes | Cuenta | Usuario de TikTok y clave de Euler Stream (compartidos por todos los widgets) |
 
 ### Estructura del código

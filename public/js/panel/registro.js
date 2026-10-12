@@ -10,6 +10,7 @@ import ruleta from './vistas/ruleta.js';
 import { metaLikes, metaSeguidores, metaCompartidos, metaMonedas } from './vistas/metas.js';
 import alertas from './vistas/alertas.js';
 import actividad from './vistas/actividad.js';
+import buscadorRegalos from './vistas/regalos.js';
 import conexion from './vistas/conexion.js';
 
 export const CATEGORIAS = [
@@ -31,6 +32,7 @@ export const CATEGORIAS = [
     icono: 'pulso',
     grupos: [
       { id: 'envivo', titulo: 'En vivo', vistas: [actividad] },
+      { id: 'regalos', titulo: 'Regalos', vistas: [buscadorRegalos] },
     ],
   },
   {

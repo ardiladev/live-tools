@@ -93,8 +93,8 @@ export default {
           campo('Texto en pantalla:', { valor: cfg.regalo, maxLength: 30, alCambiar: (v) => { cfg.regalo = v; cambio(); } }),
           campo('Giros por regalo:', { tipo: 'number', valor: cfg.gpr, min: 1, max: 10, alCambiar: (v) => { cfg.gpr = v; cambio(); } }),
           campo('Máx. por combo:', { tipo: 'number', valor: cfg.max, min: 1, max: 100, alCambiar: (v) => { cfg.max = v; cambio(); } })),
-        nota('La rosa es el 5655. Para usar otro regalo, conéctate en ', el('a', { href: '#/actividad' }, 'Actividad → Eventos en vivo'),
-          ', pide que te lo envíen y copia su ID de la tabla “Regalos recibidos”.')),
+        nota('La rosa es el 5655. Para encontrar el ID de otro regalo, usa el ', el('a', { href: '#/regalos' }, 'Buscador de regalos'),
+          ': ahí puedes ponerlo en la ruleta con un clic.')),
     ];
   },
 };
