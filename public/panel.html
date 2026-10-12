@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruleta — panel de control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fondo: #FBF4F6; --superficie: #FFFFFF; --texto: #2A0F33; --suave: #6E5874;
+    --borde: #EAD7DE; --acento: #E5386F; --acento-texto: #FFFFFF; --ok: #1F9D6B; --mal: #C2410C;
+    --fuente: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #1B0A21; --superficie: #26112D; --texto: #FBEFF3; --suave: #C6AFC9;
+      --borde: #43264B; --acento: #F0558A; --ok: #3CCB91; --mal: #FB8A5A;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fondo); color: var(--texto); font-family: var(--fuente); line-height: 1.45; }
+  .marco {
+    max-width: 1180px; margin: 0 auto; padding: 28px 20px 48px;
+    display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 28px; align-items: start;
+  }
+  header { grid-column: 1 / -1; }
+  h1 { font-size: 2rem; font-weight: 800; margin: 0 0 .2rem; letter-spacing: -.01em; }
+  header p { margin: 0; color: var(--suave); }
+  h2 { font-size: 1.15rem; font-weight: 800; margin: 0 0 .75rem; }
+  section { background: var(--superficie); border: 1px solid var(--borde); border-radius: 14px; padding: 18px; margin-bottom: 18px; }
+  .fila { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  input {
+    font: inherit; color: var(--texto); background: var(--fondo);
+    border: 1px solid var(--borde); border-radius: 10px; padding: .55rem .75rem; min-width: 0;
+  }
+  input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+  button {
+    font: inherit; font-weight: 600; cursor: pointer;
+    border-radius: 10px; padding: .55rem 1rem; border: 1px solid var(--borde);
+    background: var(--superficie); color: var(--texto);
+  }
+  button.principal { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .estado { display: flex; align-items: center; gap: .5rem; margin-top: .75rem; color: var(--suave); }
+  .punto { width: 10px; height: 10px; border-radius: 50%; background: var(--mal); flex: none; }
+  .punto.ok { background: var(--ok); }
+  .nota { font-size: .9rem; color: var(--suave); margin: .6rem 0 0; }
+
+  .premio { display: grid; grid-template-columns: minmax(0, 1fr) 76px 40px; gap: 8px; margin-bottom: 8px; }
+  .premio button { padding: 0; }
+  .encabezado-premios { display: grid; grid-template-columns: minmax(0, 1fr) 76px 40px; gap: 8px; font-size: .85rem; color: var(--suave); margin-bottom: 4px; }
+  .probabilidad { font-size: .85rem; color: var(--suave); }
+
+  ol.historial { list-style: none; margin: 0; padding: 0; max-height: 260px; overflow: auto; }
+  ol.historial li { display: flex; justify-content: space-between; gap: 12px; padding: .45rem 0; border-bottom: 1px solid var(--borde); }
+  ol.historial li:last-child { border-bottom: 0; }
+  .etiqueta { font-size: .8rem; color: var(--suave); white-space: nowrap; }
+  .vacio { color: var(--suave); }
+
+  .vista { position: sticky; top: 20px; }
+  .vista iframe { width: 100%; aspect-ratio: 9 / 16; border: 0; border-radius: 14px; display: block; background: #6b6b6b; }
+  code { background: var(--fondo); border: 1px solid var(--borde); border-radius: 6px; padding: .1rem .35rem; font-size: .9em; word-break: break-all; }
+  .aviso { min-height: 1.4em; font-size: .9rem; color: var(--acento); margin-top: .5rem; }
+
+  @media (max-width: 860px) {
+    .marco { grid-template-columns: 1fr; }
+    .vista { position: static; max-width: 360px; }
+  }
+</style>
+</head>
+<body>
+<div class="marco">
+  <header>
+    <h1>Ruleta de rosas</h1>
+    <p>Cada rosa que llega al LIVE hace girar la ruleta en pantalla.</p>
+  </header>
+
+  <div>
+    <section aria-labelledby="t-conexion">
+      <h2 id="t-conexion">Conexión con el LIVE</h2>
+      <div class="fila">
+        <input id="usuario" placeholder="usuario de TikTok (sin @)" autocomplete="off" style="flex:1 1 220px">
+        <button class="principal" id="btnConectar">Conectar</button>
+        <button id="btnDesconectar" disabled>Desconectar</button>
+      </div>
+      <div class="estado"><span class="punto" id="punto"></span><span id="mensaje">Sin conexión</span></div>
+      <p class="nota">La cuenta tiene que estar en vivo en ese momento.</p>
+    </section>
+
+    <section aria-labelledby="t-prueba">
+      <h2 id="t-prueba">Probar sin LIVE</h2>
+      <div class="fila">
+        <input id="nombrePrueba" value="Valentina" aria-label="Nombre de quien envía la rosa" style="flex:1 1 160px">
+        <button class="principal" data-cantidad="1">Enviar 1 rosa</button>
+        <button data-cantidad="3">Combo de 3 rosas</button>
+      </div>
+      <p class="nota">Simula el regalo tal como llegaría desde TikTok, incluida la cola de giros.</p>
+    </section>
+
+    <section aria-labelledby="t-premios">
+      <h2 id="t-premios">Premios</h2>
+      <div class="encabezado-premios"><span>Premio</span><span>Peso</span><span></span></div>
+      <div id="listaPremios"></div>
+      <div class="fila" style="margin-top:10px">
+        <button id="btnAgregar">Agregar premio</button>
+        <button class="principal" id="btnGuardar">Guardar premios</button>
+      </div>
+      <p class="nota">El peso define qué tan seguido sale cada premio: un peso de 2 sale el doble que uno de 1.</p>
+      <div class="aviso" id="aviso" role="status"></div>
+    </section>
+
+    <section aria-labelledby="t-historial">
+      <h2 id="t-historial">Últimos giros</h2>
+      <ol class="historial" id="historial"></ol>
+    </section>
+  </div>
+
+  <aside class="vista" aria-labelledby="t-vista">
+    <section>
+      <h2 id="t-vista"> Ruleta </h2>
+      <iframe src="/ruleta?fondo=1" title="Vista previa del overlay"></iframe>
+      <p class="nota">Para OBS o TikTok LIVE Studio, agrega una fuente de navegador con esta dirección a 1080 × 1920:</p>
+      <p><code id="urlOverlay"></code></p>
+    </section>
+  </aside>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  const $ = (id) => document.getElementById(id);
+  $('urlOverlay').textContent = `${location.origin}/ruleta`;
+
+  // ---------- Conexión ----------
+  $('btnConectar').onclick = () => socket.emit('conectar', { usuario: $('usuario').value });
+  $('usuario').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('btnConectar').click(); });
+  $('btnDesconectar').onclick = () => socket.emit('desconectar');
+
+  socket.on('estado', (e) => {
+    $('mensaje').textContent = e.mensaje;
+    $('punto').classList.toggle('ok', e.conectado);
+    $('btnDesconectar').disabled = !e.conectado;
+    if (e.usuario && !$('usuario').value) $('usuario').value = e.usuario;
+  });
+  socket.on('disconnect', () => { $('mensaje').textContent = 'El servidor no responde. ¿Sigue abierta la terminal?'; $('punto').classList.remove('ok'); });
+
+  // ---------- Simulación ----------
+  document.querySelectorAll('[data-cantidad]').forEach((b) => {
+    b.onclick = () => socket.emit('simular', { usuario: $('nombrePrueba').value, cantidad: Number(b.dataset.cantidad) });
+  });
+
+  // ---------- Premios ----------
+  let premios = [];
+  function pintarPremios() {
+    const total = premios.reduce((s, p) => s + (Number(p.peso) > 0 ? Number(p.peso) : 0), 0) || 1;
+    $('listaPremios').innerHTML = '';
+    premios.forEach((p, i) => {
+      const fila = document.createElement('div');
+      fila.className = 'premio';
+      fila.innerHTML = `
+        <input aria-label="Premio ${i + 1}" maxlength="40">
+        <input aria-label="Peso del premio ${i + 1}" type="number" min="0" step="1">
+        <button aria-label="Quitar premio ${i + 1}" title="Quitar">✕</button>`;
+      const [texto, peso, quitar] = fila.children;
+      texto.value = p.texto;
+      peso.value = p.peso;
+      texto.oninput = () => { p.texto = texto.value; };
+      peso.oninput = () => { p.peso = Number(peso.value); pintarProbabilidades(); };
+      quitar.onclick = () => { premios.splice(i, 1); pintarPremios(); };
+      $('listaPremios').append(fila);
+      const prob = document.createElement('div');
+      prob.className = 'probabilidad';
+      prob.style.margin = '-4px 0 8px';
+      prob.textContent = `${Math.round((Math.max(0, p.peso) / total) * 100)}% de probabilidad`;
+      $('listaPremios').append(prob);
+    });
+  }
+  function pintarProbabilidades() {
+    const total = premios.reduce((s, p) => s + (Number(p.peso) > 0 ? Number(p.peso) : 0), 0) || 1;
+    document.querySelectorAll('.probabilidad').forEach((el, i) => {
+      el.textContent = `${Math.round((Math.max(0, premios[i].peso || 0) / total) * 100)}% de probabilidad`;
+    });
+  }
+  $('btnAgregar').onclick = () => { premios.push({ texto: 'Nuevo premio', peso: 1 }); pintarPremios(); };
+  $('btnGuardar').onclick = () => socket.emit('guardarPremios', premios);
+
+  socket.on('config', (cfg) => { premios = cfg.premios.map((p) => ({ ...p })); pintarPremios(); });
+  socket.on('aviso', (texto) => { $('aviso').textContent = texto; setTimeout(() => ($('aviso').textContent = ''), 3500); });
+
+  // ---------- Historial ----------
+  let historial = [];
+  function pintarHistorial() {
+    const lista = $('historial');
+    lista.innerHTML = '';
+    if (!historial.length) {
+      lista.innerHTML = '<li class="vacio">Todavía no hay giros. Envía una rosa de prueba.</li>';
+      return;
+    }
+    for (const g of historial.slice(0, 30)) {
+      const li = document.createElement('li');
+      const hora = new Date(g.hora).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      li.innerHTML = '<span></span><span class="etiqueta"></span>';
+      li.children[0].textContent = `${g.usuario} → ${g.premio}`;
+      li.children[1].textContent = `${g.origen === 'tiktok' ? 'LIVE' : 'Prueba'} · ${hora}`;
+      lista.append(li);
+    }
+  }
+  socket.on('historial', (h) => { historial = h; pintarHistorial(); });
+  socket.on('giro', (g) => { historial.unshift(g); pintarHistorial(); });
+</script>
+</body>
+</html>

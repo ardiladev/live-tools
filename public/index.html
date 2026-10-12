@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruleta de rosas — generador</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --fondo: #FBF4F6; --superficie: #FFFFFF; --texto: #2A0F33; --suave: #6E5874;
+    --borde: #EAD7DE; --acento: #E5386F; --acento-texto: #FFFFFF; --ok: #1F9D6B; --mal: #C2410C;
+    --fuente: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #1B0A21; --superficie: #26112D; --texto: #FBEFF3; --suave: #C6AFC9;
+      --borde: #43264B; --acento: #F0558A; --ok: #3CCB91; --mal: #FB8A5A;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fondo); color: var(--texto); font-family: var(--fuente); line-height: 1.45; }
+  .marco {
+    max-width: 1180px; margin: 0 auto; padding: 28px 20px 48px;
+    display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 28px; align-items: start;
+  }
+  header { grid-column: 1 / -1; }
+  h1 { font-size: 2rem; font-weight: 800; margin: 0 0 .2rem; letter-spacing: -.01em; }
+  header p { margin: 0; color: var(--suave); }
+  h2 { font-size: 1.15rem; font-weight: 800; margin: 0 0 .75rem; }
+  section { background: var(--superficie); border: 1px solid var(--borde); border-radius: 14px; padding: 18px; margin-bottom: 18px; }
+  .fila { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  label { display: grid; gap: 4px; font-size: .9rem; color: var(--suave); }
+  label.casilla { display: flex; align-items: center; gap: 8px; color: var(--texto); font-size: 1rem; }
+  input, textarea {
+    font: inherit; color: var(--texto); background: var(--fondo);
+    border: 1px solid var(--borde); border-radius: 10px; padding: .55rem .75rem; min-width: 0;
+  }
+  input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--acento); }
+  textarea { width: 100%; resize: vertical; font-size: .85rem; word-break: break-all; }
+  input:focus-visible, button:focus-visible, a:focus-visible, textarea:focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+  button, a.boton {
+    font: inherit; font-weight: 600; cursor: pointer; text-decoration: none;
+    border-radius: 10px; padding: .55rem 1rem; border: 1px solid var(--borde);
+    background: var(--superficie); color: var(--texto);
+  }
+  button.principal { background: var(--acento); border-color: var(--acento); color: var(--acento-texto); }
+  .estado { display: flex; align-items: center; gap: .5rem; margin-top: .75rem; color: var(--suave); }
+  .punto { width: 10px; height: 10px; border-radius: 50%; background: var(--mal); flex: none; }
+  .punto.ok { background: var(--ok); }
+  .nota { font-size: .9rem; color: var(--suave); margin: .6rem 0 0; }
+  .nota a { color: var(--acento); }
+
+  .premio { display: grid; grid-template-columns: minmax(0, 1fr) 76px 40px; gap: 8px; margin-bottom: 8px; }
+  .premio button { padding: 0; }
+  .encabezado-premios { display: grid; grid-template-columns: minmax(0, 1fr) 76px 40px; gap: 8px; font-size: .85rem; color: var(--suave); margin-bottom: 4px; }
+  .probabilidad { font-size: .85rem; color: var(--suave); margin: -4px 0 8px; }
+
+  ol.regalos { list-style: none; margin: 0; padding: 0; max-height: 220px; overflow: auto; }
+  ol.regalos li { display: flex; justify-content: space-between; gap: 12px; padding: .4rem 0; border-bottom: 1px solid var(--borde); font-size: .95rem; }
+  .etiqueta { font-size: .8rem; color: var(--suave); white-space: nowrap; }
+  .vacio { color: var(--suave); }
+
+  .vista { position: sticky; top: 20px; }
+  .vista iframe { width: 100%; aspect-ratio: 9 / 16; border: 0; border-radius: 14px; display: block; background: #6b6b6b; }
+  .aviso { min-height: 1.4em; font-size: .9rem; color: var(--acento); margin-top: .5rem; }
+
+  @media (max-width: 860px) {
+    .marco { grid-template-columns: 1fr; }
+    .vista { position: static; max-width: 360px; }
+  }
+</style>
+</head>
+<body>
+<div class="marco">
+  <header>
+    <h1>Ruleta de rosas</h1>
+    <p>Configura la ruleta, copia la URL y pégala como fuente de navegador en OBS o TikTok LIVE Studio. No hace falta dejar nada abierto en el computador.</p>
+  </header>
+
+  <div>
+    <section aria-labelledby="t-cuenta">
+      <h2 id="t-cuenta">1. Cuenta del LIVE</h2>
+      <div class="campos">
+        <label>Usuario de TikTok (sin @)
+          <input id="usuario" autocomplete="off" placeholder="ej. bydahko">
+        </label>
+        <label>Clave de Euler Stream (API key)
+          <input id="clave" type="password" autocomplete="off" placeholder="euler_…">
+        </label>
+      </div>
+      <p class="nota">
+        La ruleta recibe los regalos a través de <a href="https://www.eulerstream.com" target="_blank" rel="noopener">Euler Stream</a>
+        (el mismo servicio que usaba el programa local). Crea una cuenta gratis allí y copia tu API key.
+        La clave queda dentro de la URL: no la muestres en el LIVE ni la compartas.
+      </p>
+    </section>
+
+    <section aria-labelledby="t-regalo">
+      <h2 id="t-regalo">2. Regalo que activa la ruleta</h2>
+      <div class="campos">
+        <label>ID del regalo
+          <input id="giftId" inputmode="numeric" value="5655">
+        </label>
+        <label>Texto en pantalla
+          <input id="regalo" value="una rosa 🌹" maxlength="30">
+        </label>
+        <label>Giros por regalo
+          <input id="gpr" type="number" min="1" max="10" value="1">
+        </label>
+        <label>Máximo de giros por combo
+          <input id="max" type="number" min="1" max="100" value="20">
+        </label>
+      </div>
+      <p class="nota">La rosa es el 5655. Para usar otro regalo, activa “Conectar la vista previa al LIVE”, pide que te lo envíen y mira su ID abajo, en “Regalos recibidos”.</p>
+    </section>
+
+    <section aria-labelledby="t-premios">
+      <h2 id="t-premios">3. Premios</h2>
+      <div class="encabezado-premios"><span>Premio</span><span>Peso</span><span></span></div>
+      <div id="listaPremios"></div>
+      <div class="fila" style="margin-top:10px">
+        <button id="btnAgregar">Agregar premio</button>
+      </div>
+      <p class="nota">El peso define qué tan seguido sale cada premio: un peso de 2 sale el doble que uno de 1.</p>
+    </section>
+
+    <section aria-labelledby="t-url">
+      <h2 id="t-url">4. URL para OBS / TikTok LIVE Studio</h2>
+      <div class="fila" style="margin-bottom:10px">
+        <label class="casilla"><input type="checkbox" id="ocultar" checked> Ocultar la ruleta cuando no hay giros</label>
+        <label class="casilla"><input type="checkbox" id="sonido" checked> Sonido de clic</label>
+      </div>
+      <textarea id="url" rows="4" readonly aria-label="URL de la ruleta"></textarea>
+      <div class="fila" style="margin-top:10px">
+        <button class="principal" id="btnCopiar">Copiar URL</button>
+        <a class="boton" id="btnAbrir" target="_blank" rel="noopener">Abrir en otra pestaña</a>
+      </div>
+      <div class="aviso" id="aviso" role="status"></div>
+      <p class="nota">Fuente de navegador a 1080 × 1920. Si cambias algo aquí, la URL cambia: vuelve a copiarla y pégala en la fuente.</p>
+    </section>
+
+    <section aria-labelledby="t-regalos">
+      <h2 id="t-regalos">Regalos recibidos</h2>
+      <ol class="regalos" id="regalos"><li class="vacio">Activa “Conectar la vista previa al LIVE” para verlos aquí.</li></ol>
+    </section>
+  </div>
+
+  <aside class="vista" aria-labelledby="t-vista">
+    <section>
+      <h2 id="t-vista">Vista previa</h2>
+      <iframe id="vista" title="Vista previa de la ruleta"></iframe>
+      <div class="estado"><span class="punto" id="punto"></span><span id="mensaje">Cargando…</span></div>
+      <div class="fila" style="margin-top:12px">
+        <input id="nombrePrueba" value="Valentina" aria-label="Nombre de quien envía la rosa" style="flex:1 1 120px">
+        <button class="principal" data-cantidad="1">Probar 1</button>
+        <button data-cantidad="3">Combo 3</button>
+      </div>
+      <label class="casilla" style="margin-top:12px"><input type="checkbox" id="vistaEnVivo"> Conectar la vista previa al LIVE</label>
+      <p class="nota">Déjalo apagado durante el LIVE: si la vista previa y OBS están conectados a la vez, cada uno sortea su propio premio.</p>
+    </section>
+  </aside>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const CAMPOS = ['usuario', 'clave', 'giftId', 'regalo', 'gpr', 'max'];
+  const OPCIONES = ['ocultar', 'sonido', 'vistaEnVivo'];
+
+  let premios = [
+    { texto: 'Baile sencillo', peso: 2 },
+    { texto: 'Saludo especial', peso: 3 },
+    { texto: 'Canción a elección', peso: 1 },
+  ];
+
+  // ---------- Codificación de la configuración en la URL ----------
+  // Va en el fragmento (#c=…), que el navegador nunca envía a ningún servidor:
+  // ni GitHub ni nadie más ve la clave al cargar la página.
+  const aBase64Url = (obj) => {
+    const bytes = new TextEncoder().encode(JSON.stringify(obj));
+    let bin = '';
+    bytes.forEach((b) => { bin += String.fromCharCode(b); });
+    return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  };
+  const deBase64Url = (s) => {
+    const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, (c) => c.charCodeAt(0))));
+  };
+
+  function configActual() {
+    return {
+      u: $('usuario').value.replace(/^@/, '').trim(),
+      k: $('clave').value.trim(),
+      g: $('giftId').value.trim() || '5655',
+      r: $('regalo').value.trim() || 'una rosa 🌹',
+      gpr: Math.max(1, Number($('gpr').value) || 1),
+      max: Math.max(1, Number($('max').value) || 20),
+      p: premios.filter((p) => p.texto.trim()).map((p) => [p.texto.trim().slice(0, 40), Math.max(0, Number(p.peso) || 0)]),
+    };
+  }
+
+  function urlRuleta({ prueba = false } = {}) {
+    const url = new URL('ruleta.html', location.href);
+    if (prueba) {
+      url.searchParams.set('fondo', '1');
+      if (!$('vistaEnVivo').checked) url.searchParams.set('prueba', '1');
+    } else {
+      if ($('ocultar').checked) url.searchParams.set('ocultar', '1');
+      if (!$('sonido').checked) url.searchParams.set('sonido', '0');
+    }
+    url.hash = 'c=' + aBase64Url(configActual());
+    return url.href;
+  }
+
+  // ---------- Guardado local (solo en este navegador) ----------
+  function guardar() {
+    try {
+      const datos = { premios };
+      CAMPOS.forEach((id) => { datos[id] = $(id).value; });
+      OPCIONES.forEach((id) => { datos[id] = $(id).checked; });
+      localStorage.setItem('ruleta-generador', JSON.stringify(datos));
+    } catch { /* sin almacenamiento: no pasa nada */ }
+  }
+
+  function cargar() {
+    // 1) Si esta página se abrió con #c=… (por ejemplo, pegando una URL vieja), se usa esa.
+    const c = new URLSearchParams(location.hash.slice(1)).get('c');
+    if (c) {
+      try {
+        const cfg = deBase64Url(c);
+        $('usuario').value = cfg.u || '';
+        $('clave').value = cfg.k || '';
+        $('giftId').value = cfg.g || '5655';
+        $('regalo').value = cfg.r || 'una rosa 🌹';
+        $('gpr').value = cfg.gpr || 1;
+        $('max').value = cfg.max || 20;
+        if (Array.isArray(cfg.p) && cfg.p.length) premios = cfg.p.map(([texto, peso]) => ({ texto, peso }));
+        history.replaceState(null, '', location.pathname + location.search);
+        return;
+      } catch { /* URL dañada: se sigue con lo guardado */ }
+    }
+    // 2) Si no, lo último que se configuró en este navegador.
+    try {
+      const datos = JSON.parse(localStorage.getItem('ruleta-generador') || 'null');
+      if (!datos) return;
+      CAMPOS.forEach((id) => { if (datos[id] != null) $(id).value = datos[id]; });
+      OPCIONES.forEach((id) => { if (datos[id] != null) $(id).checked = datos[id]; });
+      if (Array.isArray(datos.premios) && datos.premios.length) premios = datos.premios;
+    } catch { /* nada guardado */ }
+  }
+
+  // ---------- Premios ----------
+  function pintarPremios() {
+    $('listaPremios').innerHTML = '';
+    premios.forEach((p, i) => {
+      const fila = document.createElement('div');
+      fila.className = 'premio';
+      fila.innerHTML = `
+        <input aria-label="Premio ${i + 1}" maxlength="40">
+        <input aria-label="Peso del premio ${i + 1}" type="number" min="0" step="1">
+        <button aria-label="Quitar premio ${i + 1}" title="Quitar">✕</button>`;
+      const [texto, peso, quitar] = fila.children;
+      texto.value = p.texto;
+      peso.value = p.peso;
+      texto.oninput = () => { p.texto = texto.value; actualizar(); };
+      peso.oninput = () => { p.peso = Number(peso.value); pintarProbabilidades(); actualizar(); };
+      quitar.onclick = () => { premios.splice(i, 1); pintarPremios(); actualizar(); };
+      const prob = document.createElement('div');
+      prob.className = 'probabilidad';
+      $('listaPremios').append(fila, prob);
+    });
+    pintarProbabilidades();
+  }
+  function pintarProbabilidades() {
+    const total = premios.reduce((s, p) => s + Math.max(0, Number(p.peso) || 0), 0) || 1;
+    document.querySelectorAll('.probabilidad').forEach((el, i) => {
+      el.textContent = `${Math.round((Math.max(0, Number(premios[i].peso) || 0) / total) * 100)}% de probabilidad`;
+    });
+  }
+  $('btnAgregar').onclick = () => { premios.push({ texto: 'Nuevo premio', peso: 1 }); pintarPremios(); actualizar(); };
+
+  // ---------- URL y vista previa ----------
+  function avisar(texto) {
+    $('aviso').textContent = texto;
+    clearTimeout(avisar.t);
+    avisar.t = setTimeout(() => ($('aviso').textContent = ''), 4000);
+  }
+
+  function validar() {
+    const cfg = configActual();
+    if (!cfg.u) return 'Falta el usuario de TikTok.';
+    if (!cfg.k) return 'Falta la clave de Euler Stream.';
+    if (cfg.p.length < 2) return 'La ruleta necesita al menos 2 premios.';
+    if (!cfg.p.some(([, peso]) => peso > 0)) return 'Algún premio tiene que tener peso mayor a 0.';
+    return '';
+  }
+
+  // La vista previa se recarga con un pequeño retraso para no reiniciarla en cada tecla.
+  let temporizador;
+  function actualizar() {
+    guardar();
+    const url = urlRuleta();
+    $('url').value = url;
+    $('btnAbrir').href = url;
+    clearTimeout(temporizador);
+    temporizador = setTimeout(() => {
+      const nueva = urlRuleta({ prueba: true });
+      if ($('vista').src !== nueva) $('vista').src = nueva;
+    }, 500);
+  }
+
+  CAMPOS.forEach((id) => $(id).addEventListener('input', actualizar));
+  OPCIONES.forEach((id) => $(id).addEventListener('change', actualizar));
+
+  $('btnCopiar').onclick = async () => {
+    const problema = validar();
+    if (problema) return avisar(problema);
+    try {
+      await navigator.clipboard.writeText($('url').value);
+      avisar('URL copiada. Pégala en la fuente de navegador.');
+    } catch {
+      $('url').select();
+      avisar('Selecciona la URL y cópiala con Ctrl+C.');
+    }
+  };
+
+  document.querySelectorAll('[data-cantidad]').forEach((b) => {
+    b.onclick = () => $('vista').contentWindow?.postMessage(
+      { tipo: 'simular', usuario: $('nombrePrueba').value, cantidad: Number(b.dataset.cantidad) },
+      location.origin,
+    );
+  });
+
+  // ---------- Mensajes que manda la ruleta de la vista previa ----------
+  const regalos = [];
+  addEventListener('message', (ev) => {
+    if (ev.origin !== location.origin || ev.data?.fuente !== 'ruleta') return;
+    if (ev.data.tipo === 'estado') {
+      $('mensaje').textContent = ev.data.mensaje;
+      $('punto').classList.toggle('ok', ev.data.ok);
+    }
+    if (ev.data.tipo === 'regalo') {
+      regalos.unshift({ ...ev.data, hora: new Date() });
+      regalos.length = Math.min(regalos.length, 30);
+      const lista = $('regalos');
+      lista.innerHTML = '';
+      for (const r of regalos) {
+        const li = document.createElement('li');
+        li.innerHTML = '<span></span><span class="etiqueta"></span>';
+        li.children[0].textContent = `${r.usuario} · ${r.nombre || 'regalo'} x${r.cantidad}`;
+        li.children[1].textContent = `ID ${r.giftId}${r.coincide ? ' · gira' : ''}`;
+        lista.append(li);
+      }
+    }
+  });
+
+  cargar();
+  pintarPremios();
+  actualizar();
+</script>
+</body>
+</html>
