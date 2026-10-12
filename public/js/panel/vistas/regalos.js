@@ -4,7 +4,7 @@
 
 import * as almacen from '../almacen.js';
 import * as envivo from '../envivo.js';
-import { el, tarjeta, campo, nota, numero } from '../ui.js';
+import { el, tarjeta, campo, casilla, nota, numero } from '../ui.js';
 
 const ORDENES = {
   recientes: (a, b) => (b.ultimo || 0) - (a.ultimo || 0),
@@ -12,7 +12,7 @@ const ORDENES = {
   monedas: (a, b) => (b.diamantes || 0) - (a.diamantes || 0),
   nombre: (a, b) => nombreDe(a).localeCompare(nombreDe(b), 'es'),
 };
-const nombreDe = (r) => r.nombrePropio || r.nombre || '';
+const nombreDe = almacen.nombreRegalo;
 const fecha = (ms) => (ms ? new Date(ms).toLocaleString('es-CO', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—');
 
 // Se recuerdan mientras la página esté abierta.
@@ -56,12 +56,15 @@ export default {
         placeholder: r.nombre || 'Escribe un nombre…',
         maxLength: 40,
         'aria-label': `Nombre del regalo ${r.giftId}`,
-        onchange: (e) => almacen.anotarRegalo(r.giftId, { nombrePropio: e.target.value.trim() }),
+        onchange: (e) => almacen.nombrarRegalo(r.giftId, e.target.value.trim()),
       });
+      const anteriores = r.idsAnteriores?.length
+        ? el('div', { class: 'hora', title: 'Códigos que tuvo antes este regalo' }, 'antes: ', r.idsAnteriores.join(', '))
+        : null;
       return el('tr', {},
         el('td', { style: 'width:40px' }, r.imagen ? el('img', { src: r.imagen, alt: '', width: 32, height: 32 }) : el('span', { 'aria-hidden': 'true' }, '🎁')),
         el('td', { style: 'min-width:160px' }, nombre),
-        el('td', {}, el('code', {}, r.giftId)),
+        el('td', {}, el('code', {}, r.giftId), anteriores),
         el('td', {}, r.diamantes ? numero(r.diamantes) : '—'),
         el('td', {}, numero(r.veces || 0)),
         el('td', { class: 'hora', style: 'white-space:nowrap' }, fecha(r.ultimo)),
@@ -71,7 +74,37 @@ export default {
           el('button', { onclick: () => almacen.quitarRegalo(r.giftId), title: 'Quitar del catálogo', 'aria-label': `Quitar ${r.giftId}` }, '✕')));
     }
 
+    // ---------- Cambios de código: los hechos y los que hay que confirmar ----------
+    const avisosCodigo = el('div');
+    const describir = (id) => {
+      const r = almacen.regalos()[id];
+      return `${id}${r?.diamantes ? ` · ${numero(r.diamantes)} monedas` : ''} · ${numero(r?.veces || 0)} veces`;
+    };
+
+    function pintarAvisosCodigo() {
+      const preguntas = almacen.sugerencias().map((s) => {
+        const nombre = nombreDe(almacen.regalos()[s.viejo]) || nombreDe(almacen.regalos()[s.nuevo]);
+        return el('div', { class: 'opciones', style: 'display:block;border-color:var(--acento)' },
+          el('p', { style: 'margin:0 0 4px' }, el('b', {}, `¿“${nombre}” cambió de código?`)),
+          el('p', { class: 'nota', style: 'margin:0 0 8px' }, `Antes: ${describir(s.viejo)}  →  Ahora: ${describir(s.nuevo)}`),
+          el('div', { style: 'display:flex;gap:6px;flex-wrap:wrap' },
+            el('button', { class: 'principal', onclick: () => almacen.responderSugerencia(s, true) }, `Sí, reemplazar por ${s.nuevo}`),
+            el('button', { onclick: () => almacen.responderSugerencia(s, false) }, 'No, son regalos distintos')));
+      });
+      const cambios = almacen.cambiosDeCodigo();
+      const hechos = cambios.length
+        ? el('div', { class: 'opciones', style: 'display:block' },
+            el('p', { style: 'margin:0 0 6px' }, el('b', {}, 'Códigos actualizados')),
+            el('ul', { style: 'margin:0 0 8px;padding-left:18px' }, ...cambios.map((c) =>
+              el('li', {}, `${c.nombre || 'Regalo'}: ${c.viejo} → ${c.nuevo}`,
+                c.enRuleta ? el('b', { style: 'color:var(--mal)' }, ' · la ruleta se actualizó: vuelve a copiar su URL para OBS') : null))),
+            el('button', { onclick: () => almacen.olvidarCambiosDeCodigo() }, 'Entendido'))
+        : null;
+      avisosCodigo.replaceChildren(...preguntas, hechos || '');
+    }
+
     function pintar() {
+      pintarAvisosCodigo();
       const todos = Object.values(almacen.regalos());
       const q = busqueda.trim().toLowerCase();
       const visibles = todos
@@ -114,7 +147,8 @@ export default {
         e.preventDefault();
         const id = nuevoId.replace(/\D/g, '');
         if (!id) return avisar('Escribe el ID (solo números).');
-        almacen.anotarRegalo(id, { nombrePropio: nuevoNombre.trim(), ...(almacen.regalos()[id] ? {} : { ultimo: Date.now() }) });
+        if (!almacen.regalos()[id]) almacen.anotarRegalo(id, { ultimo: Date.now() });
+        almacen.nombrarRegalo(id, nuevoNombre.trim());
         e.target.reset();
         nuevoId = nuevoNombre = '';
         avisar(`Regalo ${id} agregado.`);
@@ -129,8 +163,17 @@ export default {
 
     return [
       tarjeta('Regalos guardados', { ancha: true },
-        el('div', { style: 'display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px' },
+        el('div', { style: 'display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:8px' },
           botonConectar, estadoConexion),
+        casilla('Conectar automáticamente cada vez que abra el panel', {
+          marcada: almacen.preferencias().autoConectar,
+          alCambiar: (v) => {
+            almacen.preferencias().autoConectar = v;
+            almacen.guardar();
+            if (v && !envivo.activa()) envivo.conectar();
+          },
+        }),
+        el('div', { style: 'margin:12px 0 4px' }, avisosCodigo),
         el('div', { class: 'campos', style: 'margin-bottom:8px' },
           campo('Buscar por nombre o ID:', { valor: busqueda, placeholder: 'ej. capibara o 17490', alCambiar: (v) => { busqueda = v; pintar(); } }),
           campo('Ordenar por:', {
@@ -145,7 +188,8 @@ export default {
               el('th', {}, ''), el('th', {}, 'Nombre'), el('th', {}, 'ID'), el('th', {}, 'Monedas'),
               el('th', {}, 'Veces'), el('th', {}, 'Último'), el('th', {}, ''))),
             cuerpo)),
-        nota('Los regalos se guardan solo en este navegador y solo mientras el panel está conectado al LIVE. ',
+        nota('La lista se guarda en este navegador y continúa en cada LIVE, pero solo anota regalos mientras el panel está abierto y conectado. ',
+          'Si un regalo llega con un código nuevo, se reescribe solo cuando TikTok manda su nombre y su precio; si no, te lo preguntamos aquí arriba. ',
           '“Usar en la ruleta” cambia el regalo de la ruleta: después vuelve a copiar su URL para OBS.')),
       tarjeta('Agregar un regalo a mano', { ancha: true },
         formulario,

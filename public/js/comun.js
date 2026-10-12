@@ -118,8 +118,8 @@ const CIERRES = {
   4400: ['Datos inválidos: revisa el usuario de TikTok.', null],
   4401: ['La clave de Euler Stream no es válida.', null],
   4403: ['La clave no tiene permiso para esta cuenta.', null],
-  4404: ['@{u} no está en vivo. Reintentando en 30 s…', 30000],
-  4005: ['@{u} terminó el LIVE. Reintentando en 30 s…', 30000],
+  4404: ['@{u} no está en vivo. Reintentando en 1 min…', 60000],
+  4005: ['@{u} terminó el LIVE. Reintentando en 1 min…', 60000],
   4429: ['Demasiadas conexiones con esta clave. Reintentando en 60 s…', 60000],
   4555: ['Se cumplieron 8 h de conexión. Reconectando…', 2000],
 };

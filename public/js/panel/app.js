@@ -105,3 +105,9 @@ envivo.alCambiar((cambio) => { if (cambio.estado) pintarCuenta(); });
 
 pintarCuenta();
 navegar();
+
+// Con la conexión automática, cada vez que se abre el panel se conecta solo al LIVE: así el
+// catálogo de regalos sigue creciendo en cada transmisión sin acordarse de pulsar nada.
+// Si la cuenta aún no está en vivo, reintenta cada minuto hasta que lo esté.
+const { usuario, clave } = almacen.conexion();
+if (almacen.preferencias().autoConectar && usuario && clave) envivo.conectar();
