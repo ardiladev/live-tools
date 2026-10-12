@@ -9,6 +9,9 @@
 // Ciclo de vida de una vista: al entrar se llama `vista.render({ senal })`; al salir se
 // cancela `senal` (AbortSignal), y todo lo que la vista suscribió con ella se suelta solo.
 //
+// Al arrancar también enciende los cambios en vivo (sincronizar.js), que siguen funcionando
+// sea cual sea la vista abierta.
+//
 // Secciones: 1. Arranque · 2. Riel · 3. Menú · 4. Navegación · 5. Barra superior
 //            6. Compatibilidad con el generador anterior · 7. Eventos y conexión automática
 // =============================================================================

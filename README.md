@@ -454,6 +454,8 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
 1. **Sin conexión:** sirve `public/` con cualquier servidor estático (por ejemplo
    `python -m http.server 8080 -d public` y abre `http://localhost:8080`) y usa los botones de prueba de
    cada tarjeta. Abrir `index.html` con doble clic no sirve: los módulos JS necesitan `http://`.
+   Ojo: en local el panel **también usa el Supabase real** y crea filas de prueba en la tabla `widgets`
+   (cada navegador u origen crea las suyas). Se pueden borrar desde el dashboard (Table Editor → widgets).
 2. **Eventos simulados en Actividad:** en la consola del navegador:
    ```js
    const envivo = await import('./js/panel/envivo.js');

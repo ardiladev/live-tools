@@ -197,8 +197,9 @@ const claveDePar = (a, b) => [a, b].sort().join('|');
 
 /**
  * Cambia el código de un regalo: el registro de `viejo` pasa a `nuevo`, sumando lo que ya
- * hubiera en `nuevo` y anotando el código anterior. Si la ruleta usaba el código viejo,
- * se actualiza y se deja un aviso para volver a copiar su URL.
+ * hubiera en `nuevo` y anotando el código anterior. Si la ruleta usaba el código viejo, se
+ * actualiza y se deja un aviso (con cambios en vivo, sincronizar.js lo lleva solo a OBS;
+ * sin ellos, el aviso pide volver a copiar su URL).
  */
 export function cambiarCodigo(viejo, nuevo) {
   const anterior = estado.regalos[viejo];

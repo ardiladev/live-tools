@@ -13,7 +13,7 @@
   gap: 3vmin;
   transition: opacity .4s ease, transform .4s ease;
 }
-/* Con ?ocultar=1 la escena se esconde mientras no hay giros. */
+/* Con la opción "Ocultar la ruleta cuando no hay giros" (oc = 1 o ?ocultar=1) la escena se esconde en reposo. */
 .escena.oculta { opacity: 0; transform: scale(.92); }
 
 /* ---------- Aviso: "Fulano envió una rosa" ---------- */

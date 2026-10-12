@@ -11,7 +11,8 @@
 // Para agregar una función nueva:
 //   1. Crea su vista en js/panel/vistas/ (copia una parecida, por ejemplo alertas.js).
 //   2. Si es un widget para OBS: su .html en public/, su CSS en css/widgets/ y su
-//      lógica en js/widgets/ (copia los de alertas).
+//      lógica en js/widgets/ (copia los de alertas). En su vista, regístralo con
+//      sincronizar.registrar(id, { config, validar }) para que tenga cambios en vivo.
 //   3. Agrégala aquí, en el grupo que corresponda (o en un grupo o categoría nuevos).
 //      Íconos disponibles: ver ICONOS en js/panel/ui.js.
 // =============================================================================

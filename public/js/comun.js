@@ -1,9 +1,11 @@
 // =============================================================================
 // comun.js — Piezas compartidas por los widgets (ruleta, metas, alertas…) y el panel.
 //
-// Un widget es una página .html que se pone en OBS. Toda su configuración viaja en la
-// propia URL, después de "#c=", así que funciona sin servidor: se conecta a TikTok desde
-// el navegador a través de Euler Stream y reacciona a los eventos del LIVE.
+// Un widget es una página .html que se pone en OBS. Su URL lleva, después de "#c=", el
+// usuario de TikTok, la API key y, o bien el identificador del widget (la configuración
+// llega en vivo desde Supabase, ver js/nube.js), o bien toda la configuración. Funciona sin
+// servidor propio: se conecta a TikTok desde el navegador a través de Euler Stream y
+// reacciona a los eventos del LIVE.
 //
 // Secciones:
 //   1. Configuración en la URL       codificar · decodificar · leerConfig
@@ -17,9 +19,10 @@
 // -----------------------------------------------------------------------------
 // 1. Configuración en la URL
 // -----------------------------------------------------------------------------
-// La configuración va en el fragmento (#c=…) porque el navegador nunca lo envía a ningún
-// servidor: ni GitHub Pages ni nadie ve la clave al cargar la página. Se guarda como
-// JSON → UTF-8 → base64 "url-safe" (sin + / =), para que no se rompa al copiarla.
+// Los datos van en el fragmento (#c=…) porque el navegador nunca lo envía a ningún
+// servidor: ni GitHub Pages ni nadie ve la clave al cargar la página. Se guardan como
+// JSON → UTF-8 → base64 "url-safe" (sin + / =), para que no se rompan al copiarlos.
+// El panel también usa `codificar` para la URL de la vista previa.
 
 /** Objeto → texto apto para URL. */
 export function codificar(obj) {
@@ -35,7 +38,7 @@ export function decodificar(texto) {
   return JSON.parse(new TextDecoder().decode(Uint8Array.from(binario, (c) => c.charCodeAt(0))));
 }
 
-/** La configuración del widget: `null` si la URL no trae, o `{ error: true }` si viene dañada. */
+/** Lo que trae el #c= de la URL: `null` si no trae nada, o `{ error: true }` si viene dañado. */
 export function leerConfig() {
   const c = new URLSearchParams(location.hash.slice(1)).get('c');
   if (!c) return null;
@@ -256,6 +259,7 @@ export function avisarPadre(datos) {
   if (window.parent !== window) window.parent.postMessage({ fuente: 'widget', ...datos }, location.origin);
 }
 
+// Copia de la última configuración recibida de Supabase, por widget (clave + identificador).
 const CLAVE_CACHE = 'live-tools:widget:';
 
 function leerCache(id) {
@@ -331,7 +335,8 @@ export function iniciarWidget({ cfg, alEvento, alConfig = () => {} }) {
     avisarPadre({ tipo: 'estado', ok, mensaje });
   }
 
-  // Si el panel cambia la configuración (cambia el #c=…), lo más seguro es empezar de cero.
+  // Si cambia el #c=… de la URL (por ejemplo, en la vista previa del panel), lo más seguro
+  // es empezar de cero. Los cambios en vivo de Supabase NO pasan por aquí: no recargan.
   addEventListener('hashchange', () => location.reload());
 
   // Eventos de prueba que manda el panel. Solo se aceptan desde el mismo origen.
