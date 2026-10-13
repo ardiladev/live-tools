@@ -1,0 +1,116 @@
+/* ==========================================================================
+   subathon.css — Widget "Subathon" (subathon.html)
+   Una píldora de cristal oscuro que flota en el centro: título arriba, el reloj
+   grande con cifras de ancho fijo y espaciado amplio, y el estado abajo. Al
+   sumarse tiempo, la píldora late con un pulso dorado y sube un "+1:30". Con
+   menos de un minuto, las cifras toman el color de alerta (--mal) con brillo.
+   La fase llega en data-fase: listo | corre | pausa | fin (js/widgets/subathon.js).
+   Las medidas van en vw: el widget depende solo del ancho de la fuente de OBS.
+
+   Secciones: 1. Escena · 2. Píldora · 3. Reloj · 4. Fases · 5. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+.escena {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 3vw;
+  box-sizing: border-box;
+}
+
+
+/* ---------- 2. Píldora ---------- */
+.subathon {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .6vw;
+  padding: 2.4vw 6vw 2.2vw;
+  border-radius: 999px;
+  transition: box-shadow .4s ease;
+}
+.titulo {
+  color: var(--oro-texto);
+  font-weight: 600;
+  font-size: 2.6vw;
+  letter-spacing: .3em;
+  text-transform: var(--mayus);
+}
+.titulo:empty { display: none; }
+.estado {
+  min-height: 1.2em;
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: 2.2vw;
+  letter-spacing: var(--espaciado-widget);
+  text-transform: var(--mayus);
+  opacity: .75;
+}
+
+
+/* ---------- 3. Reloj ---------- */
+/* Montserrat con cifras de ancho fijo y espaciado amplio: el reloj no "baila" al cambiar. */
+.tiempo {
+  color: var(--texto-sec);
+  font-weight: 700;
+  font-size: 11vw;
+  line-height: 1;
+  letter-spacing: .08em;
+  font-variant-numeric: tabular-nums;
+  transition: color .4s ease, text-shadow .4s ease;
+}
+
+
+/* ---------- 4. Fases ---------- */
+.subathon[data-fase="pausa"] .tiempo { animation: parpadeo 1.4s ease-in-out infinite; }
+.subathon[data-fase="fin"] .tiempo { opacity: .55; }
+.subathon[data-fase="fin"] .estado { color: var(--mal); opacity: 1; }
+.subathon.tope .estado { color: var(--activo); opacity: 1; }
+/* Menos de un minuto: color de alerta suave con brillo. */
+.subathon.urgente .tiempo {
+  color: var(--mal);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--mal) 60%, transparent);
+  animation: latido 1s ease-in-out infinite;
+}
+
+
+/* ---------- 5. Animaciones ---------- */
+/* Pulso dorado al sumarse tiempo: brillo de la píldora y destello de las cifras. */
+.pulso { animation: pulso .9s ease-out; }
+.pulso .tiempo { animation: destello .9s ease-out; }
+.subathon.urgente.pulso .tiempo { animation: destello .9s ease-out, latido 1s ease-in-out infinite; }
+
+.sumas {
+  position: absolute;
+  top: 0;
+  right: 8%;
+  pointer-events: none;
+}
+.suma {
+  position: absolute;
+  right: 0;
+  color: var(--activo);
+  font-weight: 800;
+  font-size: 3.6vw;
+  white-space: nowrap;
+  text-shadow: 0 0 12px var(--borde-color), var(--sombra-texto);
+  animation: subir 1.4s ease-out forwards;
+}
+
+@keyframes pulso {
+  30% { box-shadow: 0 0 0 1px var(--borde-color), 0 0 46px color-mix(in srgb, var(--borde-color) 70%, transparent); }
+}
+@keyframes destello {
+  25% { color: var(--activo); text-shadow: 0 0 22px color-mix(in srgb, var(--activo) 80%, transparent); }
+}
+@keyframes subir { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-5vw); } }
+@keyframes parpadeo { 50% { opacity: .4; } }
+@keyframes latido { 50% { transform: scale(1.03); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .tiempo, .subathon { transition: none; }
+  .pulso, .pulso .tiempo, .suma, .subathon .tiempo { animation: none !important; }
+}

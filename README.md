@@ -3,7 +3,7 @@
 Herramientas para transmisiones de TikTok LIVE, al estilo de TikFinity: una **ruleta de regalos**,
 **metas** con barra de progreso, **alertas** animadas, una **carrera de regalos** entre integrantes con reloj
 por rondas, una **batalla de regalos** (tira y afloja entre dos equipos), un **jefe del LIVE** (reto cooperativo con
-barra de vida) y herramientas para ver la **actividad** del LIVE
+barra de vida), un reloj de **subathon** al que el público le suma tiempo y herramientas para ver la **actividad** del LIVE
 y armar un **catálogo con el ID de cada regalo**.
 
 Los widgets se pegan como **URL** en OBS o en TikTok LIVE Studio y funcionan solos: no hay que dejar
@@ -68,7 +68,7 @@ con **Supabase** para los cambios en vivo: no hay servidor propio, ni Node.js, n
    premios y regalo y prueba con el botón **Test**.
 4. Pulsa **Copy URL** y, en OBS, agrega una **Fuente de navegador** con esa URL
    (en TikTok LIVE Studio: fuente **Enlace**). Tamaños recomendados:
-   ruleta 1080 × 1920 · meta 1200 × 400 · alertas 1280 × 720 · carrera 1920 × 400 · batalla 1600 × 300 · jefe 1920 × 300 (arriba de la escena).
+   ruleta 1080 × 1920 · meta 1200 × 400 · alertas 1280 × 720 · carrera 1920 × 400 · batalla 1600 × 300 · jefe 1920 × 300 (arriba de la escena) · subathon 900 × 300.
 5. Listo. Cuando la cuenta esté en vivo, el widget se conecta solo. Si el LIVE todavía no empieza
    o se corta, reintenta cada minuto.
 
@@ -92,6 +92,7 @@ desplegables** (menú) → **vistas** (contenido).
 | | Juegos | Carrera de regalos | Franja horizontal con 1 a 6 integrantes: cada uno tiene su regalo, color y meta; cada regalo suma monedas (precio × cantidad) a su barra. Reloj por rondas en el centro que se **inicia, pausa y reinicia desde el panel** y llega a OBS al instante. Al terminar, muestra quién ganó. |
 | | | Batalla de regalos | Tira y afloja entre dos equipos: cada uno tiene su regalo, monedas por regalo, color y foto opcional. La barra central empieza en 50 % y se corre hacia el equipo que lleva más monedas. Botón **Reiniciar batalla** que pone los puntos en 0 en OBS al instante. |
 | | | Jefe del LIVE | Reto cooperativo (boss raid): el chat le quita vida a un jefe con likes y regalos antes de que se acabe el tiempo. Nombre, vida total, tiempo límite, texto de victoria y daño por like y por moneda. Raid con **Iniciar / Pausar / Reiniciar** que llegan a OBS al instante. En 0 muestra «Reto desbloqueado» con brillo dorado; si se acaba el tiempo, «Tiempo agotado». |
+| | | Subathon | Reloj hacia atrás al que el público le suma tiempo: segundos por cada 100 likes y por cada moneda de regalo, con un **tope**. Tiempo inicial y tope en minutos. **Iniciar / Pausar / +5 min / Reiniciar** llegan a OBS al instante. Pulso dorado al sumarse tiempo y color de alerta con menos de 1 minuto. |
 | Actividad | En vivo | Eventos en vivo | Conecta el panel al LIVE: contadores (espectadores, likes, seguidores, compartidos, monedas, regalos, mensajes), lista de eventos con filtros y regalos de la sesión. |
 | | Regalos | Buscador de regalos | Catálogo permanente con el ID de cada regalo recibido. Nombres propios, búsqueda, “Copiar ID”, “Usar en ruleta” / “Usar en premium”, agregar a mano, conexión automática y seguimiento de regalos que cambian de código. |
 | Ajustes | Cuenta | Conexión con TikTok | Usuario de TikTok y API key de Euler Stream, compartidos por todos los widgets. |
@@ -106,7 +107,7 @@ Cada widget tiene una tarjeta con:
   (obsidiana o perla, opacidad, desenfoque), bordes (grosor, metálico o liso), resplandor, esquinas, colores
   (acento con degradado, texto, bordes, activo, insignias) y tipografía (fuente, espaciado, mayúsculas). La vista
   previa cambia al instante y, con cambios en vivo, OBS también. «Aplicar este estilo a todos los widgets» lo copia
-  en las ruletas, las metas, las alertas, la carrera, la batalla y el jefe.
+  en las ruletas, las metas, las alertas, la carrera, la batalla, el jefe y el subathon.
 - **Vista previa**: el widget real en modo prueba; **nunca** se conecta al LIVE.
 
 ---
@@ -124,6 +125,7 @@ flowchart LR
   EU -->|eventos JSON| W4[carrera.html]
   EU -->|eventos JSON| W5[batalla.html]
   EU -->|eventos JSON| W6[jefe.html]
+  EU -->|eventos JSON| W7[subathon.html]
   EU -->|eventos JSON| P[Panel index.html<br/>Actividad / Buscador]
   P -->|genera la URL fija #c=u,k,w| W1
   P -->|guardar_widget| SB[Supabase<br/>tabla widgets + Realtime]
@@ -133,6 +135,7 @@ flowchart LR
   SB -->|configuración y reloj al instante| W4
   SB -->|configuración y reinicio al instante| W5
   SB -->|configuración y reloj al instante| W6
+  SB -->|reloj y +5 min al instante| W7
   P -->|eventos de prueba postMessage| W1
   W1 --> OBS[OBS / LIVE Studio]
   W2 --> OBS
@@ -140,6 +143,7 @@ flowchart LR
   W4 --> OBS
   W5 --> OBS
   W6 --> OBS
+  W7 --> OBS
 ```
 
 - **El panel no es un servidor.** Es una página estática que genera URLs. GitHub Pages solo sirve
@@ -172,6 +176,7 @@ La configuración de cada widget (en Supabase o en la URL completa) usa estas cl
 | `alertas.html` | `ev` eventos `{regalo, follow, share}` · `min` monedas mínimas · `d` segundos · `s` sonido |
 | `batalla.html` | `a`, `b` equipos `{n nombre, g id del regalo, v monedas por regalo, c color, av foto (URL https), img imagen del regalo}` · `ro` ronda (al cambiar, puntos a 0) · `s` sonido |
 | `jefe.html` | `ti` nombre del jefe · `hp` vida total · `t` reloj (como en la carrera) · `ro` ronda (al cambiar, vida llena) · `dl` vida por like · `dr` vida por moneda de regalo · `v` monedas de un regalo sin precio · `tv` texto de victoria · `sr` solo con el reloj en marcha · `s` sonido |
+| `subathon.html` | `ti` título · `t` reloj base (como en la carrera) · `ro` ronda (al cambiar, se borra lo sumado) · `ex` ms agregados con «+5 min» · `cap` tope en segundos · `sl` segundos por 100 likes · `sd` segundos por moneda · `v` monedas de un regalo sin precio · `s` sonido |
 | `carrera.html` | `ti` título · `j` integrantes `[{i id, n nombre, c color, g id del regalo, gn nombre del regalo, v monedas por regalo, m meta, img imagen}]` · `t` reloj `{e listo/corre/pausa, d segundos, fin hora de término, r ms restantes}` · `ro` ronda (al cambiar, puntos a 0) · `sr` solo cuenta con el reloj en marcha · `s` sonido |
 
 Además, el panel agrega `_v` (hora de guardado) a lo que sube a Supabase: si llegara tarde una versión
@@ -207,6 +212,12 @@ si la URL tiene `w`, cada vez que llega una configuración nueva. Cada widget la
   al llegar a 0 el jefe queda vencido, el reloj del widget se congela en lo que sobró y los ataques siguientes no
   cuentan. El daño se guarda en `live-tools:jefe:<w>` (una recarga de OBS no cura al jefe). El panel no ve la
   vida: si el chat gana antes, OBS muestra la victoria aunque en el panel el reloj siga.
+- **Subathon:** el panel lleva el **reloj base** `t` y `ex`, el total que agregó con «+5 min»; el widget lleva lo que
+  suma el público y aplica cada «+5 min» nuevo (la diferencia entre `ex` y lo ya visto). Tiempo que queda = reloj
+  base + lo sumado, sin pasar nunca de `cap`. El reloj base puede quedar negativo (lo sostiene lo sumado), por eso
+  el subathon no usa `leerReloj`. El público suma con el reloj en marcha o en pausa; «+5 min» suma siempre (incluso
+  revive un reloj en 0). Lo sumado se guarda en `live-tools:subathon:<w>`. El panel no ve lo que suma el chat: su
+  reloj marca igual o menos que el de OBS.
 
 El widget guarda una copia de la última configuración en su navegador (`localStorage`, clave
 `live-tools:widget:<w>`): si al abrir OBS Supabase no responde, arranca con esa copia.
@@ -336,7 +347,8 @@ live-tools/
 │   ├── alertas.html                widget alertas    │
 │   ├── carrera.html                widget carrera    │
 │   ├── batalla.html                widget batalla    │
-│   ├── jefe.html                   widget jefe       ┘
+│   ├── jefe.html                   widget jefe       │
+│   ├── subathon.html               widget subathon   ┘
 │   ├── css/
 │   │   ├── aurea.css               sistema de diseño ÁUREA NETWORK: oro/carbón, cristal (glassmorphism), escala φ, tipografía
 │   │   ├── panel.css               estilos del panel
@@ -347,7 +359,8 @@ live-tools/
 │   │       ├── alertas.css
 │   │       ├── carrera.css
 │   │       ├── batalla.css
-│   │       └── jefe.css
+│   │       ├── jefe.css
+│   │       └── subathon.css
 │   └── js/
 │       ├── comun.js                URL ↔ config, eventos normalizados, rastreador de regalos,
 │       │                           conexión con Euler Stream, arranque de widgets, sonido
@@ -360,7 +373,8 @@ live-tools/
 │       │   ├── alertas.js
 │       │   ├── carrera.js          tarjetas, puntos por regalo, reloj y ganador
 │       │   ├── batalla.js          tira y afloja: puntos por equipo, barra y ventaja
-│       │   └── jefe.js             boss raid: vida, daño por likes y regalos, victoria
+│       │   ├── jefe.js             boss raid: vida, daño por likes y regalos, victoria
+│       │   └── subathon.js         reloj al que el público suma tiempo, con tope
 │       └── panel/
 │           ├── app.js
 │           ├── registro.js
@@ -376,6 +390,7 @@ live-tools/
 │               ├── carrera.js      integrantes, reloj (iniciar/pausar/reiniciar)
 │               ├── batalla.js      dos equipos y "Reiniciar batalla"
 │               ├── jefe.js         jefe, daño y raid (iniciar/pausar/reiniciar)
+│               ├── subathon.js     tiempos, tasas y reloj (iniciar/pausar/+5 min/reiniciar)
 │               ├── actividad.js
 │               ├── regalos.js
 │               └── conexion.js
@@ -551,6 +566,7 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
    cambie (tarda menos de un segundo). En la vista previa, los botones de prueba suman aunque el reloj
    esté detenido. Para la **batalla**, suma puntos con las pruebas y pulsa *Reiniciar batalla*: los dos
    equipos vuelven a 0 sin que se recargue la vista previa. Para el **jefe**, usa «Golpe final» en la vista
-   previa para ver la victoria, e *Iniciar raid* / *Reiniciar* para el reloj y la vida.
+   previa para ver la victoria, e *Iniciar raid* / *Reiniciar* para el reloj y la vida. Para el **subathon**,
+   inicia el reloj y usa las pruebas y *+5 min*: en la vista previa el tiempo sube sin recargarse.
 5. **Publicado:** después del `git push`, espera la publicación (pestaña *Actions* del repositorio) y
    recarga el panel en `https://ardiladev.github.io/live-tools/`.

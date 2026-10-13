@@ -1,0 +1,38 @@
+<!doctype html>
+<!--
+  subathon.html — Widget "Subathon" para OBS / TikTok LIVE Studio (recomendado 900 × 300).
+  Un reloj que cuenta hacia atrás y al que el público le suma tiempo con likes y regalos,
+  hasta un tope. El panel lo inicia, pausa, le suma 5 minutos y lo reinicia en vivo.
+  Estilos: css/aurea.css + css/widget.css + css/widgets/subathon.css · Lógica: js/widgets/subathon.js
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración (reloj, tasas) llega en vivo desde Supabase.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subathon — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/subathon.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/subathon.js"></script>
+</head>
+<body>
+  <main class="escena">
+    <!-- Píldora de cristal con el título, el reloj y el estado -->
+    <div class="subathon cristal" id="subathon">
+      <div class="titulo" id="titulo"></div>
+      <div class="tiempo" id="tiempo" role="timer">00:00:00</div>
+      <div class="estado" id="estado"></div>
+      <!-- "+1:30" cada vez que se suma tiempo -->
+      <div class="sumas" id="sumas" aria-hidden="true"></div>
+    </div>
+  </main>
+</body>
+</html>
