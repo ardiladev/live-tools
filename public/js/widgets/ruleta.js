@@ -70,8 +70,27 @@ const pendientes = [];     // giros esperando turno: { usuario, indice, premio, 
 
 
 // -----------------------------------------------------------------------------
-// 2. Dibujo de la rueda (canvas de 1000 × 1000)
+// 2. Dibujo de la rueda (en unidades de un lienzo de 1000 × 1000)
 // -----------------------------------------------------------------------------
+
+// Nitidez: el canvas tiene tantos píxeles como se ven en pantalla (tamaño × densidad de la
+// pantalla), así no se estira ni se ve borroso en pantalla completa o en monitores 4K.
+// Los dibujos siguen usando unidades de 1000 × 1000; `escala` los lleva a píxeles reales.
+// Las sombras (shadowBlur) no siguen la escala del canvas: se multiplican a mano.
+const LADO = 1000;
+const MAX_PIXELES = 4096; // tope por memoria y rendimiento
+let escala = 1;
+
+function ajustarResolucion() {
+  const ancho = lienzo.clientWidth; // tamaño de diseño: no cambia con la animación de ocultar (scale)
+  if (!ancho) return; // escena oculta o sin medir todavía
+  const pixeles = Math.min(MAX_PIXELES, Math.round(ancho * (devicePixelRatio || 1)));
+  if (pixeles === lienzo.width) return;
+  lienzo.width = pixeles;  // cambiar el tamaño borra el canvas: se redibuja enseguida
+  lienzo.height = pixeles;
+  escala = pixeles / LADO;
+  dibujar();
+}
 
 /** Color del sector `i` de `n`, evitando que el primero y el último queden iguales. */
 function colorDe(i, n) {
@@ -135,8 +154,8 @@ function dibujarSectores(radio, sector) {
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = paleta.sombra;
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 1;
+    ctx.shadowBlur = 10 * escala;
+    ctx.shadowOffsetY = 1 * escala;
     const tamano = premios.length > 10 ? 26 : 32;
     ctx.font = `600 ${tamano}px "${paleta.fuente}", "Montserrat", "Segoe UI", sans-serif`;
     ctx.letterSpacing = `${Math.round(tamano * paleta.espaciado)}px`; // navegadores sin soporte lo ignoran
@@ -165,7 +184,7 @@ function dibujarAro(radio, sector) {
   // Aro exterior con el resplandor del estilo.
   ctx.save();
   ctx.shadowColor = paleta.colorResplandor;
-  ctx.shadowBlur = paleta.resplandor;
+  ctx.shadowBlur = paleta.resplandor * escala;
   ctx.strokeStyle = metal;
   ctx.lineWidth = paleta.grosor * 2;
   ctx.beginPath();
@@ -216,7 +235,7 @@ function dibujarCentro() {
   // Disco de cristal con filo y resplandor.
   ctx.save();
   ctx.shadowColor = paleta.colorResplandor;
-  ctx.shadowBlur = Math.min(paleta.resplandor, 12);
+  ctx.shadowBlur = Math.min(paleta.resplandor, 12) * escala;
   ctx.fillStyle = paleta.centro;
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, VUELTA);
@@ -269,10 +288,13 @@ function dibujarCentro() {
 }
 
 function dibujar() {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, lienzo.width, lienzo.height);
   if (!premios.length) return; // sin premios no hay sectores (y se evita dividir por cero)
 
-  const centro = lienzo.width / 2;
+  // Todo se dibuja en unidades de un lienzo de 1000 × 1000; la escala lo lleva a los píxeles reales.
+  ctx.setTransform(escala, 0, 0, escala, 0, 0);
+  const centro = LADO / 2;
   const radio = centro - 14;
   const sector = VUELTA / premios.length;
 
@@ -454,6 +476,12 @@ addEventListener('tema-aplicado', ({ detail }) => {
 
 // La fuente llega después del primer dibujo: se redibuja para que el texto la use.
 document.fonts.ready.then(() => { if (!girando) dibujar(); });
+
+// Resolución del canvas: al arrancar, al cambiar el tamaño de la fuente en OBS (o de la
+// ventana) y al cambiar el zoom o la pantalla (cambia devicePixelRatio, y con él 'resize').
+new ResizeObserver(ajustarResolucion).observe(lienzo);
+addEventListener('resize', ajustarResolucion);
+ajustarResolucion(); // ya, sin esperar al observador (que no corre con la página en segundo plano)
 
 // Al final: la primera configuración (y su estilo) llega en esta misma llamada.
 iniciarWidget({ cfg: leerConfig(), alEvento, alConfig: aplicarConfig });
