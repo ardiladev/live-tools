@@ -9,7 +9,8 @@
 //   widgets:         { <id>: {...} }               configuración propia de cada widget
 //   menuCerrados:    [ids]                         grupos del menú que se dejaron cerrados
 //   preferencias:    { autoConectar }
-//   tema:            estilo visual de TODOS los widgets (claves de js/tema.js)
+//   tema:            estilo general de los widgets (claves de js/tema.js)
+//   temasPropios:    { <id>: tema }              estilo propio de un widget (reemplaza al general)
 //   regalos:         { <giftId>: Regalo }          catálogo de regalos recibidos o agregados
 //   sugerencias:     [{ viejo, nuevo }]            posibles cambios de código por confirmar
 //   distintos:       ["a|b"]                       pares que la persona dijo que NO son el mismo
@@ -38,6 +39,7 @@ let estado = {
   menuCerrados: [],
   preferencias: { autoConectar: false },
   tema: normalizarTema(),
+  temasPropios: {},
   regalos: {},
   sugerencias: [],
   distintos: [],
@@ -271,12 +273,42 @@ export function olvidarCambiosDeCodigo() {
 
 export const preferencias = () => estado.preferencias;
 
-/** El estilo visual de los widgets (siempre completo y válido). */
+// Hay un estilo general y, si la persona quiere, uno propio por widget. `id` = null (o
+// 'general') es el general; un id de widget ('ruleta', 'meta-likes'…) es su estilo propio.
+
+const esGeneral = (id) => !id || id === 'general';
+
+/** El estilo general de los widgets (siempre completo y válido). */
 export const tema = () => (estado.tema = normalizarTema(estado.tema));
 
-/** Cambia el estilo (todo o algunas claves) y lo guarda: sincronizar.js lo lleva a OBS. */
-export function cambiarTema(cambios) {
-  estado.tema = normalizarTema({ ...estado.tema, ...cambios });
+/** ¿El widget `id` tiene estilo propio? */
+export const tieneTemaPropio = (id) => Boolean(estado.temasPropios[id]);
+
+/** El estilo que usa el widget `id`: el propio si tiene, si no el general. Con `id` vacío, el general. */
+export function temaDe(id) {
+  if (esGeneral(id) || !tieneTemaPropio(id)) return tema();
+  return (estado.temasPropios[id] = normalizarTema(estado.temasPropios[id]));
+}
+
+/**
+ * Cambia el estilo (todo o algunas claves) y lo guarda: sincronizar.js lo lleva a OBS.
+ * `id`: el general (null) o el estilo propio de un widget (si no lo tiene, se crea).
+ */
+export function cambiarTema(id, cambios) {
+  if (esGeneral(id)) estado.tema = normalizarTema({ ...estado.tema, ...cambios });
+  else estado.temasPropios[id] = normalizarTema({ ...temaDe(id), ...cambios });
+  guardar();
+}
+
+/** Le da al widget `id` un estilo propio, empezando por una copia del general. */
+export function crearTemaPropio(id) {
+  estado.temasPropios[id] = structuredClone(tema());
+  guardar();
+}
+
+/** El widget `id` vuelve a usar el estilo general. */
+export function quitarTemaPropio(id) {
+  delete estado.temasPropios[id];
   guardar();
 }
 

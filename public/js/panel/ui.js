@@ -177,6 +177,7 @@ const RETRASO_VISTA_PREVIA_MS = 400; // no reiniciar la vista previa en cada tec
  *   - con Supabase: #c= lleva solo usuario, clave e identificador → se copia UNA vez y los
  *     cambios llegan solos al widget (sincronizar.js los sube);
  *   - sin Supabase: #c= lleva toda la configuración → hay que copiarla tras cada cambio.
+ * Debajo de la URL se indica qué estilo usa (general o propio) con un enlace para editarlo.
  *
  * Devuelve { elemento, actualizar } — llama `actualizar()` cuando cambie la configuración.
  */
@@ -282,6 +283,9 @@ export function tarjetaWidget({
       botonPersonalizar),
     opciones,
     estadoNube,
+    el('p', { class: 'nota-estilo' },
+      almacen.tieneTemaPropio(id) ? 'Estilo: propio de este widget · ' : 'Estilo: el general de los widgets · ',
+      el('a', { href: `#/estilo?w=${id}` }, 'Cambiar estilo')),
     aviso,
     el('div', { class: `escenario ${forma}` },
       iframe,

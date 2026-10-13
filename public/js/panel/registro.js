@@ -4,9 +4,10 @@
 // El menú, la navegación y los íconos se arman solos a partir de esta lista.
 //
 // Una vista es un objeto:
-//   { id, titulo, descripcion, render({ senal }) → [nodos] }
+//   { id, titulo, descripcion, render({ senal, parametros }) → [nodos] }
 // `id` es la dirección (#/id) y debe ser único. `senal` es un AbortSignal que se cancela
-// al salir de la vista: úsalo para suscripciones y addEventListener.
+// al salir de la vista: úsalo para suscripciones y addEventListener. `parametros`
+// (URLSearchParams) trae lo que venga en la dirección después de '?': #/id?clave=valor.
 //
 // Para agregar una función nueva:
 //   1. Crea su vista en js/panel/vistas/ (copia una parecida, por ejemplo alertas.js).

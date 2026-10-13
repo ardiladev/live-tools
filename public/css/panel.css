@@ -345,6 +345,7 @@ button.enlace { color: var(--enlace); }
 .estado-nube::before { content: '☁ '; }
 .estado-nube.ok { color: var(--ok); }
 .estado-nube.error { color: var(--mal); }
+.nota-estilo { margin: 0 0 6px; color: var(--suave); font-size: 13px; font-weight: 300; }
 .vacio { color: var(--suave); }
 .hora { color: var(--suave); font-size: 12px; font-variant-numeric: tabular-nums; }
 .texto-alerta { color: var(--mal); }

@@ -86,7 +86,7 @@ desplegables** (menú) → **vistas** (contenido).
 | Superposiciones | Ruletas | Ruleta de regalos | Gira y sortea un premio cada vez que llega el regalo configurado. Premios con peso (probabilidad), giros por regalo, tope por combo, ocultar en reposo y sonido. |
 | | Metas | Likes · Seguidores · Compartidos · Monedas | Barra de progreso con meta, título, color propio opcional (si no, el acento del estilo) y acción al alcanzarla (duplicar, volver a empezar o dejarla llena). |
 | | Alertas | Alertas de eventos | Aviso animado por regalos, seguidores y compartidos, en fila, con sonido y mínimo de monedas. |
-| | Apariencia | Estilo de widgets | El aspecto de **todos** los widgets a la vez: 4 estilos predefinidos, cristal (obsidiana o perla, opacidad, desenfoque), colores (acento con degradado, texto, bordes, activo, insignias), borde (grosor, metálico o liso), resplandor, esquinas, fuente, espaciado y mayúsculas. Vista previa al instante; con cambios en vivo llega solo a OBS. |
+| | Apariencia | Estilo de widgets | Un **estilo general** para todos los widgets y, si quieres, un **estilo propio** para cada uno (ruleta, cada meta, alertas): 4 estilos predefinidos, cristal (obsidiana o perla, opacidad, desenfoque), colores (acento con degradado, texto, bordes, activo, insignias), borde (grosor, metálico o liso), resplandor, esquinas, fuente, espaciado y mayúsculas. Vista previa al instante; con cambios en vivo llega solo a OBS. |
 | Actividad | En vivo | Eventos en vivo | Conecta el panel al LIVE: contadores (espectadores, likes, seguidores, compartidos, monedas, regalos, mensajes), lista de eventos con filtros y regalos de la sesión. |
 | | Regalos | Buscador de regalos | Catálogo permanente con el ID de cada regalo recibido. Nombres propios, búsqueda, “Copiar ID”, “Usar en la ruleta”, agregar a mano, conexión automática y seguimiento de regalos que cambian de código. |
 | Ajustes | Cuenta | Conexión con TikTok | Usuario de TikTok y API key de Euler Stream, compartidos por todos los widgets. |
@@ -252,9 +252,11 @@ Los mensajes solo se aceptan si vienen del mismo origen.
 todas las suscripciones (`almacen.alCambiar(fn, senal)`, `envivo.alCambiar(fn, senal)`) y los oyentes
 (`addEventListener(…, { signal: senal })`) se sueltan en ese momento.
 
-**Estilo de los widgets.** Es uno solo para todos y se guarda en `almacen.tema`. `sincronizar.registrar`
-lo agrega a la configuración de cada widget con la clave `est`, así que viaja igual que el resto (en la URL
-o por Supabase) y al cambiarlo se suben todos los widgets. En el widget, `iniciarWidget` (comun.js) llama
+**Estilo de los widgets.** Hay uno general (`almacen.tema`) y uno propio opcional por widget
+(`almacen.temasPropios[id]`); `almacen.temaDe(id)` da el que corresponde. `sincronizar.registrar` lo agrega a
+la configuración de cada widget con la clave `est`, así que viaja igual que el resto (en la URL o por
+Supabase); al cambiar el general se suben los widgets que lo usan. La tarjeta de cada widget indica qué
+estilo usa y enlaza a `#/estilo?w=<id>` (las vistas reciben esos parámetros en `render({ parametros })`). En el widget, `iniciarWidget` (comun.js) llama
 `aplicarTema(est)` antes de entregar la configuración: escribe las variables CSS (`--cristal-oscuro`,
 `--filo-oro`, `--borde-ancho`, `--resplandor`, `--fuente`, `--mayus`…) y avisa con el evento
 `tema-aplicado`, que la ruleta usa para redibujar el canvas. La vista previa de *Estilo de widgets* recibe
