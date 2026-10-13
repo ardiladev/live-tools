@@ -1,0 +1,213 @@
+/* ==========================================================================
+   batalla.css — Widget "Batalla de regalos" (batalla.html), tira y afloja
+   Una placa de cristal horizontal: equipo A a la izquierda, la barra en el
+   centro y equipo B a la derecha. La barra es del color de B y el relleno de A
+   avanza desde la izquierda; donde se encuentran está el frente, una línea de
+   oro metálico (.filo-oro). Los colores de cada equipo llegan en --color-a y
+   --color-b (js/widgets/batalla.js). Las medidas van en vw: el widget depende
+   solo del ancho de la fuente de OBS y queda arriba.
+
+   Secciones: 1. Escena · 2. Equipos · 3. Barra · 4. Ventaja · 5. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+.escena {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .8vw;
+  padding: 1.2vw 1.6vw;
+  box-sizing: border-box;
+}
+/* Colores de los equipos por defecto (el widget pone los del panel en la raíz). */
+:root {
+  --color-a: var(--acento, #D4AF37);
+  --color-b: #C9CDD4;
+}
+.batalla {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.2fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 1.6vw;
+  width: 100%;
+  padding: 1.1vw 1.6vw;
+  box-sizing: border-box;
+}
+
+
+/* ---------- 2. Equipos ---------- */
+.equipo {
+  --color: var(--color-a);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1vw;
+  min-width: 0;
+}
+/* El equipo B se lee de derecha a izquierda: avatar pegado al borde. */
+.equipo.b {
+  --color: var(--color-b);
+  flex-direction: row-reverse;
+  text-align: right;
+}
+.avatar {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 4.6vw;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--color) 35%, transparent), transparent 70%), var(--cristal-claro);
+  box-shadow: 0 0 0 2px var(--color), 0 0 14px color-mix(in srgb, var(--color) 50%, transparent);
+  transition: box-shadow .3s ease;
+}
+.foto {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.inicial {
+  color: var(--color);
+  font-weight: 800;
+  font-size: 2vw;
+}
+.inicial:empty { display: none; }
+/* Imagen del regalo en la esquina del avatar (solo cuando hay foto). */
+.insignia {
+  position: absolute;
+  right: -.4vw;
+  bottom: -.4vw;
+  width: 1.9vw;
+  height: 1.9vw;
+  padding: .15vw;
+  border-radius: 50%;
+  background: var(--cristal-oscuro);
+  box-shadow: 0 0 0 1px var(--color);
+  object-fit: contain;
+}
+.datos { min-width: 0; }
+.nombre {
+  overflow: hidden;
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: 1.15vw;
+  letter-spacing: .06em;
+  text-overflow: ellipsis;
+  text-transform: var(--mayus);
+  white-space: nowrap;
+}
+.puntos {
+  color: var(--texto-sec);
+  font-weight: 800;
+  font-size: 2.3vw;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+/* Quien va ganando: avatar con más brillo. */
+.gana .avatar { box-shadow: 0 0 0 2px var(--color), 0 0 28px color-mix(in srgb, var(--color) 80%, transparent); }
+
+
+/* ---------- 3. Barra (la cuerda) ---------- */
+.cuerda {
+  position: relative;
+  height: 2.6vw;
+  border-radius: var(--radio);
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--color-b) 45%, transparent),
+    color-mix(in srgb, var(--color-b) 80%, transparent));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+}
+.lado-a {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 50%;
+  border-radius: var(--radio) 0 0 var(--radio);
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--color-a) 80%, transparent),
+    color-mix(in srgb, var(--color-a) 45%, transparent));
+  transition: width .3s ease;
+}
+/* Marca fija del 50 %: así se ve cuánto se corrió la barra. */
+.centro {
+  position: absolute;
+  top: -.35vw;
+  bottom: -.35vw;
+  left: 50%;
+  width: 1px;
+  background: var(--texto-sec);
+  opacity: .35;
+}
+/* El frente: cuchilla de oro metálico donde se encuentran los dos equipos. */
+.frente {
+  position: absolute;
+  top: -.7vw;
+  bottom: -.7vw;
+  left: 50%;
+  z-index: 3;
+  width: .45vw;
+  border-radius: 2px;
+  background: var(--filo-oro);
+  box-shadow: 0 0 12px var(--borde-color), 0 0 2px #fff;
+  transform: translateX(-50%);
+  transition: left .3s ease;
+}
+.porcentaje {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  color: var(--texto-sec);
+  font-weight: 800;
+  font-size: 1.1vw;
+  font-variant-numeric: tabular-nums;
+  text-shadow: var(--sombra-texto);
+  transform: translateY(-50%);
+}
+.porcentaje.a { left: .8vw; }
+.porcentaje.b { right: .8vw; }
+
+
+/* ---------- 4. Ventaja ---------- */
+.ventaja {
+  padding: .35vw 1.4vw;
+  border-radius: var(--radio);
+  background: var(--cristal-oscuro);
+  -webkit-backdrop-filter: var(--desenfoque);
+  backdrop-filter: var(--desenfoque);
+  color: var(--oro-texto);
+  font-weight: 600;
+  font-size: .9vw;
+  letter-spacing: var(--espaciado-widget);
+  text-transform: var(--mayus);
+  text-shadow: var(--sombra-texto);
+}
+.ventaja[data-lado="a"] { box-shadow: inset 3px 0 0 var(--color-a); }
+.ventaja[data-lado="b"] { box-shadow: inset -3px 0 0 var(--color-b); }
+
+
+/* ---------- 5. Animaciones ---------- */
+/* "+25" que sube al llegar un regalo. */
+.suma {
+  position: absolute;
+  top: -.4vw;
+  left: 3.2vw;
+  z-index: 4;
+  color: var(--color);
+  font-weight: 800;
+  font-size: 1.3vw;
+  text-shadow: var(--sombra-texto);
+  pointer-events: none;
+  animation: subir 1.1s ease-out forwards;
+}
+.equipo.b .suma { left: auto; right: 3.2vw; }
+.golpe .avatar { animation: golpe .35s ease-out; }
+
+@keyframes subir { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-2.2vw); } }
+@keyframes golpe { 40% { transform: scale(1.1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .lado-a, .frente, .avatar { transition: none; }
+  .suma, .golpe .avatar { animation: none; }
+}

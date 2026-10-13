@@ -1,0 +1,68 @@
+<!doctype html>
+<!--
+  batalla.html — Widget "Batalla de regalos" (tira y afloja) para OBS / TikTok LIVE Studio
+  (recomendado 1600 × 300). Dos equipos, cada uno con su regalo: los regalos de cada equipo
+  empujan la barra central hacia su lado. Empieza en 50 % (empate).
+  Estilos: css/aurea.css + css/widget.css + css/widgets/batalla.css · Lógica: js/widgets/batalla.js
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración llega en vivo desde Supabase.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Batalla de regalos — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/batalla.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/batalla.js"></script>
+</head>
+<body>
+  <main class="escena">
+    <!-- Equipo A · barra · Equipo B -->
+    <div class="batalla cristal" id="batalla">
+      <div class="equipo" id="equipo-a">
+        <div class="avatar">
+          <img class="foto" alt="" hidden>
+          <span class="inicial" aria-hidden="true"></span>
+          <img class="insignia" alt="" hidden>
+        </div>
+        <div class="datos">
+          <div class="nombre"></div>
+          <div class="puntos">0</div>
+        </div>
+      </div>
+
+      <div class="cuerda" id="cuerda">
+        <div class="lado-a" id="lado-a"></div>
+        <div class="centro" aria-hidden="true"></div>
+        <div class="porcentaje a" id="porcentaje-a">50%</div>
+        <div class="porcentaje b" id="porcentaje-b">50%</div>
+        <!-- El frente: la línea dorada donde se encuentran los dos equipos -->
+        <div class="frente filo-oro" id="frente"></div>
+      </div>
+
+      <div class="equipo b" id="equipo-b">
+        <div class="avatar">
+          <img class="foto" alt="" hidden>
+          <span class="inicial" aria-hidden="true"></span>
+          <img class="insignia" alt="" hidden>
+        </div>
+        <div class="datos">
+          <div class="nombre"></div>
+          <div class="puntos">0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quién va ganando y por cuánto -->
+    <div class="ventaja" id="ventaja" role="status" aria-live="polite"></div>
+  </main>
+</body>
+</html>

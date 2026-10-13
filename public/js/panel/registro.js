@@ -21,6 +21,7 @@ import { ruletaNormal, ruletaPremium } from './vistas/ruleta.js';
 import { metaLikes, metaSeguidores, metaCompartidos, metaMonedas } from './vistas/metas.js';
 import alertas from './vistas/alertas.js';
 import carrera from './vistas/carrera.js';
+import batalla from './vistas/batalla.js';
 import actividad from './vistas/actividad.js';
 import buscadorRegalos from './vistas/regalos.js';
 import conexion from './vistas/conexion.js';
@@ -35,7 +36,7 @@ export const CATEGORIAS = [
       { id: 'ruletas', titulo: 'Ruletas', vistas: [ruletaNormal, ruletaPremium] },
       { id: 'metas', titulo: 'Metas', vistas: [metaLikes, metaSeguidores, metaCompartidos, metaMonedas] },
       { id: 'alertas', titulo: 'Alertas', vistas: [alertas] },
-      { id: 'juegos', titulo: 'Juegos', vistas: [carrera] },
+      { id: 'juegos', titulo: 'Juegos', vistas: [carrera, batalla] },
     ],
   },
   {
