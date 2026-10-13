@@ -15,6 +15,7 @@
 //   sugerencias:     [{ viejo, nuevo }]            posibles cambios de código por confirmar
 //   distintos:       ["a|b"]                       pares que la persona dijo que NO son el mismo
 //   cambiosDeCodigo: [{ nombre, viejo, nuevo, enRuleta, cuando }]  avisos de cambios hechos
+//                                                  (enRuleta: títulos de las ruletas que se actualizaron)
 //   nube:            { secreto, ids: { <id>: w } } cambios en vivo: secreto para escribir en
 //                                                  Supabase e identificador de cada widget
 //
@@ -29,6 +30,9 @@ import { idAleatorio } from '../nube.js';
 import { normalizarTema } from '../tema.js';
 
 const CLAVE = 'panel-live';
+
+/** Las ruletas del panel (ids de widget) y su nombre para los avisos. Ver vistas/ruleta.js. */
+export const RULETAS = { ruleta: 'Ruleta de regalos', 'ruleta-premium': 'Ruleta premium' };
 const CLAVE_VIEJA = 'ruleta-generador'; // la primera versión del generador guardaba aquí
 const RETRASO_GUARDADO_MS = 1000;       // los regalos se guardan agrupados, no uno por uno
 const MAX_AVISOS = 20;
@@ -207,8 +211,8 @@ const claveDePar = (a, b) => [a, b].sort().join('|');
 
 /**
  * Cambia el código de un regalo: el registro de `viejo` pasa a `nuevo`, sumando lo que ya
- * hubiera en `nuevo` y anotando el código anterior. Si la ruleta usaba el código viejo, se
- * actualiza y se deja un aviso (con cambios en vivo, sincronizar.js lo lleva solo a OBS;
+ * hubiera en `nuevo` y anotando el código anterior. Si alguna ruleta usaba el código viejo,
+ * se actualiza y se deja un aviso (con cambios en vivo, sincronizar.js lo lleva solo a OBS;
  * sin ellos, el aviso pide volver a copiar su URL).
  */
 export function cambiarCodigo(viejo, nuevo) {
@@ -229,9 +233,14 @@ export function cambiarCodigo(viejo, nuevo) {
   };
   delete estado.regalos[viejo];
 
-  const ruleta = estado.widgets.ruleta;
-  const enRuleta = !!ruleta && String(ruleta.giftId) === String(viejo);
-  if (enRuleta) ruleta.giftId = nuevo;
+  const enRuleta = [];
+  for (const [id, titulo] of Object.entries(RULETAS)) {
+    const ruleta = estado.widgets[id];
+    if (ruleta && String(ruleta.giftId) === String(viejo)) {
+      ruleta.giftId = nuevo;
+      enRuleta.push(titulo);
+    }
+  }
 
   estado.cambiosDeCodigo = [
     { nombre: nombreRegalo(estado.regalos[nuevo]), viejo, nuevo, enRuleta, cuando: Date.now() },

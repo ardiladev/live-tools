@@ -17,7 +17,7 @@
 //      Íconos disponibles: ver ICONOS en js/panel/ui.js.
 // =============================================================================
 
-import ruleta from './vistas/ruleta.js';
+import { ruletaNormal, ruletaPremium } from './vistas/ruleta.js';
 import { metaLikes, metaSeguidores, metaCompartidos, metaMonedas } from './vistas/metas.js';
 import alertas from './vistas/alertas.js';
 import actividad from './vistas/actividad.js';
@@ -31,7 +31,7 @@ export const CATEGORIAS = [
     corto: 'Superpos.',
     icono: 'monitor',
     grupos: [
-      { id: 'ruletas', titulo: 'Ruletas', vistas: [ruleta] },
+      { id: 'ruletas', titulo: 'Ruletas', vistas: [ruletaNormal, ruletaPremium] },
       { id: 'metas', titulo: 'Metas', vistas: [metaLikes, metaSeguidores, metaCompartidos, metaMonedas] },
       { id: 'alertas', titulo: 'Alertas', vistas: [alertas] },
     ],

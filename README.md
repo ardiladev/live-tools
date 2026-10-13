@@ -84,10 +84,11 @@ desplegables** (menú) → **vistas** (contenido).
 | Categoría | Grupo | Vista | Qué hace |
 |---|---|---|---|
 | Superposiciones | Ruletas | Ruleta de regalos | Gira y sortea un premio cada vez que llega el regalo configurado. Premios con peso (probabilidad), giros por regalo, tope por combo, ocultar en reposo y sonido. |
+| | | Ruleta premium | Una segunda ruleta independiente (mismo `ruleta.html`, otra URL y otra fuente en OBS) para un regalo más caro y premios más grandes. Tiene su propio regalo, premios, opciones y estilo. |
 | | Metas | Likes · Seguidores · Compartidos · Monedas | Barra de progreso con meta, título, color propio opcional (si no, el acento del estilo) y acción al alcanzarla (duplicar, volver a empezar o dejarla llena). |
 | | Alertas | Alertas de eventos | Aviso animado por regalos, seguidores y compartidos, en fila, con sonido y mínimo de monedas. |
 | Actividad | En vivo | Eventos en vivo | Conecta el panel al LIVE: contadores (espectadores, likes, seguidores, compartidos, monedas, regalos, mensajes), lista de eventos con filtros y regalos de la sesión. |
-| | Regalos | Buscador de regalos | Catálogo permanente con el ID de cada regalo recibido. Nombres propios, búsqueda, “Copiar ID”, “Usar en la ruleta”, agregar a mano, conexión automática y seguimiento de regalos que cambian de código. |
+| | Regalos | Buscador de regalos | Catálogo permanente con el ID de cada regalo recibido. Nombres propios, búsqueda, “Copiar ID”, “Usar en ruleta” / “Usar en premium”, agregar a mano, conexión automática y seguimiento de regalos que cambian de código. |
 | Ajustes | Cuenta | Conexión con TikTok | Usuario de TikTok y API key de Euler Stream, compartidos por todos los widgets. |
 
 Cada widget tiene una tarjeta con:
@@ -285,8 +286,8 @@ seguro mostrar nombres y mensajes del chat que vienen de TikTok.
   - si coincide el nombre pero el precio es desconocido o distinto, el panel **pregunta**. Hay regalos distintos
     con el mismo nombre (por ejemplo, dos “Candy Bouquet” de 249 y 349 monedas);
   - si la persona le pone a un código nuevo un nombre que ya existe, el panel ofrece unirlos;
-  - al unir, se suman las veces, se guarda el código anterior (`antes: …`) y, si la ruleta usaba el código
-    viejo, se actualiza y el cambio llega solo a la ruleta en OBS.
+  - al unir, se suman las veces, se guarda el código anterior (`antes: …`) y, si alguna ruleta (normal o premium)
+    usaba el código viejo, se actualiza y el cambio llega solo a esa ruleta en OBS.
 
 ---
 
@@ -325,7 +326,7 @@ live-tools/
 │           ├── ui.js
 │           ├── estilo.js           editor del estilo visual (va en "Personalizar" de cada widget)
 │           └── vistas/
-│               ├── ruleta.js
+│               ├── ruleta.js       ruleta normal y premium (misma fábrica)
 │               ├── metas.js
 │               ├── alertas.js
 │               ├── actividad.js

@@ -24,6 +24,11 @@ const despuesDeCambiarRuleta = () => (nubeActiva()
   ? 'el cambio llega solo a la ruleta en OBS'
   : 'vuelve a copiar su URL para OBS');
 
+// Avisos viejos guardaban `enRuleta: true` (solo existía una ruleta); los nuevos, los títulos.
+const enRuletas = (cambio) => (Array.isArray(cambio.enRuleta)
+  ? cambio.enRuleta
+  : (cambio.enRuleta ? ['Ruleta de regalos'] : []));
+
 const ORDENES = {
   recientes: (a, b) => (b.ultimo || 0) - (a.ultimo || 0),
   veces: (a, b) => (b.veces || 0) - (a.veces || 0),
@@ -71,12 +76,13 @@ export default {
       }
     }
 
-    function usarEnRuleta(regalo) {
-      const ruleta = almacen.widget('ruleta');
+    // id: 'ruleta' (la normal) o 'ruleta-premium' (ver almacen.RULETAS).
+    function usarEnRuleta(regalo, id) {
+      const ruleta = almacen.widget(id);
       ruleta.giftId = regalo.giftId;
       if (nombreDe(regalo)) ruleta.regalo = `${nombreDe(regalo)} 🎁`;
       almacen.guardar();
-      location.hash = '#/ruleta';
+      location.hash = `#/${id}`;
     }
 
     // ---------- Tabla ----------
@@ -116,7 +122,8 @@ export default {
         el('td', { class: 'hora sin-salto' }, fecha(r.ultimo)),
         el('td', { class: 'sin-salto' },
           el('button', { onclick: () => copiar(r.giftId), title: 'Copiar el ID' }, 'Copiar ID'), ' ',
-          el('button', { class: 'principal', onclick: () => usarEnRuleta(r), title: 'Poner este regalo en la ruleta' }, 'Usar en la ruleta'), ' ',
+          el('button', { class: 'principal', onclick: () => usarEnRuleta(r, 'ruleta'), title: 'Poner este regalo en la ruleta de regalos normal' }, 'Usar en ruleta'), ' ',
+          el('button', { class: 'principal', onclick: () => usarEnRuleta(r, 'ruleta-premium'), title: 'Poner este regalo en la ruleta premium' }, 'Usar en premium'), ' ',
           el('button', { onclick: () => almacen.quitarRegalo(r.giftId), title: 'Quitar del catálogo', 'aria-label': `Quitar ${r.giftId}` }, '✕')));
     }
 
@@ -159,7 +166,7 @@ export default {
         el('p', {}, el('b', {}, 'Códigos actualizados')),
         el('ul', {}, ...cambios.map((c) =>
           el('li', {}, `${c.nombre || 'Regalo'}: ${c.viejo} → ${c.nuevo}`,
-            c.enRuleta ? el('b', { class: 'texto-alerta' }, ` · la ruleta se actualizó: ${despuesDeCambiarRuleta()}`) : null))),
+            enRuletas(c).length ? el('b', { class: 'texto-alerta' }, ` · se actualizó en ${enRuletas(c).join(' y ')}: ${despuesDeCambiarRuleta()}`) : null))),
         el('button', { onclick: () => almacen.olvidarCambiosDeCodigo() }, 'Entendido'));
     }
 
@@ -247,7 +254,7 @@ export default {
             cuerpoTabla)),
         nota('La lista se guarda en este navegador y continúa en cada LIVE, pero solo anota regalos mientras el panel está abierto y conectado. ',
           'Si un regalo llega con un código nuevo, se reescribe solo cuando TikTok manda su nombre y su precio; si no, te lo preguntamos aquí arriba. ',
-          `“Usar en la ruleta” cambia el regalo de la ruleta: ${despuesDeCambiarRuleta()}.`)),
+          `“Usar en ruleta” y “Usar en premium” cambian el regalo de la ruleta normal o de la premium: ${despuesDeCambiarRuleta()}.`)),
 
       tarjeta('Agregar un regalo a mano', { ancha: true },
         el('form', { class: 'campos formulario-en-linea', onsubmit: agregarAMano },
