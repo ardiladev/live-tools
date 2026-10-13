@@ -86,7 +86,6 @@ desplegables** (menú) → **vistas** (contenido).
 | Superposiciones | Ruletas | Ruleta de regalos | Gira y sortea un premio cada vez que llega el regalo configurado. Premios con peso (probabilidad), giros por regalo, tope por combo, ocultar en reposo y sonido. |
 | | Metas | Likes · Seguidores · Compartidos · Monedas | Barra de progreso con meta, título, color propio opcional (si no, el acento del estilo) y acción al alcanzarla (duplicar, volver a empezar o dejarla llena). |
 | | Alertas | Alertas de eventos | Aviso animado por regalos, seguidores y compartidos, en fila, con sonido y mínimo de monedas. |
-| | Apariencia | Estilo de widgets | Un **estilo general** para todos los widgets y, si quieres, un **estilo propio** para cada uno (ruleta, cada meta, alertas): 4 estilos predefinidos, cristal (obsidiana o perla, opacidad, desenfoque), colores (acento con degradado, texto, bordes, activo, insignias), borde (grosor, metálico o liso), resplandor, esquinas, fuente, espaciado y mayúsculas. Vista previa al instante; con cambios en vivo llega solo a OBS. |
 | Actividad | En vivo | Eventos en vivo | Conecta el panel al LIVE: contadores (espectadores, likes, seguidores, compartidos, monedas, regalos, mensajes), lista de eventos con filtros y regalos de la sesión. |
 | | Regalos | Buscador de regalos | Catálogo permanente con el ID de cada regalo recibido. Nombres propios, búsqueda, “Copiar ID”, “Usar en la ruleta”, agregar a mano, conexión automática y seguimiento de regalos que cambian de código. |
 | Ajustes | Cuenta | Conexión con TikTok | Usuario de TikTok y API key de Euler Stream, compartidos por todos los widgets. |
@@ -97,7 +96,11 @@ Cada widget tiene una tarjeta con:
 - **Estado de los cambios en vivo** (☁): si la configuración ya está en Supabase, si se está enviando o si
   hubo un error (por ejemplo, una ruleta con menos de 2 premios no se envía hasta corregirla).
 - **Test**: lanza una prueba en la vista previa.
-- **Personalizar**: opciones adicionales.
+- **Personalizar**: opciones adicionales y el **estilo visual** de ese widget: 4 estilos predefinidos, cristal
+  (obsidiana o perla, opacidad, desenfoque), bordes (grosor, metálico o liso), resplandor, esquinas, colores
+  (acento con degradado, texto, bordes, activo, insignias) y tipografía (fuente, espaciado, mayúsculas). La vista
+  previa cambia al instante y, con cambios en vivo, OBS también. «Aplicar este estilo a todos los widgets» lo copia
+  en la ruleta, las metas y las alertas.
 - **Vista previa**: el widget real en modo prueba; **nunca** se conecta al LIVE.
 
 ---
@@ -252,16 +255,16 @@ Los mensajes solo se aceptan si vienen del mismo origen.
 todas las suscripciones (`almacen.alCambiar(fn, senal)`, `envivo.alCambiar(fn, senal)`) y los oyentes
 (`addEventListener(…, { signal: senal })`) se sueltan en ese momento.
 
-**Estilo de los widgets.** Hay uno general (`almacen.tema`) y uno propio opcional por widget
-(`almacen.temasPropios[id]`); `almacen.temaDe(id)` da el que corresponde. `sincronizar.registrar` lo agrega a
-la configuración de cada widget con la clave `est`, así que viaja igual que el resto (en la URL o por
-Supabase); al cambiar el general se suben los widgets que lo usan. La tarjeta de cada widget indica qué
-estilo usa y enlaza a `#/estilo?w=<id>` (las vistas reciben esos parámetros en `render({ parametros })`). En el widget, `iniciarWidget` (comun.js) llama
-`aplicarTema(est)` antes de entregar la configuración: escribe las variables CSS (`--cristal-oscuro`,
-`--filo-oro`, `--borde-ancho`, `--resplandor`, `--fuente`, `--mayus`…) y avisa con el evento
-`tema-aplicado`, que la ruleta usa para redibujar el canvas. La vista previa de *Estilo de widgets* recibe
-cada cambio con `postMessage({ tipo: 'tema', est })`, sin recargarse. Para agregar un preset: una entrada
-en `PRESETS` de `js/tema.js` y su muestra `.muestra-<id>` en `panel.css`.
+**Estilo de los widgets.** Cada widget tiene el suyo y se edita en su desplegable *Personalizar*
+(`js/panel/estilo.js` → `editorEstilo(id, alCambiar)`, que cada vista agrega al final de `personalizar`). Se
+guarda en `almacen.temasPropios[id]`; un widget que nunca se personalizó usa el estilo base (`almacen.tema`).
+`almacen.temaDe(id)` da el que corresponde y `sincronizar.registrar` lo agrega a la configuración del widget con
+la clave `est`, así que viaja igual que el resto (en la URL o por Supabase). En el widget, `iniciarWidget`
+(comun.js) llama `aplicarTema(est)` antes de entregar la configuración: escribe las variables CSS
+(`--cristal-oscuro`, `--filo-oro`, `--borde-ancho`, `--resplandor`, `--fuente`, `--mayus`…) y avisa con el
+evento `tema-aplicado`, que la ruleta usa para redibujar el canvas. La vista previa de la tarjeta recibe cada
+cambio de estilo con `postMessage({ tipo: 'tema', est })`, sin recargarse. Para agregar un preset: una entrada en
+`PRESETS` de `js/tema.js` y su muestra `.muestra-<id>` en `panel.css`.
 
 **Interfaz sin `innerHTML`.** Todo se construye con `el()`, que inserta el texto como texto. Por eso es
 seguro mostrar nombres y mensajes del chat que vienen de TikTok.
@@ -320,11 +323,11 @@ live-tools/
 │           ├── sincronizar.js      sube a Supabase la configuración de cada widget
 │           ├── envivo.js
 │           ├── ui.js
+│           ├── estilo.js           editor del estilo visual (va en "Personalizar" de cada widget)
 │           └── vistas/
 │               ├── ruleta.js
 │               ├── metas.js
 │               ├── alertas.js
-│               ├── estilo.js       Apariencia → Estilo de widgets (personalizador)
 │               ├── actividad.js
 │               ├── regalos.js
 │               └── conexion.js

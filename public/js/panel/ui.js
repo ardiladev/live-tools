@@ -167,7 +167,7 @@ const RETRASO_VISTA_PREVIA_MS = 400; // no reiniciar la vista previa en cada tec
  *   titulo        texto de la tarjeta
  *   archivo       'meta.html'
  *   campos        nodos que van arriba de la URL
- *   personalizar  nodos del desplegable "Personalizar"
+ *   personalizar  nodos del desplegable "Personalizar" (al final suele ir editorEstilo, panel/estilo.js)
  *   pruebas       [{ texto, evento: (nombre) => eventoNormalizado }]  (la primera es "Test")
  *   forma         'vertical' (9:16) | 'horizontal' (16:5) | 'cuadrado' (16:9)
  *   ancha         true (por defecto) = ocupa todo el ancho de la rejilla
@@ -177,7 +177,6 @@ const RETRASO_VISTA_PREVIA_MS = 400; // no reiniciar la vista previa en cada tec
  *   - con Supabase: #c= lleva solo usuario, clave e identificador → se copia UNA vez y los
  *     cambios llegan solos al widget (sincronizar.js los sube);
  *   - sin Supabase: #c= lleva toda la configuración → hay que copiarla tras cada cambio.
- * Debajo de la URL se indica qué estilo usa (general o propio) con un enlace para editarlo.
  *
  * Devuelve { elemento, actualizar } — llama `actualizar()` cuando cambie la configuración.
  */
@@ -215,13 +214,18 @@ export function tarjetaWidget({
   }
 
   let temporizador;
+  let ultimaPrevia = ''; // configuración (sin el estilo) que tiene cargada la vista previa
   function actualizar() {
     url.value = construirUrl();
+    // Un cambio de estilo se le pasa a la vista previa al instante, sin recargarla
+    // (comun.js lo aplica); el resto de la configuración sí la reinicia.
+    const { est, ...resto } = config();
+    iframe.contentWindow?.postMessage({ tipo: 'tema', est }, location.origin);
+    const clave = JSON.stringify(resto);
+    if (clave === ultimaPrevia) return;
+    ultimaPrevia = clave;
     clearTimeout(temporizador);
-    temporizador = setTimeout(() => {
-      const nueva = construirUrl({ previa: true });
-      if (iframe.src !== nueva) iframe.src = nueva;
-    }, RETRASO_VISTA_PREVIA_MS);
+    temporizador = setTimeout(() => { iframe.src = construirUrl({ previa: true }); }, RETRASO_VISTA_PREVIA_MS);
   }
 
   async function copiar() {
@@ -283,9 +287,6 @@ export function tarjetaWidget({
       botonPersonalizar),
     opciones,
     estadoNube,
-    el('p', { class: 'nota-estilo' },
-      almacen.tieneTemaPropio(id) ? 'Estilo: propio de este widget · ' : 'Estilo: el general de los widgets · ',
-      el('a', { href: `#/estilo?w=${id}` }, 'Cambiar estilo')),
     aviso,
     el('div', { class: `escenario ${forma}` },
       iframe,

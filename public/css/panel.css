@@ -11,7 +11,7 @@
      1. Variables          6. Formularios y botones   11. Actividad (contadores, lista)
      2. Base               7. Tarjeta de widget       12. Buscador de regalos
      3. Barra superior     8. Estados y avisos        13. Utilidades
-     4. Riel y menú        9. Premios (ruleta)        14. Estilo de widgets
+     4. Riel y menú        9. Premios (ruleta)        14. Estilo visual (Personalizar)
      5. Contenido         10. Tablas                 15. Pantallas angostas
    ========================================================================== */
 
@@ -345,7 +345,6 @@ button.enlace { color: var(--enlace); }
 .estado-nube::before { content: '☁ '; }
 .estado-nube.ok { color: var(--ok); }
 .estado-nube.error { color: var(--mal); }
-.nota-estilo { margin: 0 0 6px; color: var(--suave); font-size: 13px; font-weight: 300; }
 .vacio { color: var(--suave); }
 .hora { color: var(--suave); font-size: 12px; font-variant-numeric: tabular-nums; }
 .texto-alerta { color: var(--mal); }
@@ -432,24 +431,22 @@ ol.feed b { color: var(--oro); font-weight: 600; }
 .sin-salto { white-space: nowrap; }
 
 
-/* ---------- 14. Estilo de widgets (vistas/estilo.js) ---------- */
-/* Dos columnas: controles a la izquierda, vista previa fija a la derecha. */
-.personalizador {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
-  gap: var(--e-4);
-  align-items: start;
+/* ---------- 14. Estilo visual (panel/estilo.js, dentro de "Personalizar") ---------- */
+/* Ocupa todo el ancho del desplegable, separado de las opciones propias del widget. */
+.editor-estilo {
+  flex: 1 1 100%;
+  margin-top: var(--e-2);
+  padding-top: var(--e-4);
+  border-top: var(--linea-tenue);
 }
-.controles-estilo {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
-  gap: var(--e-4);
-  align-items: start;
+.subtitulo {
+  margin: 0 0 var(--e-3);
+  color: var(--oro);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-titulo);
 }
-.columna-previa { position: sticky; top: calc(var(--arriba) + var(--e-4)); }
-.controles-pila { display: grid; gap: var(--e-4); margin-top: var(--e-4); }
-.controles-pila:first-child { margin-top: 0; }
 
 /* Presets: botones con una muestra de sus colores. */
 .presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--e-3); }
@@ -468,12 +465,31 @@ button.preset[aria-pressed="true"] { border-color: var(--oro); background: var(-
 .muestra-mono    { border: 1px solid #C9CDD4; background: linear-gradient(135deg, #2A2C31 50%, #C0C4CC 50%); }
 .muestra-directo { border: 2px solid #D4AF37; background: #0F0F12; }
 
-/* Marco de la vista previa: proporción según el widget elegido. */
-.marco-previa { margin-top: var(--e-4); overflow: hidden; border: var(--linea-tenue); border-radius: var(--radio); }
-.marco-previa iframe { display: block; width: 100%; height: 100%; border: 0; }
-.marco-previa.vertical   { aspect-ratio: 4 / 5; }
-.marco-previa.horizontal { aspect-ratio: 16 / 5; }
-.marco-previa.panoramica { aspect-ratio: 16 / 9; }
+/* Grupos de controles (Cristal, Bordes y brillo, Colores, Tipografía) en columnas. */
+.grupos-estilo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--e-4);
+  margin-top: var(--e-4);
+}
+.grupos-estilo fieldset {
+  display: grid;
+  gap: var(--e-4);
+  align-content: start;
+  min-width: 0;
+  margin: 0;
+  padding: var(--e-3) var(--e-4) var(--e-4);
+  border: var(--linea-tenue);
+  border-radius: var(--radio);
+}
+.grupos-estilo legend {
+  padding: 0 var(--e-2);
+  color: var(--oro);
+  font: 600 11px/1 var(--fuente);
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-titulo);
+}
+.grupos-estilo .campos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 
 /* ---------- 15. Pantallas angostas ---------- */
@@ -489,10 +505,6 @@ button.preset[aria-pressed="true"] { border-color: var(--oro); background: var(-
     width: min(260px, 80vw);
     box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .5);
   }
-}
-@media (max-width: 1200px) {
-  .personalizador { grid-template-columns: 1fr; }
-  .columna-previa { position: static; order: -1; }
 }
 @media (max-width: 700px) {
   .escenario { grid-template-columns: 1fr; }

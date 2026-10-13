@@ -10,9 +10,8 @@
 // Solo se sincronizan los widgets que ya tienen identificador (se crea al mostrar su URL).
 // Sin Supabase configurado, solo arma la configuración (con el estilo) para la URL.
 //
-// El estilo visual (ver js/tema.js) se agrega aquí a la configuración de cada widget con la
-// clave `est`: el propio del widget si tiene, si no el general (almacen.temaDe). Al cambiar el
-// general se suben todos los widgets que lo usan.
+// El estilo visual de cada widget (almacen.temaDe, ver js/tema.js) se agrega aquí a su
+// configuración con la clave `est`.
 //
 // Secciones: 1. Registro · 2. Subida · 3. Estado · 4. Arranque
 // =============================================================================

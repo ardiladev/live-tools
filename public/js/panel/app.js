@@ -6,7 +6,7 @@
 //   - el menú con los grupos desplegables de la categoría activa
 //   - la navegación entre vistas, con direcciones del tipo  #/id-de-la-vista
 //
-// Ciclo de vida de una vista: al entrar se llama `vista.render({ senal, parametros })`; al salir se
+// Ciclo de vida de una vista: al entrar se llama `vista.render({ senal })`; al salir se
 // cancela `senal` (AbortSignal), y todo lo que la vista suscribió con ella se suelta solo.
 //
 // Al arrancar también enciende los cambios en vivo (sincronizar.js), que siguen funcionando
@@ -95,8 +95,7 @@ function pintarMenu(categoria, vistaActiva) {
 // -----------------------------------------------------------------------------
 
 function navegar() {
-  // #/id-de-la-vista o #/id-de-la-vista?clave=valor (la vista recibe los parámetros).
-  const [id, consulta = ''] = (location.hash.startsWith('#/') ? location.hash.slice(2) : VISTA_INICIAL).split('?');
+  const id = location.hash.startsWith('#/') ? location.hash.slice(2) : VISTA_INICIAL;
   const { categoria, grupo, vista } = buscarVista(id) || buscarVista(VISTA_INICIAL);
 
   // Se cierra la vista anterior: sus suscripciones y oyentes se sueltan aquí.
@@ -115,7 +114,7 @@ function navegar() {
   $('contenido').replaceChildren(
     el('h1', { class: 'vista-titulo' }, vista.titulo),
     el('p', { class: 'intro' }, vista.descripcion || ''),
-    el('div', { class: 'rejilla' }, ...vista.render({ senal: controladorVista.signal, parametros: new URLSearchParams(consulta) })));
+    el('div', { class: 'rejilla' }, ...vista.render({ senal: controladorVista.signal })));
 
   document.body.classList.remove('menu-abierto');
   scrollTo(0, 0);

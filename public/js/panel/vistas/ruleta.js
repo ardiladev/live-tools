@@ -8,6 +8,7 @@
 // =============================================================================
 
 import * as almacen from '../almacen.js';
+import { editorEstilo } from '../estilo.js';
 import * as sincronizar from '../sincronizar.js';
 import { el, tarjeta, tarjetaWidget, campo, casilla, nota } from '../ui.js';
 
@@ -91,6 +92,7 @@ export default {
       personalizar: [
         casilla('Ocultar la ruleta cuando no hay giros', { marcada: cfg.ocultar, alCambiar: (v) => { cfg.ocultar = v; cambio(); } }),
         casilla('Sonido de clic', { marcada: cfg.sonido, alCambiar: (v) => { cfg.sonido = v; cambio(); } }),
+        ...editorEstilo('ruleta', () => widget.actualizar()),
       ],
       pruebas: [
         { texto: 'Probar 1 regalo', evento: eventoDePrueba(1) },

@@ -7,6 +7,7 @@
 // =============================================================================
 
 import * as almacen from '../almacen.js';
+import { editorEstilo } from '../estilo.js';
 import * as sincronizar from '../sincronizar.js';
 import { tarjetaWidget, campo, casilla, nota } from '../ui.js';
 
@@ -64,6 +65,7 @@ export default {
         campo('Monedas mínimas para alertar un regalo:', { tipo: 'number', valor: cfg.minimo, min: 0, alCambiar: (v) => { cfg.minimo = v; cambio(); } }),
         campo('Segundos en pantalla:', { tipo: 'number', valor: cfg.duracion, min: 2, max: 15, alCambiar: (v) => { cfg.duracion = v; cambio(); } }),
         casilla('Sonido', { marcada: cfg.sonido, alCambiar: (v) => { cfg.sonido = v; cambio(); } }),
+        ...editorEstilo('alertas', () => widget.actualizar()),
       ],
       pruebas: [
         { texto: 'Regalo', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '5655', nombre: 'Rose', cantidad: 5, diamantes: 1 }) },

@@ -4,10 +4,9 @@
 // El menú, la navegación y los íconos se arman solos a partir de esta lista.
 //
 // Una vista es un objeto:
-//   { id, titulo, descripcion, render({ senal, parametros }) → [nodos] }
+//   { id, titulo, descripcion, render({ senal }) → [nodos] }
 // `id` es la dirección (#/id) y debe ser único. `senal` es un AbortSignal que se cancela
-// al salir de la vista: úsalo para suscripciones y addEventListener. `parametros`
-// (URLSearchParams) trae lo que venga en la dirección después de '?': #/id?clave=valor.
+// al salir de la vista: úsalo para suscripciones y addEventListener.
 //
 // Para agregar una función nueva:
 //   1. Crea su vista en js/panel/vistas/ (copia una parecida, por ejemplo alertas.js).
@@ -21,7 +20,6 @@
 import ruleta from './vistas/ruleta.js';
 import { metaLikes, metaSeguidores, metaCompartidos, metaMonedas } from './vistas/metas.js';
 import alertas from './vistas/alertas.js';
-import estilo from './vistas/estilo.js';
 import actividad from './vistas/actividad.js';
 import buscadorRegalos from './vistas/regalos.js';
 import conexion from './vistas/conexion.js';
@@ -36,7 +34,6 @@ export const CATEGORIAS = [
       { id: 'ruletas', titulo: 'Ruletas', vistas: [ruleta] },
       { id: 'metas', titulo: 'Metas', vistas: [metaLikes, metaSeguidores, metaCompartidos, metaMonedas] },
       { id: 'alertas', titulo: 'Alertas', vistas: [alertas] },
-      { id: 'apariencia', titulo: 'Apariencia', vistas: [estilo] },
     ],
   },
   {

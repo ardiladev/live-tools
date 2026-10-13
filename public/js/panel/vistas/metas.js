@@ -8,6 +8,7 @@
 // =============================================================================
 
 import * as almacen from '../almacen.js';
+import { editorEstilo } from '../estilo.js';
 import * as sincronizar from '../sincronizar.js';
 import { tarjetaWidget, campo, casilla, nota } from '../ui.js';
 
@@ -56,7 +57,7 @@ const ACCIONES_AL_ALCANZAR = [
 function crearVista(tipo) {
   const t = TIPOS[tipo];
   const id = `meta-${tipo}`;
-  // Sin color propio, la barra usa el acento del estilo de widgets (Superposiciones → Apariencia).
+  // Sin color propio, la barra usa el color de acento de su estilo (Personalizar → Estilo visual).
   const ajustes = () => almacen.widget(id, { objetivo: t.meta, titulo: t.etiqueta, color: t.color, colorPropio: false, alAlcanzar: 'duplicar', sonido: true });
 
   // Se registra al cargar, para que los cambios en vivo funcionen con o sin la vista abierta.
@@ -91,7 +92,7 @@ function crearVista(tipo) {
         alCambiar: (v) => { cfg.color = v; cambio(); },
       });
 
-      const casillaColor = casilla('Color propio (si no, el acento del estilo de widgets)', {
+      const casillaColor = casilla('Color propio (si no, el acento del estilo visual)', {
         marcada: cfg.colorPropio,
         alCambiar: (v) => {
           cfg.colorPropio = v;
@@ -118,6 +119,7 @@ function crearVista(tipo) {
         ],
         personalizar: [
           casilla('Sonido al alcanzar la meta', { marcada: cfg.sonido, alCambiar: (v) => { cfg.sonido = v; cambio(); } }),
+          ...editorEstilo(id, () => widget.actualizar()),
         ],
         pruebas: t.pruebas,
       });
