@@ -1,0 +1,191 @@
+/* ==========================================================================
+   repertorio.css — Widget "Repertorio" (repertorio.html), playlist / menú de bailes
+   Una pila vertical de tarjetas de cristal. Las pendientes y las hechas van
+   atenuadas; la activa tiene el filo de oro con brillo; la desbloqueada
+   ("Sonando") brilla más y muestra el triángulo de reproducir; las hechas, un
+   visto. Tipografía en mayúsculas, geométrica y espaciada.
+   El estado va en data-estado: pendiente | activa | sonando | hecha
+   (js/widgets/repertorio.js). Las medidas usan --u (el menor entre 1 % del alto
+   y 1,5 % del ancho): la lista cabe en cualquier tamaño de fuente de OBS.
+
+   Secciones: 1. Escena · 2. Tarjeta · 3. Ícono · 4. Barra · 5. Estados
+              6. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+:root { --u: min(1vh, 1.5vw); }
+
+.escena {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1.4);
+  padding: calc(var(--u) * 2.4);
+  box-sizing: border-box;
+}
+.titulo {
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 2.4);
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  text-shadow: var(--sombra-texto);
+}
+.titulo:empty { display: none; }
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1.2);
+}
+
+
+/* ---------- 2. Tarjeta ---------- */
+.cancion {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 1.8) calc(var(--u) * 2.4);
+  opacity: .5;
+  transition: opacity .6s ease, box-shadow .6s ease, transform .6s ease;
+}
+/* El filo de oro de .cristal solo se ve en la activa (y en la que suena). */
+.cancion::before { opacity: .35; transition: opacity .6s ease; }
+.cuerpo { display: grid; gap: calc(var(--u) * .7); min-width: 0; }
+.nombre {
+  overflow: hidden;
+  color: var(--texto-sec);
+  font-weight: 700;
+  font-size: calc(var(--u) * 2.3);
+  letter-spacing: .12em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.estado {
+  color: var(--oro-texto);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.35);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  opacity: .85;
+}
+.cifras {
+  justify-self: end;
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.3);
+  letter-spacing: .06em;
+  font-variant-numeric: tabular-nums;
+  opacity: .8;
+}
+
+
+/* ---------- 3. Ícono: número, reproducir o visto ---------- */
+.icono {
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 5.2);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid var(--insignia-borde);
+  background: var(--insignia-fondo);
+}
+.icono > * { grid-area: 1 / 1; }
+.numero {
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 1.8);
+  letter-spacing: .05em;
+  font-variant-numeric: tabular-nums;
+}
+.icono svg {
+  width: 55%;
+  opacity: 0;
+  transform: scale(.6);
+  transition: opacity .4s ease, transform .4s ease;
+}
+.reproducir path { fill: var(--activo); }
+.visto path {
+  fill: none;
+  stroke: var(--activo);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+
+/* ---------- 4. Barra ---------- */
+.barra {
+  position: relative;
+  height: calc(var(--u) * .9);
+  overflow: hidden;
+  border-radius: var(--radio);
+  background: var(--cristal-claro);
+}
+.relleno {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: var(--acento-relleno);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--borde-color) 50%, transparent);
+  transition: width .6s cubic-bezier(.2, .9, .3, 1);
+}
+
+
+/* ---------- 5. Estados ---------- */
+/* Activa: opaca, filo de oro con brillo y un poco más grande. */
+.cancion[data-estado="activa"],
+.cancion[data-estado="sonando"] {
+  opacity: 1;
+  box-shadow: var(--resplandor-activo);
+  transform: scale(1.02);
+}
+.cancion[data-estado="activa"]::before,
+.cancion[data-estado="sonando"]::before { opacity: 1; }
+
+/* Sonando: más brillo, el triángulo en lugar del número y la barra llena con destello. */
+.cancion[data-estado="sonando"] {
+  box-shadow: var(--resplandor-activo), 0 0 calc(var(--u) * 3) color-mix(in srgb, var(--borde-color) 45%, transparent);
+}
+.cancion[data-estado="sonando"] .estado { color: var(--activo); opacity: 1; }
+.cancion[data-estado="sonando"] .numero,
+.cancion[data-estado="hecha"] .numero { opacity: 0; }
+.cancion[data-estado="sonando"] .reproducir,
+.cancion[data-estado="hecha"] .visto { opacity: 1; transform: none; }
+.cancion[data-estado="sonando"] .reproducir { animation: latido 1.4s ease-in-out infinite; }
+.cancion[data-estado="sonando"] .relleno::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .45), transparent);
+  background-size: 45% 100%;
+  background-repeat: no-repeat;
+  animation: destello 2s linear infinite;
+}
+
+/* Pendientes: sin barra ni cifras (solo nombre y "En espera"). */
+.cancion[data-estado="pendiente"] .barra,
+.cancion[data-estado="pendiente"] .cifras { display: none; }
+/* Hechas: atenuadas, con el visto, sin barra. */
+.cancion[data-estado="hecha"] { opacity: .4; }
+.cancion[data-estado="hecha"] .barra,
+.cancion[data-estado="hecha"] .cifras { display: none; }
+.cancion[data-estado="hecha"] .nombre { text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--activo) 60%, transparent); }
+
+
+/* ---------- 6. Animaciones ---------- */
+.golpe { animation: golpe .45s ease-out; }
+.desbloqueo { animation: desbloqueo 1.8s ease-out; }
+
+@keyframes golpe { 40% { transform: scale(1.04); } }
+@keyframes desbloqueo {
+  25% { transform: scale(1.06); box-shadow: var(--resplandor-activo), 0 0 calc(var(--u) * 6) var(--activo); }
+}
+@keyframes latido { 50% { transform: scale(1.15); } }
+@keyframes destello { from { background-position: -60% 0; } to { background-position: 160% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .cancion, .cancion::before, .relleno, .icono svg { transition: none; }
+  .golpe, .desbloqueo, .cancion .reproducir, .cancion .relleno::after { animation: none !important; }
+}

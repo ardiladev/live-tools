@@ -382,6 +382,25 @@ button.enlace { color: var(--enlace); }
 .color-opcional { display: flex; align-items: center; gap: 4px; }
 .color-opcional input[type="color"] { flex: 1; min-width: 0; }
 .integrante-fila.encabezado { margin-bottom: 4px; color: var(--suave); font-size: 12px; }
+/* Repertorio: estado · nombre · meta · activar · hecha · subir · bajar · quitar. */
+.cancion-fila {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr) 110px auto auto 34px 34px 34px;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.cancion-fila button { padding: 0 10px; }
+.cancion-fila.encabezado { margin-bottom: 4px; color: var(--suave); font-size: 12px; }
+.cancion-estado { color: var(--suave); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.cancion-fila.activa .cancion-estado { color: var(--oro); font-weight: 600; }
+.cancion-fila.hecha .cancion-estado { color: var(--ok); }
+.cancion-fila.hecha input { opacity: .6; }
+@media (max-width: 760px) {
+  .cancion-fila { grid-template-columns: 70px minmax(0, 1fr) 90px; }
+  .cancion-fila.encabezado { display: none; }
+}
+
 @media (max-width: 760px) {
   .integrante-fila,
   .integrante-fila.sin-meta { grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) 34px; }

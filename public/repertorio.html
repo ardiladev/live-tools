@@ -1,0 +1,52 @@
+<!doctype html>
+<!--
+  repertorio.html — Widget "Repertorio" (playlist / menú de bailes) para OBS / TikTok LIVE Studio
+  (recomendado 600 × 900, a un costado de la escena). Una lista vertical de canciones o bailes; los
+  regalos llenan la barra de la canción activa y, al llegar a su meta, se desbloquea ("Sonando").
+  El panel elige la activa, marca las hechas y reinicia la lista.
+  Estilos: css/aurea.css + css/widget.css + css/widgets/repertorio.css · Lógica: js/widgets/repertorio.js
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración llega en vivo desde Supabase.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Repertorio — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/repertorio.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/repertorio.js"></script>
+</head>
+<body>
+  <main class="escena">
+    <div class="titulo" id="titulo"></div>
+    <div class="lista" id="lista"></div>
+  </main>
+
+  <!-- Tarjeta de una canción (la clona js/widgets/repertorio.js). El estado va en data-estado:
+       pendiente | activa | sonando (activa y desbloqueada) | hecha -->
+  <template id="plantilla-cancion">
+    <article class="cancion cristal" data-estado="pendiente">
+      <div class="icono">
+        <span class="numero"></span>
+        <!-- Sonando: triángulo de reproducir · Hecha: visto -->
+        <svg class="reproducir" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>
+        <svg class="visto" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </div>
+      <div class="cuerpo">
+        <div class="nombre"></div>
+        <div class="estado"></div>
+        <div class="barra"><div class="relleno"></div></div>
+        <div class="cifras"></div>
+      </div>
+    </article>
+  </template>
+</body>
+</html>
