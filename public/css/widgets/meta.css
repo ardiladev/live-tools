@@ -1,9 +1,9 @@
 /* ==========================================================================
-   meta.css — Widget "Meta" (meta.html): barra de progreso recta, de línea fina
-   Arriba la etiqueta (título en mayúsculas + conteo fino), abajo la barra con el
+   meta.css — Widget "Meta" (meta.html): placa de cristal con barra de progreso
+   Arriba la etiqueta (oro claro, mayúsculas), abajo la barra traslúcida con el
    porcentaje. El color llega con la configuración en la variable --color
-   (js/widgets/meta.js); por defecto es el oro de la marca, y con él el relleno
-   toma el degradado de oro metálico.
+   (js/widgets/meta.js); por defecto es el oro de la marca. El relleno es ese
+   color traslúcido (15 % → 40 %), nunca un bloque sólido.
    ========================================================================== */
 
 :root { --color: #D4AF37; } /* hasta que llegue la configuración */
@@ -17,13 +17,11 @@
   box-sizing: border-box;
 }
 .meta {
-  width: min(92vw, 1400px);
-  padding: 2.5vh 3vw 3vh;
-  border: var(--linea);
-  border-radius: var(--radio);
-  background: var(--placa);
   display: flex;
   flex-direction: column;
+  width: min(92vw, 1400px);
+  padding: 2.5vh 3vw 3vh;
+  box-sizing: border-box;
 }
 
 /* ---------- Etiqueta: "Meta de likes - 120 / 1.000 Likes" ---------- */
@@ -31,34 +29,32 @@
 .etiqueta {
   order: -1;
   margin-bottom: 1.6vh;
-  color: var(--nitido);
-  font-weight: var(--peso-medio);
+  color: var(--oro-texto);
+  font-weight: 600;
   font-size: clamp(14px, 4.4vh, 50px);
   line-height: 1.2;
   text-transform: uppercase;
-  letter-spacing: var(--espaciado-titulo);
+  letter-spacing: var(--espaciado-widget);
 }
 
 /* ---------- Barra ---------- */
-/* Alto contenido: una franja de línea fina, no un bloque. */
+/* Franja de cristal claro con filo de oro (clase .filo-oro de widget.css). */
 .barra {
   position: relative;
   height: clamp(28px, 10.5vh, 120px);
   overflow: hidden;
-  border: var(--linea-oro);
-  border-color: var(--color);
   border-radius: var(--radio);
-  background: color-mix(in srgb, var(--color) 8%, transparent);
+  background: var(--cristal-claro);
 }
-/* Relleno metálico construido con el color de la meta (con el oro queda el degradado de la marca). */
+/* Relleno traslúcido del color de la meta, con un borde de avance brillante. */
 .relleno {
   position: absolute;
   inset: 0 auto 0 0;
   width: 0%;
-  background: linear-gradient(135deg,
-    var(--color) 0%,
-    color-mix(in srgb, var(--color) 55%, #FFF3A6) 50%,
-    color-mix(in srgb, var(--color) 72%, #3A2600) 100%);
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--color) 15%, transparent),
+    color-mix(in srgb, var(--color) 40%, transparent));
+  box-shadow: inset -1.5px 0 0 color-mix(in srgb, var(--color) 70%, #FFF3C4);
   transition: width .6s cubic-bezier(.2, .9, .3, 1);
 }
 /* Divisiones en 38,2 % y 61,8 %: los dos puntos áureos de la barra. */
@@ -78,19 +74,16 @@
   z-index: 1;
   display: grid;
   place-items: center;
-  font-weight: var(--peso-fuerte);
+  font-weight: 600;
   font-size: clamp(16px, 6.5vh, 74px);         /* alto de la barra / φ */
-  letter-spacing: var(--espaciado-titulo);
+  letter-spacing: var(--espaciado-widget);
   font-variant-numeric: tabular-nums;
-  color: var(--nitido);
-  /* Contorno fino para leerse igual sobre el relleno claro y sobre el fondo oscuro. */
-  -webkit-text-stroke: .05em var(--carbon);
-  paint-order: stroke fill;
+  color: #FFFFFF;
 }
 
 /* ---------- Meta alcanzada ---------- */
 .meta.lograda { animation: brillo 1.2s ease-in-out 3; }
-@keyframes brillo { 50% { box-shadow: var(--brillo); border-color: var(--oro); } }
+@keyframes brillo { 50% { box-shadow: 0 0 26px rgba(212, 175, 55, .45); } }
 
 @media (prefers-reduced-motion: reduce) {
   .relleno { transition: none; }

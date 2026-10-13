@@ -1,7 +1,8 @@
 /* ==========================================================================
    alertas.css — Widget "Alertas de eventos" (alertas.html)
-   Una placa rectangular en proporción áurea: ícono en un marco dorado, quién (título
-   en mayúsculas) y qué hizo (subtítulo fino). Entra y sale con un desvanecido.
+   Una placa de cristal (clase .cristal de widget.css) con el ícono en una gema
+   dorada traslúcida, quién (oro claro) y qué hizo (blanco). Entra y sale con un
+   desvanecido; al aparecer el resplandor dorado se intensifica un poco.
    ========================================================================== */
 
 /* ---------- Escena ---------- */
@@ -15,32 +16,17 @@
 
 /* ---------- Placa de la alerta ---------- */
 .alerta {
-  position: relative;
   display: flex;
   align-items: center;
   gap: 3.7vmin;                                  /* 6vmin / φ */
   max-width: 92vw;
   padding: 2.3vmin 6vmin 2.3vmin 2.3vmin;
-  border: var(--linea-oro);
-  border-radius: var(--radio);
-  background: var(--placa);
-  color: var(--nitido);
+  color: #FFFFFF;
   opacity: 0;
   transform: translateY(12%);
   transition: opacity .35s ease, transform .45s cubic-bezier(.2, .9, .3, 1), box-shadow .45s ease;
 }
-.alerta.visible { opacity: 1; transform: none; box-shadow: var(--brillo); }
-
-/* Línea de oro metálico en la base: el único adorno. */
-.alerta::after {
-  content: "";
-  position: absolute;
-  left: -1px;
-  right: -1px;
-  bottom: -1px;
-  height: max(2px, .4vmin);
-  background: var(--oro-metal);
-}
+.alerta.visible { opacity: 1; transform: none; box-shadow: 0 0 22px rgba(212, 175, 55, .3); }
 
 /* ---------- Ícono (emoji o imagen del regalo) ---------- */
 .icono {
@@ -49,28 +35,30 @@
   place-items: center;
   width: clamp(48px, 13vmin, 150px);
   aspect-ratio: 1;
-  border: var(--linea);
-  border-radius: var(--radio);
-  background: var(--oro-suave);
+  border: 1px solid rgba(212, 175, 55, .6);
+  border-radius: var(--radio-grande);
+  background: var(--cristal-oro);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18);
   font-size: clamp(28px, 8vmin, 90px);
 }
 .icono img { width: 80%; height: 80%; object-fit: contain; }
 
 /* ---------- Textos ---------- */
 .quien {
-  font-weight: var(--peso-fuerte);
+  font-weight: 600;
   font-size: clamp(20px, 5.5vmin, 64px);
   line-height: 1.1;
   text-transform: uppercase;
-  letter-spacing: var(--espaciado-titulo);
-  color: var(--oro);
+  letter-spacing: var(--espaciado-widget);
+  color: var(--oro-texto);
 }
 .que {
-  margin-top: .3em;
-  font-weight: var(--peso-fino);
-  font-size: clamp(14px, 3.4vmin, 40px);       /* 5.5vmin / φ */
-  letter-spacing: var(--espaciado-sub);
-  color: var(--nitido);
+  margin-top: .35em;
+  font-weight: 500;
+  font-size: clamp(13px, 3.4vmin, 40px);       /* 5.5vmin / φ */
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-widget);
+  color: #FFFFFF;
 }
 
 @media (prefers-reduced-motion: reduce) {

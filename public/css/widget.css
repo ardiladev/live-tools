@@ -2,36 +2,70 @@
    widget.css — Base común de todos los widgets que van en OBS / LIVE Studio
    (ruleta.html, meta.html, alertas.html). Cada widget añade su propio CSS
    en css/widgets/<nombre>.css.
-   Colores, escala φ y tipografía: css/aurea.css (sistema de diseño ÁUREA NETWORK).
+   Colores, cristal, escala φ y tipografía: css/aurea.css (sistema ÁUREA NETWORK).
    La fuente se carga con <link> en cada HTML (más rápido que @import).
+
+   Secciones: 1. Lienzo · 2. Cristal · 3. Píldora de estado
    ========================================================================== */
 
-/* ---------- Placa ---------- */
-/* La superficie oscura de los widgets: carbón casi opaco para leerse sobre cualquier
-   video, con borde fino dorado. Sin sombras ni relieves. */
-:root {
-  --placa: rgba(15, 15, 18, .92);
-}
 
-/* ---------- Lienzo ---------- */
+/* ---------- 1. Lienzo ---------- */
 /* Fondo transparente: OBS dibuja el widget encima de la cámara. */
 html,
 body {
   margin: 0;
   height: 100%;
   background: transparent;
-  color: var(--nitido);
+  color: #FFFFFF;
   font-family: var(--fuente);
   overflow: hidden;
 }
 
-/* Solo en la vista previa del panel (?fondo=1): un gris para ver el widget. */
-body.vista-previa { background: #3a3a40; }
+/* Solo en la vista previa del panel (?fondo=1): manchas de color que imitan una
+   transmisión, para ver la transparencia del cristal. En OBS no se usa. */
+body.vista-previa {
+  background:
+    radial-gradient(circle at 22% 28%, #6d8196 0, transparent 42%),
+    radial-gradient(circle at 78% 64%, #9a6f5c 0, transparent 46%),
+    radial-gradient(circle at 40% 88%, #4d6b5a 0, transparent 38%),
+    linear-gradient(160deg, #2c3540, #463c38);
+}
 
 /* El atributo hidden siempre gana, aunque una clase ponga display. */
 [hidden] { display: none !important; }
 
-/* ---------- Píldora de estado de la conexión ---------- */
+
+/* ---------- 2. Cristal ---------- */
+/* Placa de cristal esmerilado: fondo traslúcido con desenfoque, filo de oro de 1px
+   y un resplandor dorado muy fino. Se usa con class="cristal" en el HTML.
+   El filo es un ::before con máscara: así el degradado respeta las esquinas
+   redondeadas y no se ve a través del fondo traslúcido. */
+.cristal {
+  position: relative;
+  border-radius: var(--radio-grande);
+  background: var(--cristal-oscuro);
+  -webkit-backdrop-filter: var(--desenfoque);
+  backdrop-filter: var(--desenfoque);
+  box-shadow: var(--resplandor);
+  text-shadow: var(--sombra-texto);
+}
+.cristal::before,
+.filo-oro::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 1px;
+  border-radius: inherit;
+  background: var(--filo-oro);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+
+
+/* ---------- 3. Píldora de estado de la conexión ---------- */
 /* La crea js/comun.js (iniciarWidget). Solo se ve en la vista previa, nunca en OBS. */
 .pildora-estado {
   position: fixed;
@@ -45,7 +79,9 @@ body.vista-previa { background: #3a3a40; }
   font: 500 12px/1.3 var(--fuente);
   letter-spacing: var(--espaciado-sub);
   color: var(--nitido);
-  background: var(--placa);
+  background: var(--cristal-oscuro);
+  -webkit-backdrop-filter: var(--desenfoque);
+  backdrop-filter: var(--desenfoque);
 }
 .pildora-estado::before { content: "●"; margin-right: .4em; color: var(--mal); }
 .pildora-estado.ok::before { color: var(--ok); }

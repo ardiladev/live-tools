@@ -24,26 +24,37 @@
 <body>
   <main class="escena" id="escena">
     <!-- Quién envió el regalo -->
-    <div class="aviso" id="aviso" aria-live="polite"></div>
+    <div class="aviso cristal" id="aviso" aria-live="polite"></div>
 
     <!-- La rueda: el canvas la dibuja y el puntero marca el premio -->
     <div class="rueda">
-      <!-- Puntero: chevrón blanco con filo de oro metálico (proporción 1 : φ) -->
-      <svg class="puntero" id="puntero" viewBox="0 0 100 162" aria-hidden="true">
+      <!-- Puntero: gema facetada de oro bruñido (proporción 1 : φ). Cada faceta tiene su
+           degradado para dar volumen; arriba, un destello con desenfoque. -->
+      <svg class="puntero" id="puntero" viewBox="0 0 60 97" aria-hidden="true">
         <defs>
-          <linearGradient id="oroPuntero" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#D4AF37"/><stop offset=".5" stop-color="#FFD700"/><stop offset="1" stop-color="#AA771C"/>
-          </linearGradient>
+          <linearGradient id="faceta1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF4C2"/><stop offset="1" stop-color="#E2BE57"/></linearGradient>
+          <linearGradient id="faceta2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#EBCF73"/><stop offset="1" stop-color="#C39A2E"/></linearGradient>
+          <linearGradient id="faceta3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D4AF37"/><stop offset="1" stop-color="#8C6216"/></linearGradient>
+          <linearGradient id="faceta4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#AA771C"/><stop offset="1" stop-color="#5E400C"/></linearGradient>
+          <filter id="destello" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="1.4"/></filter>
         </defs>
-        <path d="M4 4 H96 L50 158 Z" fill="#0F0F12" stroke="url(#oroPuntero)" stroke-width="6" stroke-linejoin="miter"/>
-        <path d="M22 18 H78 L50 112 Z" fill="#FFFFFF"/>
+        <!-- Corona (arriba) y pabellón (la punta), dos facetas cada uno -->
+        <path d="M14 4 H30 V22 H4 Z" fill="url(#faceta1)"/>
+        <path d="M30 4 H46 L56 22 H30 Z" fill="url(#faceta2)"/>
+        <path d="M4 22 H30 L30 93 Z" fill="url(#faceta3)"/>
+        <path d="M30 22 H56 L30 93 Z" fill="url(#faceta4)"/>
+        <!-- Aristas finas de luz -->
+        <path d="M14 4 H46 L56 22 L30 93 L4 22 Z M4 22 H56 M30 4 V93" fill="none" stroke="#FFF1C1" stroke-opacity=".7" stroke-width=".8" stroke-linejoin="round"/>
+        <!-- Destello -->
+        <circle cx="21" cy="11" r="3" fill="#FFFFFF" filter="url(#destello)"/>
+        <circle cx="21" cy="11" r="1.1" fill="#FFFFFF"/>
       </svg>
       <canvas id="lienzo" width="1000" height="1000" aria-label="Ruleta de premios"></canvas>
     </div>
 
     <!-- El premio que salió y los giros que esperan turno -->
-    <div class="resultado" id="resultado" aria-live="polite"></div>
-    <div class="cola" id="cola"></div>
+    <div class="resultado cristal" id="resultado" aria-live="polite"></div>
+    <div class="cola cristal" id="cola"></div>
   </main>
 </body>
 </html>

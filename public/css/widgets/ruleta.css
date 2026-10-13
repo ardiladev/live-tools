@@ -1,7 +1,9 @@
 /* ==========================================================================
    ruleta.css — Widget "Ruleta de regalos" (ruleta.html)
    Estructura: aviso (quién envió) → rueda (canvas + puntero) → resultado → cola
-   La rueda se dibuja en js/widgets/ruleta.js con los colores de aurea.css.
+   El aviso, el resultado y la cola son placas de cristal (.cristal, widget.css).
+   La rueda: un disco de cristal esmerilado (aquí) y encima los sectores
+   traslúcidos que dibuja js/widgets/ruleta.js.
    ========================================================================== */
 
 /* ---------- Escena ---------- */
@@ -21,16 +23,13 @@
 .aviso {
   min-height: 1.2em;
   max-width: 90vw;
-  padding: .55em 1.6em;
-  border: var(--linea-oro);
-  border-radius: var(--radio);
-  background: var(--placa);
-  color: var(--nitido);
-  font-weight: var(--peso-medio);
-  font-size: clamp(16px, 3.4vmin, 38px);
+  padding: .6em 1.6em;
+  color: #FFFFFF;
+  font-weight: 600;
+  font-size: clamp(15px, 3.2vmin, 36px);
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: var(--espaciado-titulo);
+  letter-spacing: var(--espaciado-widget);
   visibility: hidden;
 }
 .aviso.visible { visibility: visible; animation: entra .35s ease-out; }
@@ -41,22 +40,35 @@
   width: min(86vw, 70vh);
   aspect-ratio: 1;
 }
+/* Disco de cristal detrás de los sectores. Su borde coincide con el aro del canvas
+   (radio 486 de 500 → 1,4 % de margen) y lleva el resplandor dorado. */
+.rueda::before {
+  content: "";
+  position: absolute;
+  inset: 1.4%;
+  border-radius: 50%;
+  -webkit-backdrop-filter: var(--desenfoque);
+  backdrop-filter: var(--desenfoque);
+  box-shadow: var(--resplandor);
+}
 .rueda canvas {
+  position: relative;
   display: block;
   width: 100%;
   height: 100%;
 }
 
-/* Puntero: chevrón blanco con filo dorado, apuntando hacia la rueda. Da un "golpe" en cada sector. */
+/* Puntero: gema de oro (SVG en ruleta.html). Da un "golpe" en cada sector. */
 .puntero {
   position: absolute;
   left: 50%;
-  top: -3%;
+  top: -2.5%;
   z-index: 2;
-  width: 8.5%;
+  width: 6%;
   aspect-ratio: 1 / 1.618;
   transform: translateX(-50%);
-  transform-origin: 50% 20%;
+  transform-origin: 50% 15%;
+  filter: drop-shadow(0 0 6px rgba(212, 175, 55, .45)) drop-shadow(0 2px 3px rgba(0, 0, 0, .55));
 }
 .puntero.golpe { animation: golpe .12s ease-out; }
 
@@ -64,30 +76,29 @@
 .resultado {
   min-height: 1.3em;
   max-width: 92vw;
-  padding: .3em 1.2em;
-  border: var(--linea-oro);
-  border-radius: var(--radio);
-  background: var(--placa);
-  font-weight: var(--peso-fuerte);
-  font-size: clamp(22px, 6vmin, 64px);
+  padding: .35em 1.3em;
+  font-weight: 600;
+  font-size: clamp(20px, 5.6vmin, 60px);
   text-align: center;
   text-transform: uppercase;
-  letter-spacing: var(--espaciado-titulo);
-  color: var(--oro);
+  letter-spacing: var(--espaciado-widget);
+  color: var(--oro-texto);
   visibility: hidden;
 }
-.resultado.visible { visibility: visible; box-shadow: var(--brillo); animation: premio .6s cubic-bezier(.2, 1.3, .4, 1); }
+.resultado.visible {
+  visibility: visible;
+  box-shadow: 0 0 24px rgba(212, 175, 55, .32);
+  animation: premio .6s cubic-bezier(.2, 1.3, .4, 1);
+}
 
 /* ---------- Cola: "+3 en espera" ---------- */
 .cola {
-  padding: .25em 1em;
-  border: var(--linea);
-  border-radius: var(--radio);
-  background: var(--placa);
-  font-weight: var(--peso-fino);
-  font-size: clamp(13px, 2.6vmin, 26px);
-  letter-spacing: var(--espaciado-sub);
-  color: var(--nitido);
+  padding: .3em 1.1em;
+  font-weight: 500;
+  font-size: clamp(12px, 2.4vmin, 24px);
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-widget);
+  color: #FFFFFF;
   visibility: hidden;
 }
 .cola.visible { visibility: visible; }

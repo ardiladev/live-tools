@@ -26,20 +26,27 @@ const DURACION_GIRO_MS = MOVIMIENTO_REDUCIDO ? 1200 : 5200;
 const PAUSA_RESULTADO_MS = 2800;
 const VUELTA = Math.PI * 2;
 
-// Paleta ÁUREA NETWORK (la misma de css/aurea.css; el canvas no lee variables CSS).
+// Paleta ÁUREA NETWORK en cristal (la misma de css/aurea.css; el canvas no lee variables CSS).
+// Los sectores son traslúcidos: detrás hay un disco con desenfoque (css/widgets/ruleta.css).
 const ORO = '#D4AF37';
-const CARBON = '#0F0F12';
-const PIZARRA = '#1A1A1A';
+const ORO_OSCURO = '#AA771C';
+const ORO_TEXTO = '#F3DFA2';
 const BLANCO = '#FFFFFF';
 const PHI = 1.618;
+const SOMBRA_TEXTO = 'rgba(0, 0, 0, .7)';
 
-// Colores de los sectores, en orden. 'oro' = degradado de oro metálico.
-// El texto de cada uno se elige para que contraste.
+// Fondos de los sectores: 'oscuro' y 'claro' son cristal; 'oro' es un degradado dorado traslúcido.
+const FONDOS = {
+  oscuro: 'rgba(15, 15, 18, .55)',
+  claro: 'rgba(255, 255, 255, .08)',
+};
+
+// Sectores, en orden. El texto de cada uno se elige para que contraste.
 const COLORES = [
-  { fondo: CARBON, texto: ORO },
-  { fondo: 'oro', texto: PIZARRA },
-  { fondo: BLANCO, texto: PIZARRA },
-  { fondo: 'oro', texto: PIZARRA },
+  { fondo: 'oscuro', texto: ORO_TEXTO },
+  { fondo: 'oro', texto: BLANCO },
+  { fondo: 'claro', texto: ORO_TEXTO },
+  { fondo: 'oro', texto: BLANCO },
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -96,17 +103,25 @@ function partirTexto(texto, maxAncho) {
   return lineas.slice(0, 2);
 }
 
-/** Degradado de oro metálico (135°) que cubre el círculo de radio `radio`. */
-function oroMetal(radio) {
+/** Filo de oro (135°): #D4AF37 → oro claro → #AA771C, del tamaño del círculo de radio `radio`. */
+function filoOro(radio) {
   const g = ctx.createLinearGradient(-radio, -radio, radio, radio);
-  g.addColorStop(0, '#D4AF37');
-  g.addColorStop(0.5, '#FFD700');
-  g.addColorStop(1, '#AA771C');
+  g.addColorStop(0, ORO);
+  g.addColorStop(0.45, ORO_TEXTO);
+  g.addColorStop(1, ORO_OSCURO);
+  return g;
+}
+
+/** Dorado traslúcido de los sectores 'oro': 15 % cerca del centro → 40 % en el borde. */
+function oroCristal(radio) {
+  const g = ctx.createRadialGradient(0, 0, radio * 0.12, 0, 0, radio);
+  g.addColorStop(0, 'rgba(212, 175, 55, .15)');
+  g.addColorStop(1, 'rgba(212, 175, 55, .4)');
   return g;
 }
 
 function dibujarSectores(radio, sector) {
-  const oro = oroMetal(radio);
+  const oro = oroCristal(radio);
   premios.forEach((premio, i) => {
     const inicio = -Math.PI / 2 + i * sector;
     const { fondo, texto } = colorDe(i, premios.length);
@@ -115,31 +130,35 @@ function dibujarSectores(radio, sector) {
     ctx.moveTo(0, 0);
     ctx.arc(0, 0, radio, inicio, inicio + sector);
     ctx.closePath();
-    ctx.fillStyle = fondo === 'oro' ? oro : fondo;
+    ctx.fillStyle = fondo === 'oro' ? oro : FONDOS[fondo];
     ctx.fill();
 
-    // Texto radial en mayúsculas con espaciado amplio, alineado hacia el borde.
+    // Texto radial: semi-negrita, mayúsculas y espaciado amplio, con sombra suave para leerse
+    // sobre la transmisión aunque la rueda esté girando.
     ctx.save();
     ctx.rotate(inicio + sector / 2);
     ctx.fillStyle = texto;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
+    ctx.shadowColor = SOMBRA_TEXTO;
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 1;
     const tamano = premios.length > 10 ? 26 : 32;
-    ctx.font = `700 ${tamano}px "Montserrat", "Segoe UI", sans-serif`;
-    ctx.letterSpacing = '3px'; // navegadores sin soporte lo ignoran
+    ctx.font = `600 ${tamano}px "Montserrat", "Segoe UI", sans-serif`;
+    ctx.letterSpacing = `${Math.round(tamano * 0.12)}px`; // navegadores sin soporte lo ignoran
     const lineas = partirTexto(premio.texto.toUpperCase(), radio * 0.56);
-    lineas.forEach((l, k) => ctx.fillText(l, radio - 60, (k - (lineas.length - 1) / 2) * tamano * 1.15));
+    lineas.forEach((l, k) => ctx.fillText(l, radio - 56, (k - (lineas.length - 1) / 2) * tamano * 1.15));
     ctx.restore();
   });
 }
 
-/** Divisiones finas, aro doble dorado y un rombo en cada división. */
+/** Divisiones finas, aro de cristal y oro con resplandor, y una pequeña gema en cada división. */
 function dibujarAro(radio, sector) {
-  const oro = oroMetal(radio);
+  const filo = filoOro(radio);
 
-  // Divisiones: líneas rectas del centro al borde.
-  ctx.strokeStyle = ORO;
-  ctx.lineWidth = 3;
+  // Divisiones: líneas finas del centro al borde.
+  ctx.strokeStyle = filo;
+  ctx.lineWidth = 1.5;
   for (let i = 0; i < premios.length; i++) {
     const a = -Math.PI / 2 + i * sector;
     ctx.beginPath();
@@ -148,56 +167,110 @@ function dibujarAro(radio, sector) {
     ctx.stroke();
   }
 
-  // Aro exterior de oro metálico y una línea interior fina.
-  ctx.strokeStyle = oro;
-  ctx.lineWidth = 8;
+  // Aro exterior: filo de 2 px con un resplandor dorado desenfocado.
+  ctx.save();
+  ctx.shadowColor = 'rgba(212, 175, 55, .35)';
+  ctx.shadowBlur = 15;
+  ctx.strokeStyle = filo;
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.arc(0, 0, radio, 0, VUELTA);
   ctx.stroke();
-  ctx.strokeStyle = ORO;
-  ctx.lineWidth = 1.5;
+  ctx.restore();
+
+  // Línea interior muy fina: el "canto" del cristal.
+  ctx.strokeStyle = 'rgba(212, 175, 55, .45)';
+  ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.arc(0, 0, radio - 20, 0, VUELTA);
+  ctx.arc(0, 0, radio - 16, 0, VUELTA);
   ctx.stroke();
 
-  // Rombo en cada división, sobre el aro.
-  ctx.fillStyle = CARBON;
-  ctx.strokeStyle = ORO;
-  ctx.lineWidth = 2;
+  // Gema pequeña (rombo en proporción áurea) en cada división, sobre el aro.
   for (let i = 0; i < premios.length; i++) {
     const a = -Math.PI / 2 + i * sector;
     ctx.save();
     ctx.translate(Math.cos(a) * radio, Math.sin(a) * radio);
     ctx.rotate(a);
+    const g = ctx.createLinearGradient(-7, -4, 7, 4);
+    g.addColorStop(0, '#FFF4C2');
+    g.addColorStop(0.5, ORO);
+    g.addColorStop(1, ORO_OSCURO);
+    ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.moveTo(-10, 0); ctx.lineTo(0, -10 / PHI); ctx.lineTo(10, 0); ctx.lineTo(0, 10 / PHI);
+    ctx.moveTo(-7, 0); ctx.lineTo(0, -7 / PHI); ctx.lineTo(7, 0); ctx.lineTo(0, 7 / PHI);
     ctx.closePath();
     ctx.fill();
-    ctx.stroke();
     ctx.restore();
   }
 }
 
-/** Centro geométrico que no gira: anillos en proporción áurea (r, r/φ, r/φ²). */
+/**
+ * Centro que no gira: un disco de cristal con filo de oro, un anillo a r/φ y una gema
+ * octogonal de facetas de oro bruñido con un punto de luz en el eje.
+ */
 function dibujarCentro() {
-  const r = 84;
-  ctx.fillStyle = CARBON;
+  const r = 46;
+
+  // Halo: anillo muy fino a r × φ.
+  ctx.strokeStyle = 'rgba(212, 175, 55, .3)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * PHI, 0, VUELTA);
+  ctx.stroke();
+
+  // Disco de cristal oscuro con filo de oro y resplandor.
+  ctx.save();
+  ctx.shadowColor = 'rgba(212, 175, 55, .3)';
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = 'rgba(15, 15, 18, .7)';
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, VUELTA);
   ctx.fill();
-  ctx.strokeStyle = oroMetal(r);
-  ctx.lineWidth = 5;
+  ctx.restore();
+  ctx.strokeStyle = filoOro(r);
+  ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  ctx.strokeStyle = ORO;
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = 'rgba(212, 175, 55, .55)';
+  ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.arc(0, 0, r / PHI, 0, VUELTA);
   ctx.stroke();
 
-  ctx.fillStyle = oroMetal(r / (PHI * PHI));
+  // Gema: ocho facetas triangulares alternando oro claro y oro bruñido.
+  const rg = r / (PHI * PHI);
+  const tonos = ['#FFF1B8', '#D4AF37', '#E9CB6B', '#8C6216', '#F6E08E', '#AA771C', '#E2BE57', '#6E4C10'];
+  for (let k = 0; k < 8; k++) {
+    const a1 = -Math.PI / 2 + (k * VUELTA) / 8 - VUELTA / 16;
+    const a2 = a1 + VUELTA / 8;
+    ctx.fillStyle = tonos[k];
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(a1) * rg, Math.sin(a1) * rg);
+    ctx.lineTo(Math.cos(a2) * rg, Math.sin(a2) * rg);
+    ctx.closePath();
+    ctx.fill();
+  }
+  // Aristas de la gema.
+  ctx.strokeStyle = 'rgba(255, 241, 193, .7)';
+  ctx.lineWidth = 0.8;
   ctx.beginPath();
-  ctx.arc(0, 0, r / (PHI * PHI), 0, VUELTA);
+  for (let k = 0; k <= 8; k++) {
+    const a = -Math.PI / 2 + (k * VUELTA) / 8 - VUELTA / 16;
+    const x = Math.cos(a) * rg;
+    const y = Math.sin(a) * rg;
+    if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Punto de luz en el eje.
+  const luz = ctx.createRadialGradient(0, 0, 0, 0, 0, rg * 0.75);
+  luz.addColorStop(0, 'rgba(255, 255, 255, .95)');
+  luz.addColorStop(0.35, 'rgba(255, 248, 220, .6)');
+  luz.addColorStop(1, 'rgba(255, 248, 220, 0)');
+  ctx.fillStyle = luz;
+  ctx.beginPath();
+  ctx.arc(0, 0, rg * 0.75, 0, VUELTA);
   ctx.fill();
 }
 
