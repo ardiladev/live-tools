@@ -12,6 +12,7 @@
      2. Base               7. Tarjeta de widget       12. Buscador de regalos
      3. Barra superior     8. Estados y avisos        13. Utilidades
      4. Riel y menú        9. Premios (ruleta)        14. Estilo visual (Personalizar)
+                           9b. Carrera de regalos
      5. Contenido         10. Tablas                 15. Pantallas angostas
    ========================================================================== */
 
@@ -357,6 +358,31 @@ button.enlace { color: var(--enlace); }
 .premio button { padding: 0; }
 .encabezado-premios { margin-bottom: 4px; color: var(--suave); }
 .probabilidad { margin: 0 0 8px; color: var(--suave); font-size: 12px; }
+
+
+/* ---------- 9b. Carrera de regalos (vista de la carrera) ---------- */
+/* Reloj de la ronda: tiempo grande y su estado. */
+.reloj-panel { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; }
+.reloj-panel + .fila-acciones { margin-bottom: 0; }
+.campos.duracion { grid-template-columns: minmax(0, 220px); }
+.reloj-tiempo { color: var(--texto); font: 800 40px/1 var(--fuente); font-variant-numeric: tabular-nums; }
+.reloj-tiempo[data-estado="corre"] { color: var(--ok); }
+.reloj-tiempo[data-estado="fin"] { color: var(--oro); }
+.reloj-estado { color: var(--suave); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; }
+/* Una fila por integrante: color · nombre · ID · nombre del regalo · monedas · meta · quitar. */
+.integrante-fila {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1.3fr) minmax(0, .9fr) minmax(0, 1.2fr) 82px 92px 34px;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.integrante-fila button { padding: 0; }
+.integrante-fila.encabezado { margin-bottom: 4px; color: var(--suave); font-size: 12px; }
+@media (max-width: 760px) {
+  .integrante-fila { grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 34px; }
+  .integrante-fila.encabezado { display: none; }
+  .integrante-fila { padding-bottom: 6px; border-bottom: var(--linea-tenue); }
+}
 
 
 /* ---------- 10. Tablas ---------- */

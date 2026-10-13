@@ -66,7 +66,7 @@ con **Supabase** para los cambios en vivo: no hay servidor propio, ni Node.js, n
    premios y regalo y prueba con el botón **Test**.
 4. Pulsa **Copy URL** y, en OBS, agrega una **Fuente de navegador** con esa URL
    (en TikTok LIVE Studio: fuente **Enlace**). Tamaños recomendados:
-   ruleta 1080 × 1920 · meta 1200 × 400 · alertas 1280 × 720.
+   ruleta 1080 × 1920 · meta 1200 × 400 · alertas 1280 × 720 · carrera 1920 × 400 (arriba de la escena).
 5. Listo. Cuando la cuenta esté en vivo, el widget se conecta solo. Si el LIVE todavía no empieza
    o se corta, reintenta cada minuto.
 
@@ -87,6 +87,7 @@ desplegables** (menú) → **vistas** (contenido).
 | | | Ruleta premium | Una segunda ruleta independiente (mismo `ruleta.html`, otra URL y otra fuente en OBS) para un regalo más caro y premios más grandes. Tiene su propio regalo, premios, opciones y estilo. |
 | | Metas | Likes · Seguidores · Compartidos · Monedas | Barra de progreso con meta, título, color propio opcional (si no, el acento del estilo) y acción al alcanzarla (duplicar, volver a empezar o dejarla llena). |
 | | Alertas | Alertas de eventos | Aviso animado por regalos, seguidores y compartidos, en fila, con sonido y mínimo de monedas. |
+| | Juegos | Carrera de regalos | Franja horizontal con 1 a 6 integrantes: cada uno tiene su regalo, color y meta; cada regalo suma monedas (precio × cantidad) a su barra. Reloj por rondas en el centro que se **inicia, pausa y reinicia desde el panel** y llega a OBS al instante. Al terminar, muestra quién ganó. |
 | Actividad | En vivo | Eventos en vivo | Conecta el panel al LIVE: contadores (espectadores, likes, seguidores, compartidos, monedas, regalos, mensajes), lista de eventos con filtros y regalos de la sesión. |
 | | Regalos | Buscador de regalos | Catálogo permanente con el ID de cada regalo recibido. Nombres propios, búsqueda, “Copiar ID”, “Usar en ruleta” / “Usar en premium”, agregar a mano, conexión automática y seguimiento de regalos que cambian de código. |
 | Ajustes | Cuenta | Conexión con TikTok | Usuario de TikTok y API key de Euler Stream, compartidos por todos los widgets. |
@@ -156,6 +157,7 @@ La configuración de cada widget (en Supabase o en la URL completa) usa estas cl
 | `ruleta.html` | `g` id del regalo · `r` texto en pantalla · `gpr` giros por regalo · `max` tope por combo · `p` premios `[[texto, peso], …]` · `oc` ocultar sin giros (1/0) · `so` sonido (1/0) |
 | `meta.html` | `t` tipo (`likes`/`follows`/`shares`/`monedas`) · `o` objetivo · `ti` título · `col` color · `al` al alcanzar (`duplicar`/`reiniciar`/`nada`) · `s` sonido |
 | `alertas.html` | `ev` eventos `{regalo, follow, share}` · `min` monedas mínimas · `d` segundos · `s` sonido |
+| `carrera.html` | `ti` título · `j` integrantes `[{i id, n nombre, c color, g id del regalo, gn nombre del regalo, v monedas por regalo, m meta, img imagen}]` · `t` reloj `{e listo/corre/pausa, d segundos, fin hora de término, r ms restantes}` · `ro` ronda (al cambiar, puntos a 0) · `sr` solo cuenta con el reloj en marcha · `s` sonido |
 
 Además, el panel agrega `_v` (hora de guardado) a lo que sube a Supabase: si llegara tarde una versión
 vieja, el widget la ignora.
@@ -173,6 +175,14 @@ si la URL tiene `w`, cada vez que llega una configuración nueva. Cada widget la
 - **Meta:** conserva el conteo. Si cambias la meta, manda la tuya; si no, se respeta la que se duplicó
   durante el LIVE. Solo vuelve a 0 si cambia el tipo de meta.
 - **Alertas:** cambian al instante; las alertas que ya estaban en fila se muestran igual.
+- **Carrera de regalos:** conserva los puntos (también si OBS recarga la fuente: se guardan en
+  `live-tools:carrera:<w>`). Solo vuelven a 0 cuando cambia `ro` (botón *Reiniciar* o *Nueva ronda*).
+  El reloj viaja como la **hora en que termina** (`js/reloj.js`), así el panel y OBS marcan lo mismo aunque
+  el cambio tarde un momento; *Iniciar/Pausar/Reiniciar* se suben a Supabase sin la espera habitual. En la
+  vista previa, el reloj y la ronda llegan por mensaje (`sinRecargar` en `tarjetaWidget`) sin reiniciarla.
+  Los regalos se asignan por ID; si ninguno coincide, por el nombre que manda TikTok. Si TikTok no manda el
+  precio, vale lo puesto en «Monedas c/u». Con el reloj detenido no suman (opción en *Personalizar*); los
+  combos que terminan hasta 3 s después del final sí cuentan.
 
 El widget guarda una copia de la última configuración en su navegador (`localStorage`, clave
 `live-tools:widget:<w>`): si al abrir OBS Supabase no responde, arranca con esa copia.
@@ -299,7 +309,8 @@ live-tools/
 │   ├── index.html                  panel principal (esqueleto; lo arma js/panel/app.js)
 │   ├── ruleta.html                 widget ruleta     ┐
 │   ├── meta.html                   widget meta       ├ solo estructura HTML
-│   ├── alertas.html                widget alertas    ┘
+│   ├── alertas.html                widget alertas    │
+│   ├── carrera.html                widget carrera    ┘
 │   ├── css/
 │   │   ├── aurea.css               sistema de diseño ÁUREA NETWORK: oro/carbón, cristal (glassmorphism), escala φ, tipografía
 │   │   ├── panel.css               estilos del panel
@@ -307,16 +318,19 @@ live-tools/
 │   │   └── widgets/
 │   │       ├── ruleta.css
 │   │       ├── meta.css
-│   │       └── alertas.css
+│   │       ├── alertas.css
+│   │       └── carrera.css
 │   └── js/
 │       ├── comun.js                URL ↔ config, eventos normalizados, rastreador de regalos,
 │       │                           conexión con Euler Stream, arranque de widgets, sonido
 │       ├── nube.js                 Supabase: proyecto, leer/guardar configuración, Realtime
 │       ├── tema.js                 estilo de los widgets: presets, variables CSS, colores de la ruleta
+│       ├── reloj.js                reloj por rondas (hora de término): lo usan la carrera y su vista
 │       ├── widgets/
 │       │   ├── ruleta.js           dibujo, giro, cola y sorteo de premios
 │       │   ├── meta.js
-│       │   └── alertas.js
+│       │   ├── alertas.js
+│       │   └── carrera.js          tarjetas, puntos por regalo, reloj y ganador
 │       └── panel/
 │           ├── app.js
 │           ├── registro.js
@@ -329,6 +343,7 @@ live-tools/
 │               ├── ruleta.js       ruleta normal y premium (misma fábrica)
 │               ├── metas.js
 │               ├── alertas.js
+│               ├── carrera.js      integrantes, reloj (iniciar/pausar/reiniciar)
 │               ├── actividad.js
 │               ├── regalos.js
 │               └── conexion.js

@@ -355,11 +355,13 @@ export function iniciarWidget({ cfg, alEvento, alConfig: alConfigWidget = () => 
   addEventListener('hashchange', () => location.reload());
 
   // Mensajes del panel (vista previa). Solo se aceptan desde el mismo origen:
-  //   simular → un evento de prueba · tema → el estilo nuevo, sin recargar la página.
+  //   simular → un evento de prueba · tema → el estilo nuevo, sin recargar la página
+  //   config  → la configuración completa, sin recargar (p. ej. el reloj de la carrera)
   addEventListener('message', (ev) => {
     if (ev.origin !== location.origin) return;
     if (ev.data?.tipo === 'simular' && ev.data.evento) alEvento(ev.data.evento);
     if (ev.data?.tipo === 'tema' && ev.data.est) aplicarTema(ev.data.est);
+    if (ev.data?.tipo === 'config' && ev.data.config) alConfig(ev.data.config);
   });
 
   if (cfg?.error) return alEstado(false, 'La configuración de la URL está dañada. Cópiala de nuevo desde el panel.');

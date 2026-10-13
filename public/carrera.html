@@ -1,0 +1,70 @@
+<!doctype html>
+<!--
+  carrera.html — Widget "Carrera de regalos" para OBS / TikTok LIVE Studio (recomendado 1920 × 400,
+  arriba de la escena). Una barra horizontal con una tarjeta por integrante (nombre, puntaje, barra
+  de progreso hacia su meta y el regalo que le suma) y el reloj de la ronda en el centro.
+  Estilos: css/aurea.css + css/widget.css + css/widgets/carrera.css · Lógica: js/widgets/carrera.js
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración (integrantes, reloj) llega en vivo desde Supabase.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carrera de regalos — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/carrera.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/carrera.js"></script>
+</head>
+<body>
+  <main class="escena">
+    <!-- Integrantes a la izquierda · reloj · integrantes a la derecha -->
+    <div class="carrera" id="carrera">
+      <div class="lado" id="izquierda"></div>
+
+      <div class="reloj cristal" id="reloj">
+        <div class="titulo" id="titulo"></div>
+        <div class="anillo">
+          <div class="tiempo" id="tiempo">00:00</div>
+        </div>
+        <div class="estado-reloj" id="estado-reloj"></div>
+      </div>
+
+      <div class="lado" id="derecha"></div>
+    </div>
+
+    <!-- Al terminar la ronda: quién ganó -->
+    <div class="ganador cristal" id="ganador" role="status" aria-live="polite" hidden>
+      <span class="trofeo" aria-hidden="true">🏆</span>
+      <span id="ganador-texto"></span>
+    </div>
+  </main>
+
+  <!-- Tarjeta de un integrante (la clona js/widgets/carrera.js) -->
+  <template id="plantilla-integrante">
+    <article class="integrante cristal">
+      <span class="corona" aria-hidden="true">♛</span>
+      <div class="cabeza">
+        <div class="regalo">
+          <img alt="" hidden>
+          <span class="sin-imagen" aria-hidden="true">🎁</span>
+        </div>
+        <div class="nombre"></div>
+      </div>
+      <div class="puntos">0</div>
+      <div class="barra filo-oro"><div class="relleno"></div></div>
+      <div class="pie">
+        <span class="porcentaje">0%</span>
+        <span class="objetivo"></span>
+      </div>
+    </article>
+  </template>
+</body>
+</html>

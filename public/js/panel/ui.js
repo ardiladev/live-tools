@@ -171,6 +171,8 @@ const RETRASO_VISTA_PREVIA_MS = 400; // no reiniciar la vista previa en cada tec
  *   pruebas       [{ texto, evento: (nombre) => eventoNormalizado }]  (la primera es "Test")
  *   forma         'vertical' (9:16) | 'horizontal' (16:5) | 'cuadrado' (16:9)
  *   ancha         true (por defecto) = ocupa todo el ancho de la rejilla
+ *   sinRecargar   claves de la configuración que la vista previa aplica sin reiniciarse
+ *                 (p. ej. ['t', 'ro'], el reloj de la carrera): se le mandan por mensaje
  *   senal        AbortSignal de la vista: al cancelarse se dejan de escuchar mensajes
  *
  * La URL para OBS:
@@ -182,7 +184,7 @@ const RETRASO_VISTA_PREVIA_MS = 400; // no reiniciar la vista previa en cada tec
  */
 export function tarjetaWidget({
   id, titulo, archivo, campos = [], personalizar = [],
-  pruebas = [], forma = 'vertical', ancha = true, senal,
+  pruebas = [], forma = 'vertical', ancha = true, sinRecargar = [], senal,
 }) {
   const { config, validar } = sincronizar.definicion(id);
 
@@ -219,8 +221,11 @@ export function tarjetaWidget({
     url.value = construirUrl();
     // Un cambio de estilo se le pasa a la vista previa al instante, sin recargarla
     // (comun.js lo aplica); el resto de la configuración sí la reinicia.
-    const { est, ...resto } = config();
+    const completa = config();
+    const { est, ...resto } = completa;
     iframe.contentWindow?.postMessage({ tipo: 'tema', est }, location.origin);
+    if (sinRecargar.length) iframe.contentWindow?.postMessage({ tipo: 'config', config: completa }, location.origin);
+    sinRecargar.forEach((clave) => delete resto[clave]);
     const clave = JSON.stringify(resto);
     if (clave === ultimaPrevia) return;
     ultimaPrevia = clave;
