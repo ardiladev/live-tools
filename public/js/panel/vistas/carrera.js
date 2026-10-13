@@ -1,5 +1,5 @@
 // =============================================================================
-// vistas/carrera.js — Superposiciones → Juegos → Carrera de regalos
+// vistas/carrera.js — Juegos → Competencias → Carrera de regalos
 //
 // Configura el widget carrera.html: de 1 a 6 integrantes, cada uno con su nombre, color,
 // regalo de TikTok y meta, y el reloj de la ronda (iniciar, pausar, reiniciar). Lo que se

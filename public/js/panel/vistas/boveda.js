@@ -1,5 +1,5 @@
 // =============================================================================
-// vistas/boveda.js — Superposiciones → Juegos → Bóveda dorada
+// vistas/boveda.js — Juegos → Retos del público → Bóveda dorada
 //
 // Configura el widget boveda.html, una caja sorpresa: los regalos llenan una barra hacia una
 // meta de monedas y, al llegar, se revela el texto secreto. Aquí se ponen la meta, el secreto y

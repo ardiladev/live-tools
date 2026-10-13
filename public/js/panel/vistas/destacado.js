@@ -1,5 +1,5 @@
 // =============================================================================
-// vistas/destacado.js — Superposiciones → Alertas → Mensaje VIP destacado
+// vistas/destacado.js — Superposiciones → Reconocimiento → Mensaje VIP destacado
 //
 // Configura el widget destacado.html: cuando alguien envía regalos por al menos el umbral de
 // monedas, su último mensaje del chat se fija en pantalla unos segundos (si no escribió, un

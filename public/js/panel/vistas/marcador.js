@@ -1,5 +1,5 @@
 // =============================================================================
-// vistas/marcador.js — Superposiciones → Juegos → Marcador
+// vistas/marcador.js — Juegos → Competencias → Marcador
 //
 // Configura el widget marcador.html, una versión sencilla de la carrera: de 1 a 6 integrantes,
 // cada uno con su nombre, color (opcional), regalo y monedas por regalo; sin barras ni metas. El

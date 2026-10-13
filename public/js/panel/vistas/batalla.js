@@ -1,5 +1,5 @@
 // =============================================================================
-// vistas/batalla.js — Superposiciones → Juegos → Batalla de regalos
+// vistas/batalla.js — Juegos → Competencias → Batalla de regalos
 //
 // Configura el widget batalla.html, un tira y afloja entre dos equipos: cada uno con su
 // nombre, regalo, monedas por regalo (si TikTok no manda el precio), color y foto opcional.

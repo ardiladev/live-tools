@@ -1,5 +1,5 @@
 // =============================================================================
-// vistas/subathon.js — Superposiciones → Juegos → Subathon
+// vistas/subathon.js — Juegos → Retos del público → Subathon
 //
 // Configura el widget subathon.html: un reloj al que el público le suma tiempo con likes y
 // regalos, hasta un tope. Aquí se ponen el tiempo inicial, el tope y cuánto suma cada cosa, y se

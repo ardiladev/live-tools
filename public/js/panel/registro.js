@@ -18,33 +18,49 @@
 // =============================================================================
 
 import { ruletaNormal, ruletaPremium } from './vistas/ruleta.js';
-import { metaLikes, metaSeguidores, metaCompartidos, metaMonedas } from './vistas/metas.js';
-import alertas from './vistas/alertas.js';
+import tragamonedas from './vistas/tragamonedas.js';
 import carrera from './vistas/carrera.js';
+import marcador from './vistas/marcador.js';
 import batalla from './vistas/batalla.js';
 import jefe from './vistas/jefe.js';
-import subathon from './vistas/subathon.js';
 import boveda from './vistas/boveda.js';
-import trono from './vistas/trono.js';
-import marcador from './vistas/marcador.js';
+import subathon from './vistas/subathon.js';
 import repertorio from './vistas/repertorio.js';
+import { metaLikes, metaSeguidores, metaCompartidos, metaMonedas } from './vistas/metas.js';
+import alertas from './vistas/alertas.js';
 import destacado from './vistas/destacado.js';
-import tragamonedas from './vistas/tragamonedas.js';
+import trono from './vistas/trono.js';
 import actividad from './vistas/actividad.js';
 import buscadorRegalos from './vistas/regalos.js';
 import conexion from './vistas/conexion.js';
 
+// Organización por propósito (2026-10-13):
+//   Juegos           → la persona en vivo y el público juegan: sorteos al azar, competencias
+//                      entre integrantes o equipos, y retos que el público desbloquea.
+//   Superposiciones  → lo que acompaña el LIVE sin ser un juego: metas, alertas y reconocimiento
+//                      a quien apoya.
+// Los ids de las vistas no cambian (son la dirección #/id y la clave de lo guardado).
 export const CATEGORIAS = [
+  {
+    id: 'juegos',
+    titulo: 'Juegos',
+    corto: 'Juegos',
+    icono: 'juegos',
+    grupos: [
+      { id: 'sorteos', titulo: 'Sorteos', vistas: [ruletaNormal, ruletaPremium, tragamonedas] },
+      { id: 'competencias', titulo: 'Competencias', vistas: [carrera, marcador, batalla] },
+      { id: 'retos', titulo: 'Retos del público', vistas: [jefe, boveda, subathon, repertorio] },
+    ],
+  },
   {
     id: 'superposiciones',
     titulo: 'Superposiciones',
     corto: 'Superpos.',
     icono: 'monitor',
     grupos: [
-      { id: 'ruletas', titulo: 'Ruletas', vistas: [ruletaNormal, ruletaPremium] },
       { id: 'metas', titulo: 'Metas', vistas: [metaLikes, metaSeguidores, metaCompartidos, metaMonedas] },
-      { id: 'alertas', titulo: 'Alertas', vistas: [alertas, destacado] },
-      { id: 'juegos', titulo: 'Juegos', vistas: [carrera, marcador, batalla, jefe, subathon, boveda, trono, repertorio, tragamonedas] },
+      { id: 'alertas', titulo: 'Alertas', vistas: [alertas] },
+      { id: 'reconocimiento', titulo: 'Reconocimiento', vistas: [destacado, trono] },
     ],
   },
   {

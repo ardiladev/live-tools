@@ -1,5 +1,5 @@
 // =============================================================================
-// vistas/ruleta.js — Superposiciones → Ruletas → Ruleta de regalos · Ruleta premium
+// vistas/ruleta.js — Juegos → Sorteos → Ruleta de regalos · Ruleta premium
 //
 // Configura el widget ruleta.html: regalo que la activa, premios con su peso y opciones.
 // Hay dos ruletas independientes (cada una con su regalo, premios, estilo y URL para OBS),

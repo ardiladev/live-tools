@@ -1,5 +1,5 @@
 // =============================================================================
-// vistas/tragamonedas.js — Superposiciones → Juegos → Tragamonedas
+// vistas/tragamonedas.js — Juegos → Sorteos → Tragamonedas
 //
 // Configura el widget tragamonedas.html: como la ruleta, se activa con un regalo, pero tiene tres
 // rodillos (por ejemplo Quién · Qué · Cómo) que se detienen uno tras otro. Aquí se eligen el

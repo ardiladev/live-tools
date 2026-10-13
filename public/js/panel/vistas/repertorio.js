@@ -1,5 +1,5 @@
 // =============================================================================
-// vistas/repertorio.js — Superposiciones → Juegos → Repertorio
+// vistas/repertorio.js — Juegos → Retos del público → Repertorio
 //
 // Configura el widget repertorio.html, una playlist o menú de bailes: una lista de canciones,
 // cada una con su meta de monedas. Los regalos llenan la canción activa; al llegar a la meta,

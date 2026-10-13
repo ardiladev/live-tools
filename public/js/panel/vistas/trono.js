@@ -1,5 +1,5 @@
 // =============================================================================
-// vistas/trono.js — Superposiciones → Juegos → Trono
+// vistas/trono.js — Superposiciones → Reconocimiento → Trono
 //
 // Configura el widget trono.html, el rey del LIVE (top supporter): muestra a quien más ha dado,
 // según el modo: el combo más grande de una vez, o lo más acumulado en la sesión. "Reiniciar

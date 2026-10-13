@@ -1,5 +1,5 @@
 // =============================================================================
-// vistas/jefe.js — Superposiciones → Juegos → Jefe del LIVE
+// vistas/jefe.js — Juegos → Retos del público → Jefe del LIVE
 //
 // Configura el widget jefe.html, un boss raid: el chat le quita vida al jefe con likes y
 // regalos antes de que se acabe el tiempo. Aquí se ponen el nombre, la vida, el tiempo límite
