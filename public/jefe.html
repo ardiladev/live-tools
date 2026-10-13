@@ -1,0 +1,50 @@
+<!doctype html>
+<!--
+  jefe.html — Widget "Jefe del LIVE" (boss raid) para OBS / TikTok LIVE Studio (recomendado
+  1920 × 300, arriba de la escena). El chat ataca entre todos a un jefe: los likes y los regalos le
+  quitan vida, y hay que dejarlo en 0 antes de que se acabe el tiempo.
+  Estilos: css/aurea.css + css/widget.css + css/widgets/jefe.css · Lógica: js/widgets/jefe.js
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración (vida, reloj) llega en vivo desde Supabase.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jefe del LIVE — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/jefe.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/jefe.js"></script>
+</head>
+<body>
+  <main class="escena">
+    <div class="jefe cristal" id="jefe">
+      <!-- Nombre del jefe y estado (vivo, vencido, escapó) -->
+      <div class="cabecera">
+        <span class="nombre" id="nombre"></span>
+        <span class="estado" id="estado"></span>
+      </div>
+
+      <!-- Barra de vida: el rastro claro se queda atrás un momento al recibir daño -->
+      <div class="barra filo-oro" id="barra">
+        <div class="rastro" id="rastro"></div>
+        <div class="vida" id="vida"></div>
+        <div class="cifra" id="cifra">0 / 0</div>
+      </div>
+
+      <!-- Reloj y último golpe -->
+      <div class="pie">
+        <span class="reloj" id="reloj">00:00</span>
+        <span class="golpe" id="golpe"></span>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,189 @@
+/* ==========================================================================
+   jefe.css — Widget "Jefe del LIVE" (jefe.html), boss raid
+   Una placa de cristal arriba de la escena: nombre del jefe y estado, una barra
+   de vida grande (relleno de oro con degradado, el acento del estilo) con la
+   cifra encima, y abajo el reloj y el último golpe. El estado llega en
+   data-fase: listo | corre | pausa | escapo | vencido (js/widgets/jefe.js).
+   Las medidas van en vw: el widget depende solo del ancho de la fuente de OBS.
+
+   Secciones: 1. Escena · 2. Cabecera · 3. Barra de vida · 4. Pie y reloj
+              5. Fases (victoria, tiempo agotado) · 6. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+.escena {
+  display: flex;
+  justify-content: center;
+  padding: 1.2vw 2vw;
+  box-sizing: border-box;
+}
+.jefe {
+  display: flex;
+  flex-direction: column;
+  gap: .8vw;
+  width: 100%;
+  padding: 1.1vw 1.6vw 1vw;
+  box-sizing: border-box;
+  transition: box-shadow .6s ease;
+}
+
+
+/* ---------- 2. Cabecera ---------- */
+.cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1vw;
+  min-width: 0;
+}
+.nombre {
+  overflow: hidden;
+  color: var(--oro-texto);
+  font-weight: 800;
+  font-size: 1.5vw;
+  letter-spacing: var(--espaciado-widget);
+  text-overflow: ellipsis;
+  text-transform: var(--mayus);
+  white-space: nowrap;
+}
+.estado {
+  flex: none;
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: .85vw;
+  letter-spacing: var(--espaciado-widget);
+  text-transform: var(--mayus);
+  opacity: .8;
+}
+
+
+/* ---------- 3. Barra de vida ---------- */
+.barra {
+  position: relative;
+  height: 3.6vw;
+  overflow: hidden;
+  border-radius: var(--radio);
+  background: var(--cristal-oscuro);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, .45);
+}
+/* Rastro: la vida que se acaba de perder, clara, que se va un momento después. */
+.rastro,
+.vida {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 100%;
+}
+.rastro {
+  background: color-mix(in srgb, var(--activo) 55%, transparent);
+  transition: width .6s ease .45s;
+}
+.vida {
+  background: var(--acento-relleno);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--borde-color) 55%, transparent), inset 0 1px 0 rgba(255, 255, 255, .35);
+  transition: width .3s ease;
+}
+/* Brillo que recorre la barra. */
+.vida::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .28), transparent);
+  background-size: 40% 100%;
+  background-repeat: no-repeat;
+  animation: destello 3.2s linear infinite;
+}
+.cifra {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  color: var(--blanco);
+  font-weight: 800;
+  font-size: 2vw;
+  letter-spacing: .04em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .85), 0 0 14px rgba(0, 0, 0, .6);
+}
+
+
+/* ---------- 4. Pie y reloj ---------- */
+.pie {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1vw;
+  min-width: 0;
+}
+.reloj {
+  padding: .2vw 1vw;
+  border: 1px solid var(--insignia-borde);
+  border-radius: var(--radio);
+  background: var(--insignia-fondo);
+  color: var(--texto-sec);
+  font-weight: 800;
+  font-size: 1.3vw;
+  font-variant-numeric: tabular-nums;
+}
+.golpe {
+  overflow: hidden;
+  color: var(--texto-sec);
+  font-weight: 500;
+  font-size: .85vw;
+  letter-spacing: .04em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: .85;
+}
+
+
+/* ---------- 5. Fases ---------- */
+.jefe[data-fase="corre"] .estado { color: var(--ok); opacity: 1; }
+.jefe[data-fase="pausa"] .reloj { animation: parpadeo 1.2s ease-in-out infinite; }
+.jefe.urgente .reloj { color: var(--mal); animation: latido 1s ease-in-out infinite; }
+/* Tiempo agotado: el jefe escapó. */
+.jefe[data-fase="escapo"] .estado { color: var(--mal); opacity: 1; }
+.jefe[data-fase="escapo"] .barra { filter: saturate(.35) brightness(.8); }
+/* Victoria: "RETO DESBLOQUEADO" en oro con resplandor. */
+.jefe[data-fase="vencido"] { box-shadow: var(--resplandor-activo), 0 0 40px color-mix(in srgb, var(--borde-color) 45%, transparent); }
+.jefe[data-fase="vencido"] .estado {
+  color: var(--activo);
+  font-weight: 800;
+  font-size: 1.4vw;
+  opacity: 1;
+  text-shadow: 0 0 12px var(--activo), 0 0 28px var(--borde-color);
+  animation: victoria 1.6s ease-in-out infinite;
+}
+.jefe[data-fase="vencido"] .cifra { color: var(--activo); }
+.jefe[data-fase="vencido"] .barra { box-shadow: inset 0 0 26px color-mix(in srgb, var(--activo) 45%, transparent); }
+
+
+/* ---------- 6. Animaciones ---------- */
+/* "−250" que cae desde la cifra al recibir daño (los regalos, más grandes). */
+.dano {
+  position: absolute;
+  top: 0;
+  left: 50%;                 /* js/widgets/jefe.js lo pone junto al borde de la vida */
+  z-index: 4;
+  color: var(--blanco);
+  font-weight: 800;
+  font-size: 1.4vw;
+  text-shadow: 0 0 10px var(--mal), 0 1px 2px rgba(0, 0, 0, .8);
+  pointer-events: none;
+  animation: caer 1s ease-out forwards;
+}
+.dano.fuerte { color: var(--activo); font-size: 1.9vw; }
+.sacudida .barra { animation: sacudida .3s ease-out; }
+
+@keyframes destello { from { background-position: -60% 0; } to { background-position: 160% 0; } }
+@keyframes caer { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(2.4vw); } }
+@keyframes sacudida { 25% { transform: translateX(-.25vw); } 50% { transform: translateX(.25vw); } 75% { transform: translateX(-.1vw); } }
+@keyframes parpadeo { 50% { opacity: .35; } }
+@keyframes latido { 50% { transform: scale(1.08); } }
+@keyframes victoria { 50% { text-shadow: 0 0 20px var(--activo), 0 0 44px var(--borde-color); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rastro, .vida { transition: none; }
+  .vida::after, .dano, .sacudida .barra, .jefe .estado, .jefe .reloj { animation: none !important; }
+}
