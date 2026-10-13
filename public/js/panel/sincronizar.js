@@ -8,7 +8,10 @@
 // de código y la ruleta se actualiza sola.
 //
 // Solo se sincronizan los widgets que ya tienen identificador (se crea al mostrar su URL).
-// Sin Supabase configurado, este módulo no hace nada.
+// Sin Supabase configurado, solo arma la configuración (con el estilo) para la URL.
+//
+// El estilo visual (almacen.tema, ver js/tema.js) es uno para todos: se agrega aquí a la
+// configuración de cada widget con la clave `est`. Al cambiarlo, se suben todos los widgets.
 //
 // Secciones: 1. Registro · 2. Subida · 3. Estado · 4. Arranque
 // =============================================================================
@@ -35,7 +38,8 @@ const oyentes = new Set();
  */
 export function registrar(id, { config, validar = () => '' }) {
   widgets.set(id, {
-    config, validar,
+    config: () => ({ ...config(), est: almacen.tema() }),
+    validar,
     ultima: null,                                 // última configuración subida (JSON)
     estado: { tipo: 'pendiente', mensaje: '' },   // pendiente | guardando | ok | error
     temporizador: null,

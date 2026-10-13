@@ -4,6 +4,7 @@
 // Configuración (la genera el panel; llega en #c=… o, con cambios en vivo, desde Supabase):
 //   u, k = usuario y clave · ev = eventos activos { regalo, follow, share }
 //   min = monedas mínimas para alertar un regalo · d = segundos en pantalla · s = sonido (1/0)
+//   est = estilo visual (js/tema.js; lo aplica comun.js)
 //
 // Las alertas hacen fila: se muestran una tras otra.
 // Secciones: 1. Configuración · 2. Plantillas · 3. Cola · 4. Arranque

@@ -5,6 +5,7 @@
 //   u, k = usuario y clave · g = id del regalo · r = texto en pantalla
 //   gpr = giros por regalo · max = tope por combo · p = premios [[texto, peso], …]
 //   oc = ocultar cuando no hay giros (1/0) · so = sonido de clic (1/0)
+//   est = estilo visual (js/tema.js; lo aplica comun.js y aquí se usa para el canvas)
 //
 // Opciones visibles en la URL: ?fondo=1 (fondo gris, vista previa) · ?prueba=1 (sin conexión
 // a TikTok). Por compatibilidad con URLs viejas también se aceptan ?ocultar=1 y ?sonido=0.
@@ -13,6 +14,7 @@
 // =============================================================================
 
 import { leerConfig, iniciarWidget, sonar, esperar } from '../comun.js';
+import { paletaRuleta, fuenteLista } from '../tema.js';
 
 
 // -----------------------------------------------------------------------------
@@ -26,27 +28,19 @@ const DURACION_GIRO_MS = MOVIMIENTO_REDUCIDO ? 1200 : 5200;
 const PAUSA_RESULTADO_MS = 2800;
 const VUELTA = Math.PI * 2;
 
-// Paleta ÁUREA NETWORK en cristal (la misma de css/aurea.css; el canvas no lee variables CSS).
-// Los sectores son traslúcidos: detrás hay un disco con desenfoque (css/widgets/ruleta.css).
-const ORO = '#D4AF37';
-const ORO_OSCURO = '#AA771C';
-const ORO_TEXTO = '#F3DFA2';
-const BLANCO = '#FFFFFF';
+// Colores, líneas y letra: salen del estilo de widgets (js/tema.js → paletaRuleta), que se
+// actualiza con cada configuración. Los sectores son traslúcidos: detrás hay un disco con
+// desenfoque (css/widgets/ruleta.css).
 const PHI = 1.618;
-const SOMBRA_TEXTO = 'rgba(0, 0, 0, .7)';
+let paleta = paletaRuleta();
 
-// Fondos de los sectores: 'oscuro' y 'claro' son cristal; 'oro' es un degradado dorado traslúcido.
-const FONDOS = {
-  oscuro: 'rgba(15, 15, 18, .55)',
-  claro: 'rgba(255, 255, 255, .08)',
-};
-
-// Sectores, en orden. El texto de cada uno se elige para que contraste.
+// Sectores, en orden: 'base' (cristal del modo), 'acento' (degradado traslúcido) y 'alterno'
+// (el tono contrario, muy tenue). El texto de cada uno se elige para que contraste.
 const COLORES = [
-  { fondo: 'oscuro', texto: ORO_TEXTO },
-  { fondo: 'oro', texto: BLANCO },
-  { fondo: 'claro', texto: ORO_TEXTO },
-  { fondo: 'oro', texto: BLANCO },
+  { fondo: 'base', texto: 'texto' },
+  { fondo: 'acento', texto: 'textoSec' },
+  { fondo: 'alterno', texto: 'texto' },
+  { fondo: 'acento', texto: 'textoSec' },
 ];
 
 const $ = (id) => document.getElementById(id);
@@ -103,25 +97,25 @@ function partirTexto(texto, maxAncho) {
   return lineas.slice(0, 2);
 }
 
-/** Filo de oro (135°): #D4AF37 → oro claro → #AA771C, del tamaño del círculo de radio `radio`. */
-function filoOro(radio) {
+/** Filo metálico (135°) del color del borde, del tamaño del círculo de radio `radio`. */
+function filo(radio) {
   const g = ctx.createLinearGradient(-radio, -radio, radio, radio);
-  g.addColorStop(0, ORO);
-  g.addColorStop(0.45, ORO_TEXTO);
-  g.addColorStop(1, ORO_OSCURO);
+  g.addColorStop(0, paleta.filo[0]);
+  g.addColorStop(0.45, paleta.filo[1]);
+  g.addColorStop(1, paleta.filo[2]);
   return g;
 }
 
-/** Dorado traslúcido de los sectores 'oro': 15 % cerca del centro → 40 % en el borde. */
-function oroCristal(radio) {
+/** Relleno de los sectores de acento: más tenue cerca del centro, más marcado en el borde. */
+function acentoCristal(radio) {
   const g = ctx.createRadialGradient(0, 0, radio * 0.12, 0, 0, radio);
-  g.addColorStop(0, 'rgba(212, 175, 55, .15)');
-  g.addColorStop(1, 'rgba(212, 175, 55, .4)');
+  g.addColorStop(0, paleta.acento[0]);
+  g.addColorStop(1, paleta.acento[1]);
   return g;
 }
 
 function dibujarSectores(radio, sector) {
-  const oro = oroCristal(radio);
+  const acento = acentoCristal(radio);
   premios.forEach((premio, i) => {
     const inicio = -Math.PI / 2 + i * sector;
     const { fondo, texto } = colorDe(i, premios.length);
@@ -130,35 +124,36 @@ function dibujarSectores(radio, sector) {
     ctx.moveTo(0, 0);
     ctx.arc(0, 0, radio, inicio, inicio + sector);
     ctx.closePath();
-    ctx.fillStyle = fondo === 'oro' ? oro : FONDOS[fondo];
+    ctx.fillStyle = fondo === 'acento' ? acento : paleta[fondo];
     ctx.fill();
 
-    // Texto radial: semi-negrita, mayúsculas y espaciado amplio, con sombra suave para leerse
-    // sobre la transmisión aunque la rueda esté girando.
+    // Texto radial con la letra, el espaciado y las mayúsculas del estilo, y una sombra suave
+    // para leerse sobre la transmisión aunque la rueda esté girando.
     ctx.save();
     ctx.rotate(inicio + sector / 2);
-    ctx.fillStyle = texto;
+    ctx.fillStyle = paleta[texto];
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    ctx.shadowColor = SOMBRA_TEXTO;
+    ctx.shadowColor = paleta.sombra;
     ctx.shadowBlur = 10;
     ctx.shadowOffsetY = 1;
     const tamano = premios.length > 10 ? 26 : 32;
-    ctx.font = `600 ${tamano}px "Montserrat", "Segoe UI", sans-serif`;
-    ctx.letterSpacing = `${Math.round(tamano * 0.12)}px`; // navegadores sin soporte lo ignoran
-    const lineas = partirTexto(premio.texto.toUpperCase(), radio * 0.56);
+    ctx.font = `600 ${tamano}px "${paleta.fuente}", "Montserrat", "Segoe UI", sans-serif`;
+    ctx.letterSpacing = `${Math.round(tamano * paleta.espaciado)}px`; // navegadores sin soporte lo ignoran
+    const lineas = partirTexto(paleta.transformar(premio.texto), radio * 0.56);
     lineas.forEach((l, k) => ctx.fillText(l, radio - 56, (k - (lineas.length - 1) / 2) * tamano * 1.15));
     ctx.restore();
   });
 }
 
-/** Divisiones finas, aro de cristal y oro con resplandor, y una pequeña gema en cada división. */
+/** Divisiones, aro con resplandor y una pequeña gema en cada división (grosor 0 = sin líneas). */
 function dibujarAro(radio, sector) {
-  const filo = filoOro(radio);
+  if (paleta.grosor <= 0) return;
+  const metal = filo(radio);
 
   // Divisiones: líneas finas del centro al borde.
-  ctx.strokeStyle = filo;
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = metal;
+  ctx.lineWidth = paleta.grosor * 1.5;
   for (let i = 0; i < premios.length; i++) {
     const a = -Math.PI / 2 + i * sector;
     ctx.beginPath();
@@ -167,19 +162,19 @@ function dibujarAro(radio, sector) {
     ctx.stroke();
   }
 
-  // Aro exterior: filo de 2 px con un resplandor dorado desenfocado.
+  // Aro exterior con el resplandor del estilo.
   ctx.save();
-  ctx.shadowColor = 'rgba(212, 175, 55, .35)';
-  ctx.shadowBlur = 15;
-  ctx.strokeStyle = filo;
-  ctx.lineWidth = 2;
+  ctx.shadowColor = paleta.colorResplandor;
+  ctx.shadowBlur = paleta.resplandor;
+  ctx.strokeStyle = metal;
+  ctx.lineWidth = paleta.grosor * 2;
   ctx.beginPath();
   ctx.arc(0, 0, radio, 0, VUELTA);
   ctx.stroke();
   ctx.restore();
 
   // Línea interior muy fina: el "canto" del cristal.
-  ctx.strokeStyle = 'rgba(212, 175, 55, .45)';
+  ctx.strokeStyle = paleta.tenue;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.arc(0, 0, radio - 16, 0, VUELTA);
@@ -192,9 +187,9 @@ function dibujarAro(radio, sector) {
     ctx.translate(Math.cos(a) * radio, Math.sin(a) * radio);
     ctx.rotate(a);
     const g = ctx.createLinearGradient(-7, -4, 7, 4);
-    g.addColorStop(0, '#FFF4C2');
-    g.addColorStop(0.5, ORO);
-    g.addColorStop(1, ORO_OSCURO);
+    g.addColorStop(0, paleta.gema[0]);
+    g.addColorStop(0.5, paleta.filo[0]);
+    g.addColorStop(1, paleta.filo[2]);
     ctx.fillStyle = g;
     ctx.beginPath();
     ctx.moveTo(-7, 0); ctx.lineTo(0, -7 / PHI); ctx.lineTo(7, 0); ctx.lineTo(0, 7 / PHI);
@@ -205,45 +200,44 @@ function dibujarAro(radio, sector) {
 }
 
 /**
- * Centro que no gira: un disco de cristal con filo de oro, un anillo a r/φ y una gema
- * octogonal de facetas de oro bruñido con un punto de luz en el eje.
+ * Centro que no gira: un disco de cristal con filo metálico, un anillo a r/φ y una gema
+ * octogonal de facetas (del color del borde) con un punto de luz en el eje.
  */
 function dibujarCentro() {
   const r = 46;
 
   // Halo: anillo muy fino a r × φ.
-  ctx.strokeStyle = 'rgba(212, 175, 55, .3)';
+  ctx.strokeStyle = paleta.tenue;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.arc(0, 0, r * PHI, 0, VUELTA);
   ctx.stroke();
 
-  // Disco de cristal oscuro con filo de oro y resplandor.
+  // Disco de cristal con filo y resplandor.
   ctx.save();
-  ctx.shadowColor = 'rgba(212, 175, 55, .3)';
-  ctx.shadowBlur = 12;
-  ctx.fillStyle = 'rgba(15, 15, 18, .7)';
+  ctx.shadowColor = paleta.colorResplandor;
+  ctx.shadowBlur = Math.min(paleta.resplandor, 12);
+  ctx.fillStyle = paleta.centro;
   ctx.beginPath();
   ctx.arc(0, 0, r, 0, VUELTA);
   ctx.fill();
   ctx.restore();
-  ctx.strokeStyle = filoOro(r);
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = filo(r);
+  ctx.lineWidth = Math.max(1, paleta.grosor * 1.5);
   ctx.stroke();
 
-  ctx.strokeStyle = 'rgba(212, 175, 55, .55)';
+  ctx.strokeStyle = paleta.tenue;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.arc(0, 0, r / PHI, 0, VUELTA);
   ctx.stroke();
 
-  // Gema: ocho facetas triangulares alternando oro claro y oro bruñido.
+  // Gema: ocho facetas triangulares alternando tonos claros y bruñidos.
   const rg = r / (PHI * PHI);
-  const tonos = ['#FFF1B8', '#D4AF37', '#E9CB6B', '#8C6216', '#F6E08E', '#AA771C', '#E2BE57', '#6E4C10'];
   for (let k = 0; k < 8; k++) {
     const a1 = -Math.PI / 2 + (k * VUELTA) / 8 - VUELTA / 16;
     const a2 = a1 + VUELTA / 8;
-    ctx.fillStyle = tonos[k];
+    ctx.fillStyle = paleta.gema[k];
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.lineTo(Math.cos(a1) * rg, Math.sin(a1) * rg);
@@ -252,7 +246,7 @@ function dibujarCentro() {
     ctx.fill();
   }
   // Aristas de la gema.
-  ctx.strokeStyle = 'rgba(255, 241, 193, .7)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, .55)';
   ctx.lineWidth = 0.8;
   ctx.beginPath();
   for (let k = 0; k <= 8; k++) {
@@ -449,7 +443,17 @@ function alEvento(evento) {
 // 5. Arranque
 // -----------------------------------------------------------------------------
 
-iniciarWidget({ cfg: leerConfig(), alEvento, alConfig: aplicarConfig });
+// Estilo nuevo (con la configuración o desde la vista previa del panel): se toma la paleta y
+// se redibuja; si cambió la fuente, otra vez cuando termine de cargar. Durante un giro no hace
+// falta: el siguiente cuadro de la animación ya usa la paleta nueva.
+addEventListener('tema-aplicado', ({ detail }) => {
+  paleta = paletaRuleta(detail);
+  if (!girando) dibujar();
+  fuenteLista(detail.fu).then(() => { if (!girando) dibujar(); });
+});
 
 // La fuente llega después del primer dibujo: se redibuja para que el texto la use.
 document.fonts.ready.then(() => { if (!girando) dibujar(); });
+
+// Al final: la primera configuración (y su estilo) llega en esta misma llamada.
+iniciarWidget({ cfg: leerConfig(), alEvento, alConfig: aplicarConfig });

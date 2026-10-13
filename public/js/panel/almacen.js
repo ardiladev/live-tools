@@ -9,6 +9,7 @@
 //   widgets:         { <id>: {...} }               configuración propia de cada widget
 //   menuCerrados:    [ids]                         grupos del menú que se dejaron cerrados
 //   preferencias:    { autoConectar }
+//   tema:            estilo visual de TODOS los widgets (claves de js/tema.js)
 //   regalos:         { <giftId>: Regalo }          catálogo de regalos recibidos o agregados
 //   sugerencias:     [{ viejo, nuevo }]            posibles cambios de código por confirmar
 //   distintos:       ["a|b"]                       pares que la persona dijo que NO son el mismo
@@ -20,10 +21,11 @@
 //              idsAnteriores?, cambiado? }
 //
 // Secciones: 1. Carga y guardado · 2. Conexión y widgets · 3. Catálogo de regalos
-//            4. Cambios de código · 5. Preferencias · 6. Suscripciones · 7. Cambios en vivo
+//            4. Cambios de código · 5. Preferencias y estilo · 6. Suscripciones · 7. Cambios en vivo
 // =============================================================================
 
 import { idAleatorio } from '../nube.js';
+import { normalizarTema } from '../tema.js';
 
 const CLAVE = 'panel-live';
 const CLAVE_VIEJA = 'ruleta-generador'; // la primera versión del generador guardaba aquí
@@ -35,6 +37,7 @@ let estado = {
   widgets: {},
   menuCerrados: [],
   preferencias: { autoConectar: false },
+  tema: normalizarTema(),
   regalos: {},
   sugerencias: [],
   distintos: [],
@@ -263,10 +266,19 @@ export function olvidarCambiosDeCodigo() {
 
 
 // -----------------------------------------------------------------------------
-// 5. Preferencias
+// 5. Preferencias y estilo de los widgets
 // -----------------------------------------------------------------------------
 
 export const preferencias = () => estado.preferencias;
+
+/** El estilo visual de los widgets (siempre completo y válido). */
+export const tema = () => (estado.tema = normalizarTema(estado.tema));
+
+/** Cambia el estilo (todo o algunas claves) y lo guarda: sincronizar.js lo lleva a OBS. */
+export function cambiarTema(cambios) {
+  estado.tema = normalizarTema({ ...estado.tema, ...cambios });
+  guardar();
+}
 
 
 // -----------------------------------------------------------------------------

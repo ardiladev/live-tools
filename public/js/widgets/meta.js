@@ -3,7 +3,8 @@
 //
 // Configuración (la genera el panel; llega en #c=… o, con cambios en vivo, desde Supabase):
 //   u, k = usuario y clave · t = tipo (likes | follows | shares | monedas)
-//   o = objetivo · ti = título · col = color (#rrggbb)
+//   o = objetivo · ti = título · col = color propio (#rrggbb; vacío = acento del estilo)
+//   est = estilo visual (js/tema.js; lo aplica comun.js)
 //   al = al alcanzar la meta (duplicar | reiniciar | nada) · s = sonido (1/0)
 //
 // El conteo empieza en 0 cada vez que se abre la fuente en OBS. Un cambio en vivo no lo
@@ -46,8 +47,9 @@ function aplicarConfig(cfg) {
   titulo = String(cfg.ti || 'Meta');
   alAlcanzar = cfg.al || 'nada';
   sonido = cfg.s !== 0;
-  const color = /^#[0-9a-f]{6}$/i.test(cfg.col) ? cfg.col : '#D4AF37';
-  document.documentElement.style.setProperty('--color', color);
+  // Color propio de la meta; sin él, la barra usa el acento del estilo (css/widgets/meta.css).
+  if (/^#[0-9a-f]{6}$/i.test(cfg.col)) document.documentElement.style.setProperty('--color', cfg.col);
+  else document.documentElement.style.removeProperty('--color');
 
   // Si la persona cambió la meta, manda la suya; si no, se respeta la que se duplicó en el LIVE.
   const nuevoObjetivo = Math.max(1, Number(cfg.o) || 100);

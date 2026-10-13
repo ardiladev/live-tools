@@ -11,8 +11,8 @@
      1. Variables          6. Formularios y botones   11. Actividad (contadores, lista)
      2. Base               7. Tarjeta de widget       12. Buscador de regalos
      3. Barra superior     8. Estados y avisos        13. Utilidades
-     4. Riel y menú        9. Premios (ruleta)        14. Pantallas angostas
-     5. Contenido         10. Tablas
+     4. Riel y menú        9. Premios (ruleta)        14. Estilo de widgets
+     5. Contenido         10. Tablas                 15. Pantallas angostas
    ========================================================================== */
 
 
@@ -252,6 +252,28 @@ input:focus,
 select:focus { border-color: var(--oro); outline: none; }
 input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--acento); }
 input[type="color"] { padding: 2px; cursor: pointer; }
+input[type="color"]:disabled,
+input:disabled { opacity: .4; cursor: not-allowed; }
+
+/* Deslizador (ui.js → deslizador): etiqueta y valor arriba, barra abajo. */
+.deslizador output { color: var(--oro); font-variant-numeric: tabular-nums; }
+input[type="range"] {
+  height: 20px;
+  padding: 0;
+  border: 0;
+  background: none;
+  accent-color: var(--oro);
+  cursor: pointer;
+}
+
+/* Botones segmentados (ui.js → segmentado): una sola opción elegida. */
+.campo-segmentado { display: grid; gap: 4px; color: var(--suave); font-size: 13px; }
+.segmentado { display: flex; flex-wrap: wrap; }
+.segmentado button { flex: 1 1 auto; border-radius: 0; }
+.segmentado button + button { margin-left: -1px; }
+.segmentado button:first-child { border-radius: var(--radio) 0 0 var(--radio); }
+.segmentado button:last-child { border-radius: 0 var(--radio) var(--radio) 0; }
+.segmentado button[aria-pressed="true"] { position: relative; border-color: var(--oro); background: var(--resalte); color: var(--oro); }
 
 button {
   display: inline-flex;
@@ -409,7 +431,51 @@ ol.feed b { color: var(--oro); font-weight: 600; }
 .sin-salto { white-space: nowrap; }
 
 
-/* ---------- 14. Pantallas angostas ---------- */
+/* ---------- 14. Estilo de widgets (vistas/estilo.js) ---------- */
+/* Dos columnas: controles a la izquierda, vista previa fija a la derecha. */
+.personalizador {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 460px);
+  gap: var(--e-4);
+  align-items: start;
+}
+.controles-estilo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: var(--e-4);
+  align-items: start;
+}
+.columna-previa { position: sticky; top: calc(var(--arriba) + var(--e-4)); }
+.controles-pila { display: grid; gap: var(--e-4); margin-top: var(--e-4); }
+.controles-pila:first-child { margin-top: 0; }
+
+/* Presets: botones con una muestra de sus colores. */
+.presets { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--e-3); }
+button.preset {
+  justify-content: flex-start;
+  gap: var(--e-3);
+  height: auto;
+  padding: var(--e-3);
+  text-align: left;
+  white-space: normal;
+}
+button.preset[aria-pressed="true"] { border-color: var(--oro); background: var(--resalte); color: var(--oro); }
+.muestra { flex: none; width: 32px; height: 20px; border-radius: var(--radio); }
+.muestra-aurea   { border: 1px solid #D4AF37; background: linear-gradient(135deg, rgba(15, 15, 18, .9) 50%, #D4AF37 50%); }
+.muestra-perla   { border: 1px solid #C9A032; background: linear-gradient(135deg, rgba(255, 255, 255, .75) 50%, #E9CB6B 50%); }
+.muestra-mono    { border: 1px solid #C9CDD4; background: linear-gradient(135deg, #2A2C31 50%, #C0C4CC 50%); }
+.muestra-directo { border: 2px solid #D4AF37; background: #0F0F12; }
+
+/* Marco de la vista previa: proporción según el widget elegido. */
+.marco-previa { margin-top: var(--e-4); overflow: hidden; border: var(--linea-tenue); border-radius: var(--radio); }
+.marco-previa iframe { display: block; width: 100%; height: 100%; border: 0; }
+.marco-previa.vertical   { aspect-ratio: 4 / 5; }
+.marco-previa.horizontal { aspect-ratio: 16 / 5; }
+.marco-previa.panoramica { aspect-ratio: 16 / 9; }
+
+
+/* ---------- 15. Pantallas angostas ---------- */
 /* Menos de 1000 px: el menú se esconde (se abre con ☰) y queda solo el riel. */
 @media (max-width: 1000px) {
   .menu { display: none; }
@@ -422,6 +488,10 @@ ol.feed b { color: var(--oro); font-weight: 600; }
     width: min(260px, 80vw);
     box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .5);
   }
+}
+@media (max-width: 1200px) {
+  .personalizador { grid-template-columns: 1fr; }
+  .columna-previa { position: static; order: -1; }
 }
 @media (max-width: 700px) {
   .escenario { grid-template-columns: 1fr; }

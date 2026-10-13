@@ -84,8 +84,9 @@ desplegables** (menú) → **vistas** (contenido).
 | Categoría | Grupo | Vista | Qué hace |
 |---|---|---|---|
 | Superposiciones | Ruletas | Ruleta de regalos | Gira y sortea un premio cada vez que llega el regalo configurado. Premios con peso (probabilidad), giros por regalo, tope por combo, ocultar en reposo y sonido. |
-| | Metas | Likes · Seguidores · Compartidos · Monedas | Barra de progreso con meta, título, color y acción al alcanzarla (duplicar, volver a empezar o dejarla llena). |
+| | Metas | Likes · Seguidores · Compartidos · Monedas | Barra de progreso con meta, título, color propio opcional (si no, el acento del estilo) y acción al alcanzarla (duplicar, volver a empezar o dejarla llena). |
 | | Alertas | Alertas de eventos | Aviso animado por regalos, seguidores y compartidos, en fila, con sonido y mínimo de monedas. |
+| | Apariencia | Estilo de widgets | El aspecto de **todos** los widgets a la vez: 4 estilos predefinidos, cristal (obsidiana o perla, opacidad, desenfoque), colores (acento con degradado, texto, bordes, activo, insignias), borde (grosor, metálico o liso), resplandor, esquinas, fuente, espaciado y mayúsculas. Vista previa al instante; con cambios en vivo llega solo a OBS. |
 | Actividad | En vivo | Eventos en vivo | Conecta el panel al LIVE: contadores (espectadores, likes, seguidores, compartidos, monedas, regalos, mensajes), lista de eventos con filtros y regalos de la sesión. |
 | | Regalos | Buscador de regalos | Catálogo permanente con el ID de cada regalo recibido. Nombres propios, búsqueda, “Copiar ID”, “Usar en la ruleta”, agregar a mano, conexión automática y seguimiento de regalos que cambian de código. |
 | Ajustes | Cuenta | Conexión con TikTok | Usuario de TikTok y API key de Euler Stream, compartidos por todos los widgets. |
@@ -242,13 +243,23 @@ Los mensajes solo se aceptan si vienen del mismo origen.
 | `js/panel/almacen.js` | Lo que el panel guarda en el navegador (`localStorage`, clave `panel-live`), incluidos el identificador de cada widget y el secreto para Supabase |
 | `js/panel/sincronizar.js` | Cambios en vivo: cada vista de widget registra aquí su configuración; al guardar algo, la sube a Supabase si cambió |
 | `js/panel/envivo.js` | Conexión del panel al LIVE: contadores, lista de eventos, regalos de la sesión |
-| `js/panel/ui.js` | Componentes: `el()`, `icono()`, `tarjeta`, `campo`, `casilla`, `nota`, `tarjetaWidget` |
+| `js/panel/ui.js` | Componentes: `el()`, `icono()`, `tarjeta`, `campo`, `casilla`, `deslizador`, `segmentado`, `nota`, `tarjetaWidget` |
+| `js/tema.js` | **Estilo de los widgets** (compartido con los widgets): presets, valores por defecto, `normalizarTema`, `aplicarTema` (variables CSS) y `paletaRuleta` (colores del canvas) |
 | `js/panel/vistas/*.js` | Una vista por archivo |
 
 **Ciclo de vida de una vista.** Una vista es `{ id, titulo, descripcion, render({ senal }) }`. Al entrar,
 `app.js` llama `render`, que devuelve los nodos de la vista. Al salir, cancela `senal` (un `AbortSignal`):
 todas las suscripciones (`almacen.alCambiar(fn, senal)`, `envivo.alCambiar(fn, senal)`) y los oyentes
 (`addEventListener(…, { signal: senal })`) se sueltan en ese momento.
+
+**Estilo de los widgets.** Es uno solo para todos y se guarda en `almacen.tema`. `sincronizar.registrar`
+lo agrega a la configuración de cada widget con la clave `est`, así que viaja igual que el resto (en la URL
+o por Supabase) y al cambiarlo se suben todos los widgets. En el widget, `iniciarWidget` (comun.js) llama
+`aplicarTema(est)` antes de entregar la configuración: escribe las variables CSS (`--cristal-oscuro`,
+`--filo-oro`, `--borde-ancho`, `--resplandor`, `--fuente`, `--mayus`…) y avisa con el evento
+`tema-aplicado`, que la ruleta usa para redibujar el canvas. La vista previa de *Estilo de widgets* recibe
+cada cambio con `postMessage({ tipo: 'tema', est })`, sin recargarse. Para agregar un preset: una entrada
+en `PRESETS` de `js/tema.js` y su muestra `.muestra-<id>` en `panel.css`.
 
 **Interfaz sin `innerHTML`.** Todo se construye con `el()`, que inserta el texto como texto. Por eso es
 seguro mostrar nombres y mensajes del chat que vienen de TikTok.
@@ -295,6 +306,7 @@ live-tools/
 │       ├── comun.js                URL ↔ config, eventos normalizados, rastreador de regalos,
 │       │                           conexión con Euler Stream, arranque de widgets, sonido
 │       ├── nube.js                 Supabase: proyecto, leer/guardar configuración, Realtime
+│       ├── tema.js                 estilo de los widgets: presets, variables CSS, colores de la ruleta
 │       ├── widgets/
 │       │   ├── ruleta.js           dibujo, giro, cola y sorteo de premios
 │       │   ├── meta.js
@@ -310,6 +322,7 @@ live-tools/
 │               ├── ruleta.js
 │               ├── metas.js
 │               ├── alertas.js
+│               ├── estilo.js       Apariencia → Estilo de widgets (personalizador)
 │               ├── actividad.js
 │               ├── regalos.js
 │               └── conexion.js

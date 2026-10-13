@@ -56,7 +56,8 @@ const ACCIONES_AL_ALCANZAR = [
 function crearVista(tipo) {
   const t = TIPOS[tipo];
   const id = `meta-${tipo}`;
-  const ajustes = () => almacen.widget(id, { objetivo: t.meta, titulo: t.etiqueta, color: t.color, alAlcanzar: 'duplicar', sonido: true });
+  // Sin color propio, la barra usa el acento del estilo de widgets (Superposiciones → Apariencia).
+  const ajustes = () => almacen.widget(id, { objetivo: t.meta, titulo: t.etiqueta, color: t.color, colorPropio: false, alAlcanzar: 'duplicar', sonido: true });
 
   // Se registra al cargar, para que los cambios en vivo funcionen con o sin la vista abierta.
   sincronizar.registrar(id, {
@@ -66,7 +67,7 @@ function crearVista(tipo) {
         t: tipo,
         o: Math.max(1, Number(cfg.objetivo) || t.meta),
         ti: String(cfg.titulo).slice(0, 40),
-        col: cfg.color,
+        col: cfg.colorPropio ? cfg.color : '',
         al: cfg.alAlcanzar,
         s: cfg.sonido ? 1 : 0,
       };
@@ -85,6 +86,20 @@ function crearVista(tipo) {
         widget.actualizar();
       };
 
+      const campoColor = campo('Color propio:', {
+        tipo: 'color', valor: cfg.color, disabled: !cfg.colorPropio,
+        alCambiar: (v) => { cfg.color = v; cambio(); },
+      });
+
+      const casillaColor = casilla('Color propio (si no, el acento del estilo de widgets)', {
+        marcada: cfg.colorPropio,
+        alCambiar: (v) => {
+          cfg.colorPropio = v;
+          campoColor.querySelector('input').disabled = !v;
+          cambio();
+        },
+      });
+
       const widget = tarjetaWidget({
         id,
         titulo: `Meta de ${t.titulo.toLowerCase()}`,
@@ -98,7 +113,8 @@ function crearVista(tipo) {
             tipo: 'select', valor: cfg.alAlcanzar, opciones: ACCIONES_AL_ALCANZAR,
             alCambiar: (v) => { cfg.alAlcanzar = v; cambio(); },
           }),
-          campo('Color:', { tipo: 'color', valor: cfg.color, alCambiar: (v) => { cfg.color = v; cambio(); } }),
+          campoColor,
+          casillaColor,
         ],
         personalizar: [
           casilla('Sonido al alcanzar la meta', { marcada: cfg.sonido, alCambiar: (v) => { cfg.sonido = v; cambio(); } }),

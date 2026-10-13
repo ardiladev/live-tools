@@ -2,11 +2,12 @@
    meta.css — Widget "Meta" (meta.html): placa de cristal con barra de progreso
    Arriba la etiqueta (oro claro, mayúsculas), abajo la barra traslúcida con el
    porcentaje. El color llega con la configuración en la variable --color
-   (js/widgets/meta.js); por defecto es el oro de la marca. El relleno es ese
+   (js/widgets/meta.js); sin color propio, el acento del estilo de widgets. El relleno es ese
    color traslúcido (15 % → 40 %), nunca un bloque sólido.
    ========================================================================== */
 
-:root { --color: #D4AF37; } /* hasta que llegue la configuración */
+/* Sin color propio de la meta, la barra usa el acento del estilo de widgets. */
+:root { --color: var(--acento, #D4AF37); }
 
 /* ---------- Escena ---------- */
 .escena {
@@ -33,7 +34,7 @@
   font-weight: 600;
   font-size: clamp(14px, 4.4vh, 50px);
   line-height: 1.2;
-  text-transform: uppercase;
+  text-transform: var(--mayus);
   letter-spacing: var(--espaciado-widget);
 }
 
@@ -78,12 +79,12 @@
   font-size: clamp(16px, 6.5vh, 74px);         /* alto de la barra / φ */
   letter-spacing: var(--espaciado-widget);
   font-variant-numeric: tabular-nums;
-  color: #FFFFFF;
+  color: var(--texto-sec);
 }
 
 /* ---------- Meta alcanzada ---------- */
 .meta.lograda { animation: brillo 1.2s ease-in-out 3; }
-@keyframes brillo { 50% { box-shadow: 0 0 26px rgba(212, 175, 55, .45); } }
+@keyframes brillo { 50% { box-shadow: var(--resplandor-activo); } }
 
 @media (prefers-reduced-motion: reduce) {
   .relleno { transition: none; }

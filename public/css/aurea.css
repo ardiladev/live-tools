@@ -78,6 +78,18 @@
   --oro-texto: #F3DFA2;                         /* oro claro para textos sobre cristal */
   /* Sombra suave para que el texto se lea sobre cualquier video. */
   --sombra-texto: 0 1px 2px rgba(0, 0, 0, .7), 0 0 14px rgba(0, 0, 0, .45);
+
+  /* Variables que ajusta el estilo de widgets del panel (js/tema.js → aplicarTema).
+     Estos son sus valores por defecto: el preset "Áurea Signature Gold". */
+  --borde-ancho: 1px;
+  --borde-color: #D4AF37;
+  --resplandor-activo: 0 0 24px rgba(243, 223, 162, .35);
+  --mayus: uppercase;
+  --texto-sec: #FFFFFF;                         /* texto secundario de los widgets */
+  --activo: #F3DFA2;                            /* lo que se destaca: el premio, el brillo */
+  --acento-relleno: linear-gradient(135deg, #D4AF37, #AA771C);
+  --insignia-fondo: var(--cristal-oro);
+  --insignia-borde: rgba(212, 175, 55, .6);
 }
 
 

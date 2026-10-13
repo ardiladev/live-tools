@@ -16,7 +16,7 @@ body {
   margin: 0;
   height: 100%;
   background: transparent;
-  color: #FFFFFF;
+  color: var(--texto-sec);
   font-family: var(--fuente);
   overflow: hidden;
 }
@@ -55,7 +55,7 @@ body.vista-previa {
   position: absolute;
   inset: 0;
   z-index: 2;
-  padding: 1px;
+  padding: var(--borde-ancho);
   border-radius: inherit;
   background: var(--filo-oro);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);

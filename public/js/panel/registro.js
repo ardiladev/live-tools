@@ -20,6 +20,7 @@
 import ruleta from './vistas/ruleta.js';
 import { metaLikes, metaSeguidores, metaCompartidos, metaMonedas } from './vistas/metas.js';
 import alertas from './vistas/alertas.js';
+import estilo from './vistas/estilo.js';
 import actividad from './vistas/actividad.js';
 import buscadorRegalos from './vistas/regalos.js';
 import conexion from './vistas/conexion.js';
@@ -34,6 +35,7 @@ export const CATEGORIAS = [
       { id: 'ruletas', titulo: 'Ruletas', vistas: [ruleta] },
       { id: 'metas', titulo: 'Metas', vistas: [metaLikes, metaSeguidores, metaCompartidos, metaMonedas] },
       { id: 'alertas', titulo: 'Alertas', vistas: [alertas] },
+      { id: 'apariencia', titulo: 'Apariencia', vistas: [estilo] },
     ],
   },
   {

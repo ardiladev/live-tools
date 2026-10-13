@@ -4,7 +4,7 @@
 // Secciones:
 //   1. el()            crear elementos sin innerHTML
 //   2. Íconos
-//   3. Bloques básicos tarjeta · campo · casilla · nota · numero
+//   3. Bloques básicos tarjeta · campo · casilla · deslizador · segmentado · nota · numero
 //   4. tarjetaWidget   la tarjeta estándar de un widget de OBS (URL, cambios en vivo, pruebas,
 //                      vista previa)
 // =============================================================================
@@ -98,6 +98,39 @@ export function casilla(texto, { marcada = false, alCambiar } = {}) {
   const control = el('input', { type: 'checkbox', checked: marcada });
   control.addEventListener('change', () => alCambiar?.(control.checked));
   return el('label', { class: 'casilla' }, control, ' ', texto);
+}
+
+/**
+ * Deslizador con su valor a la vista. `formato(valor)` arma el texto que se muestra
+ * (por ejemplo `(v) => `${v} px``). `alCambiar(valor)` recibe un número.
+ */
+export function deslizador(etiqueta, { valor, min, max, paso = 1, formato = String, alCambiar } = {}) {
+  const salida = el('output', {}, formato(valor));
+  const control = el('input', { type: 'range', min, max, step: paso, value: valor });
+  control.addEventListener('input', () => {
+    const v = Number(control.value);
+    salida.textContent = formato(v);
+    alCambiar?.(v);
+  });
+  return el('label', { class: 'deslizador' }, el('span', { class: 'fila-entre' }, etiqueta, salida), control);
+}
+
+/**
+ * Botones de opción única, uno al lado del otro (como un interruptor de varias posiciones).
+ * `opciones`: [[valor, texto], …]. `alCambiar(valor)` se llama al elegir otra.
+ */
+export function segmentado(etiqueta, opciones, { valor, alCambiar } = {}) {
+  const botones = opciones.map(([v, texto]) => el('button', {
+    type: 'button',
+    'aria-pressed': String(v === valor),
+    onclick: () => {
+      botones.forEach((b, i) => b.setAttribute('aria-pressed', String(opciones[i][0] === v)));
+      alCambiar?.(v);
+    },
+  }, texto));
+  return el('div', { class: 'campo-segmentado' },
+    el('span', {}, etiqueta),
+    el('div', { class: 'segmentado', role: 'group', 'aria-label': etiqueta }, ...botones));
 }
 
 /** Párrafo de ayuda en gris. */

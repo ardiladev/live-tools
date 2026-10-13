@@ -15,6 +15,8 @@
 //   5. Utilidades                    sonar · esperar
 // =============================================================================
 
+import { aplicarTema } from './tema.js';
+
 
 // -----------------------------------------------------------------------------
 // 1. Configuración en la URL
@@ -322,8 +324,15 @@ function sincronizarConfig(cfgUrl, alConfig) {
  * no necesita saber de dónde vienen.
  * `alConfig(config)` recibe la configuración: una vez al arrancar (la de la URL) y, si la
  * URL usa cambios en vivo (#c= con `w`), otra vez cada vez que se edite en el panel.
+ * El estilo visual (`est`, ver js/tema.js) se aplica aquí, antes de pasarle la configuración
+ * al widget, así cada widget solo se ocupa de su contenido.
  */
-export function iniciarWidget({ cfg, alEvento, alConfig = () => {} }) {
+export function iniciarWidget({ cfg, alEvento, alConfig: alConfigWidget = () => {} }) {
+  const alConfig = (config) => {
+    aplicarTema(config.est);
+    alConfigWidget(config);
+  };
+
   const params = new URLSearchParams(location.search);
   const vistaPrevia = params.get('fondo') === '1';
   if (vistaPrevia) document.body.classList.add('vista-previa');
@@ -345,10 +354,12 @@ export function iniciarWidget({ cfg, alEvento, alConfig = () => {} }) {
   // es empezar de cero. Los cambios en vivo de Supabase NO pasan por aquí: no recargan.
   addEventListener('hashchange', () => location.reload());
 
-  // Eventos de prueba que manda el panel. Solo se aceptan desde el mismo origen.
+  // Mensajes del panel (vista previa). Solo se aceptan desde el mismo origen:
+  //   simular → un evento de prueba · tema → el estilo nuevo, sin recargar la página.
   addEventListener('message', (ev) => {
-    if (ev.origin !== location.origin || ev.data?.tipo !== 'simular' || !ev.data.evento) return;
-    alEvento(ev.data.evento);
+    if (ev.origin !== location.origin) return;
+    if (ev.data?.tipo === 'simular' && ev.data.evento) alEvento(ev.data.evento);
+    if (ev.data?.tipo === 'tema' && ev.data.est) aplicarTema(ev.data.est);
   });
 
   if (cfg?.error) return alEstado(false, 'La configuración de la URL está dañada. Cópiala de nuevo desde el panel.');
