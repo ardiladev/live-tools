@@ -1,7 +1,8 @@
 # Live Tools
 
 Herramientas para transmisiones de TikTok LIVE, al estilo de TikFinity: una **ruleta de regalos**,
-**metas** con barra de progreso, **alertas** animadas y herramientas para ver la **actividad** del LIVE
+**metas** con barra de progreso, **alertas** animadas, una **carrera de regalos** entre integrantes con reloj
+por rondas y herramientas para ver la **actividad** del LIVE
 y armar un **catálogo con el ID de cada regalo**.
 
 Los widgets se pegan como **URL** en OBS o en TikTok LIVE Studio y funcionan solos: no hay que dejar
@@ -102,7 +103,7 @@ Cada widget tiene una tarjeta con:
   (obsidiana o perla, opacidad, desenfoque), bordes (grosor, metálico o liso), resplandor, esquinas, colores
   (acento con degradado, texto, bordes, activo, insignias) y tipografía (fuente, espaciado, mayúsculas). La vista
   previa cambia al instante y, con cambios en vivo, OBS también. «Aplicar este estilo a todos los widgets» lo copia
-  en la ruleta, las metas y las alertas.
+  en las ruletas, las metas, las alertas y la carrera.
 - **Vista previa**: el widget real en modo prueba; **nunca** se conecta al LIVE.
 
 ---
@@ -117,16 +118,19 @@ flowchart LR
   EU -->|eventos JSON| W1[ruleta.html]
   EU -->|eventos JSON| W2[meta.html]
   EU -->|eventos JSON| W3[alertas.html]
+  EU -->|eventos JSON| W4[carrera.html]
   EU -->|eventos JSON| P[Panel index.html<br/>Actividad / Buscador]
   P -->|genera la URL fija #c=u,k,w| W1
   P -->|guardar_widget| SB[Supabase<br/>tabla widgets + Realtime]
   SB -->|configuración al instante| W1
   SB -->|configuración al instante| W2
   SB -->|configuración al instante| W3
+  SB -->|configuración y reloj al instante| W4
   P -->|eventos de prueba postMessage| W1
   W1 --> OBS[OBS / LIVE Studio]
   W2 --> OBS
   W3 --> OBS
+  W4 --> OBS
 ```
 
 - **El panel no es un servidor.** Es una página estática que genera URLs. GitHub Pages solo sirve
@@ -471,7 +475,12 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
 - **El catálogo de regalos vive en un solo navegador** y solo anota mientras el panel está abierto y conectado.
   Puedes poner el panel en OBS como **dock de navegador** para que esté abierto siempre que transmites.
   Ese dock tendrá su propia lista, separada de la de Chrome.
-- **Las metas empiezan en 0** cada vez que se abre o recarga la fuente en OBS.
+- **Las metas empiezan en 0** cada vez que se abre o recarga la fuente en OBS. La **carrera de regalos**, en
+  cambio, guarda los puntos de la ronda en el navegador de OBS y los conserva al recargar.
+- **El reloj de la carrera usa la hora del computador.** El panel guarda la hora en que termina la ronda; si el
+  panel y OBS están en computadores distintos con la hora desajustada, los relojes no coinciden.
+- **Carrera:** cada integrante necesita un regalo distinto (si dos tienen el mismo, solo suma el primero). Como
+  TikTok casi nunca manda el precio, cada regalo vale lo puesto en «Monedas c/u».
 - **No hay una lista oficial de IDs de regalos.** Usa el Buscador de regalos (lo más fiable, porque son los
   regalos que llegan a tu cuenta) o el navegador de regalos de TikFinity.
 - **Premios:** que sean cosas que se puedan cumplir en el LIVE y que respeten las normas comunitarias de TikTok.
@@ -510,5 +519,8 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
 4. **Cambios en vivo:** abre la URL de un widget (la de **Copy URL**) en otra pestaña, cambia algo en el
    panel y mira que el widget cambie en uno o dos segundos. Ojo: Chrome frena las animaciones en pestañas
    de fondo, así que la ruleta solo gira con su pestaña visible (en OBS siempre gira).
+   Para la **carrera**, pulsa *Iniciar*, *Pausar* y *Reiniciar* en el panel y mira que el reloj del widget
+   cambie (tarda menos de un segundo). En la vista previa, los botones de prueba suman aunque el reloj
+   esté detenido.
 5. **Publicado:** después del `git push`, espera la publicación (pestaña *Actions* del repositorio) y
    recarga el panel en `https://ardiladev.github.io/live-tools/`.
