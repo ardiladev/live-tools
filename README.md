@@ -284,6 +284,7 @@ live-tools/
 │   ├── meta.html                   widget meta       ├ solo estructura HTML
 │   ├── alertas.html                widget alertas    ┘
 │   ├── css/
+│   │   ├── aurea.css               sistema de diseño ÁUREA NETWORK: colores oro/carbón, escala φ, tipografía
 │   │   ├── panel.css               estilos del panel
 │   │   ├── widget.css              base común de los widgets (transparencia, píldora de estado)
 │   │   └── widgets/

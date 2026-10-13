@@ -18,22 +18,22 @@ import { tarjetaWidget, campo, casilla, nota } from '../ui.js';
 
 const TIPOS = {
   likes: {
-    titulo: 'Likes', meta: 1000, color: '#3aa0d8', etiqueta: 'Meta de likes',
+    titulo: 'Likes', meta: 1000, color: '#D4AF37', etiqueta: 'Meta de likes',
     pruebas: [
       { texto: '+50 likes', evento: (n) => ({ tipo: 'like', usuario: n, cantidad: 50, total: 0 }) },
       { texto: '+500 likes', evento: (n) => ({ tipo: 'like', usuario: n, cantidad: 500, total: 0 }) },
     ],
   },
   follows: {
-    titulo: 'Seguidores', meta: 50, color: '#8b5cf6', etiqueta: 'Nuevos seguidores',
+    titulo: 'Seguidores', meta: 50, color: '#D4AF37', etiqueta: 'Nuevos seguidores',
     pruebas: [{ texto: '+1 seguidor', evento: (n) => ({ tipo: 'follow', usuario: n }) }],
   },
   shares: {
-    titulo: 'Compartidos', meta: 20, color: '#16a34a', etiqueta: 'Meta de compartidos',
+    titulo: 'Compartidos', meta: 20, color: '#D4AF37', etiqueta: 'Meta de compartidos',
     pruebas: [{ texto: '+1 compartido', evento: (n) => ({ tipo: 'share', usuario: n }) }],
   },
   monedas: {
-    titulo: 'Monedas', meta: 500, color: '#f59e0b', etiqueta: 'Meta de monedas',
+    titulo: 'Monedas', meta: 500, color: '#D4AF37', etiqueta: 'Meta de monedas',
     aviso: 'TikTok no siempre manda el precio de los regalos; los que lleguen sin precio no suman monedas.',
     pruebas: [
       { texto: 'Rosa (1)', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '5655', nombre: 'Rose', cantidad: 1, diamantes: 1 }) },

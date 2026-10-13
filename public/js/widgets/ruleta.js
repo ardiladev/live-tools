@@ -26,15 +26,21 @@ const DURACION_GIRO_MS = MOVIMIENTO_REDUCIDO ? 1200 : 5200;
 const PAUSA_RESULTADO_MS = 2800;
 const VUELTA = Math.PI * 2;
 
-// Colores de los sectores, en orden. El texto de cada uno se elige para que contraste.
+// Paleta ÁUREA NETWORK (la misma de css/aurea.css; el canvas no lee variables CSS).
+const ORO = '#D4AF37';
+const CARBON = '#0F0F12';
+const PIZARRA = '#1A1A1A';
+const BLANCO = '#FFFFFF';
+const PHI = 1.618;
+
+// Colores de los sectores, en orden. 'oro' = degradado de oro metálico.
+// El texto de cada uno se elige para que contraste.
 const COLORES = [
-  { fondo: '#E5386F', texto: '#FFF6F0' },
-  { fondo: '#3B1446', texto: '#FFF6F0' },
-  { fondo: '#FFC9D6', texto: '#3B1446' },
-  { fondo: '#8E2A5E', texto: '#FFF6F0' },
+  { fondo: CARBON, texto: ORO },
+  { fondo: 'oro', texto: PIZARRA },
+  { fondo: BLANCO, texto: PIZARRA },
+  { fondo: 'oro', texto: PIZARRA },
 ];
-const COLOR_ARO = '#3B1446';
-const COLOR_CLAVOS = '#F7B731';
 
 const $ = (id) => document.getElementById(id);
 const lienzo = $('lienzo');
@@ -90,7 +96,17 @@ function partirTexto(texto, maxAncho) {
   return lineas.slice(0, 2);
 }
 
+/** Degradado de oro metálico (135°) que cubre el círculo de radio `radio`. */
+function oroMetal(radio) {
+  const g = ctx.createLinearGradient(-radio, -radio, radio, radio);
+  g.addColorStop(0, '#D4AF37');
+  g.addColorStop(0.5, '#FFD700');
+  g.addColorStop(1, '#AA771C');
+  return g;
+}
+
 function dibujarSectores(radio, sector) {
+  const oro = oroMetal(radio);
   premios.forEach((premio, i) => {
     const inicio = -Math.PI / 2 + i * sector;
     const { fondo, texto } = colorDe(i, premios.length);
@@ -99,55 +115,89 @@ function dibujarSectores(radio, sector) {
     ctx.moveTo(0, 0);
     ctx.arc(0, 0, radio, inicio, inicio + sector);
     ctx.closePath();
-    ctx.fillStyle = fondo;
+    ctx.fillStyle = fondo === 'oro' ? oro : fondo;
     ctx.fill();
 
-    // Texto radial, alineado hacia el borde.
+    // Texto radial en mayúsculas con espaciado amplio, alineado hacia el borde.
     ctx.save();
     ctx.rotate(inicio + sector / 2);
     ctx.fillStyle = texto;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'middle';
-    const tamano = premios.length > 10 ? 30 : 38;
-    ctx.font = `800 ${tamano}px "Bricolage Grotesque", "Segoe UI", sans-serif`;
-    const lineas = partirTexto(premio.texto, radio * 0.58);
-    lineas.forEach((l, k) => ctx.fillText(l, radio - 64, (k - (lineas.length - 1) / 2) * tamano * 1.05));
+    const tamano = premios.length > 10 ? 26 : 32;
+    ctx.font = `700 ${tamano}px "Montserrat", "Segoe UI", sans-serif`;
+    ctx.letterSpacing = '3px'; // navegadores sin soporte lo ignoran
+    const lineas = partirTexto(premio.texto.toUpperCase(), radio * 0.56);
+    lineas.forEach((l, k) => ctx.fillText(l, radio - 60, (k - (lineas.length - 1) / 2) * tamano * 1.15));
     ctx.restore();
   });
 }
 
+/** Divisiones finas, aro doble dorado y un rombo en cada división. */
 function dibujarAro(radio, sector) {
-  ctx.lineWidth = 14;
-  ctx.strokeStyle = COLOR_ARO;
-  ctx.beginPath();
-  ctx.arc(0, 0, radio, 0, VUELTA);
-  ctx.stroke();
-  // Un "clavo" dorado en cada división.
-  ctx.fillStyle = COLOR_CLAVOS;
+  const oro = oroMetal(radio);
+
+  // Divisiones: líneas rectas del centro al borde.
+  ctx.strokeStyle = ORO;
+  ctx.lineWidth = 3;
   for (let i = 0; i < premios.length; i++) {
     const a = -Math.PI / 2 + i * sector;
     ctx.beginPath();
-    ctx.arc(Math.cos(a) * radio, Math.sin(a) * radio, 9, 0, VUELTA);
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(a) * radio, Math.sin(a) * radio);
+    ctx.stroke();
+  }
+
+  // Aro exterior de oro metálico y una línea interior fina.
+  ctx.strokeStyle = oro;
+  ctx.lineWidth = 8;
+  ctx.beginPath();
+  ctx.arc(0, 0, radio, 0, VUELTA);
+  ctx.stroke();
+  ctx.strokeStyle = ORO;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(0, 0, radio - 20, 0, VUELTA);
+  ctx.stroke();
+
+  // Rombo en cada división, sobre el aro.
+  ctx.fillStyle = CARBON;
+  ctx.strokeStyle = ORO;
+  ctx.lineWidth = 2;
+  for (let i = 0; i < premios.length; i++) {
+    const a = -Math.PI / 2 + i * sector;
+    ctx.save();
+    ctx.translate(Math.cos(a) * radio, Math.sin(a) * radio);
+    ctx.rotate(a);
+    ctx.beginPath();
+    ctx.moveTo(-10, 0); ctx.lineTo(0, -10 / PHI); ctx.lineTo(10, 0); ctx.lineTo(0, 10 / PHI);
+    ctx.closePath();
     ctx.fill();
+    ctx.stroke();
+    ctx.restore();
   }
 }
 
-/** Centro decorativo: una rosa simple que no gira. */
+/** Centro geométrico que no gira: anillos en proporción áurea (r, r/φ, r/φ²). */
 function dibujarCentro() {
-  ctx.fillStyle = COLOR_ARO;
+  const r = 84;
+  ctx.fillStyle = CARBON;
   ctx.beginPath();
-  ctx.arc(0, 0, 74, 0, VUELTA);
+  ctx.arc(0, 0, r, 0, VUELTA);
   ctx.fill();
-  ctx.fillStyle = '#E5386F';
-  for (let k = 0; k < 5; k++) {
-    ctx.rotate(VUELTA / 5);
-    ctx.beginPath();
-    ctx.ellipse(0, -24, 20, 30, 0, 0, VUELTA);
-    ctx.fill();
-  }
-  ctx.fillStyle = '#FFC9D6';
+  ctx.strokeStyle = oroMetal(r);
+  ctx.lineWidth = 5;
+  ctx.stroke();
+
+  ctx.strokeStyle = ORO;
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  ctx.arc(0, 0, 16, 0, VUELTA);
+  ctx.arc(0, 0, r / PHI, 0, VUELTA);
+  ctx.stroke();
+
+  ctx.fillStyle = oroMetal(r / (PHI * PHI));
+  ctx.beginPath();
+  ctx.arc(0, 0, r / (PHI * PHI), 0, VUELTA);
   ctx.fill();
 }
 

@@ -1,9 +1,12 @@
 /* ==========================================================================
-   meta.css — Widget "Meta" (meta.html): barra de progreso inclinada
-   El color llega con la configuración y se aplica en la variable --color (js/widgets/meta.js).
+   meta.css — Widget "Meta" (meta.html): barra de progreso recta, de línea fina
+   Arriba la etiqueta (título en mayúsculas + conteo fino), abajo la barra con el
+   porcentaje. El color llega con la configuración en la variable --color
+   (js/widgets/meta.js); por defecto es el oro de la marca, y con él el relleno
+   toma el degradado de oro metálico.
    ========================================================================== */
 
-:root { --color: #3aa0d8; } /* hasta que llegue la configuración */
+:root { --color: #D4AF37; } /* hasta que llegue la configuración */
 
 /* ---------- Escena ---------- */
 .escena {
@@ -15,57 +18,81 @@
 }
 .meta {
   width: min(92vw, 1400px);
-  filter: drop-shadow(0 .6vmin 0 rgba(0, 0, 0, .35));
+  padding: 2.5vh 3vw 3vh;
+  border: var(--linea);
+  border-radius: var(--radio);
+  background: var(--placa);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- Etiqueta: "Meta de likes - 120 / 1.000 Likes" ---------- */
+/* Va antes de la barra en pantalla (order), aunque en el HTML esté después. */
+.etiqueta {
+  order: -1;
+  margin-bottom: 1.6vh;
+  color: var(--nitido);
+  font-weight: var(--peso-medio);
+  font-size: clamp(14px, 4.4vh, 50px);
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-titulo);
 }
 
 /* ---------- Barra ---------- */
-/* El fondo es el color de la meta oscurecido; el relleno avanza con el progreso. */
+/* Alto contenido: una franja de línea fina, no un bloque. */
 .barra {
   position: relative;
-  height: clamp(34px, 9vh, 110px);
+  height: clamp(28px, 10.5vh, 120px);
   overflow: hidden;
-  border: .45vmin solid var(--color);
-  background: color-mix(in srgb, var(--color) 45%, #10131a);
-  transform: skewX(-18deg);
+  border: var(--linea-oro);
+  border-color: var(--color);
+  border-radius: var(--radio);
+  background: color-mix(in srgb, var(--color) 8%, transparent);
 }
+/* Relleno metálico construido con el color de la meta (con el oro queda el degradado de la marca). */
 .relleno {
   position: absolute;
   inset: 0 auto 0 0;
   width: 0%;
-  background: var(--color);
+  background: linear-gradient(135deg,
+    var(--color) 0%,
+    color-mix(in srgb, var(--color) 55%, #FFF3A6) 50%,
+    color-mix(in srgb, var(--color) 72%, #3A2600) 100%);
   transition: width .6s cubic-bezier(.2, .9, .3, 1);
 }
-/* El texto se "desinclina" para que se lea derecho. */
+/* Divisiones en 38,2 % y 61,8 %: los dos puntos áureos de la barra. */
+.barra::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(var(--color), var(--color)) 38.2% 0 / 1px 100% no-repeat,
+    linear-gradient(var(--color), var(--color)) 61.8% 0 / 1px 100% no-repeat;
+  opacity: .35;
+  pointer-events: none;
+}
 .porcentaje {
   position: absolute;
   inset: 0;
+  z-index: 1;
   display: grid;
   place-items: center;
-  transform: skewX(18deg);
-  font-weight: 800;
-  font-size: clamp(18px, 5.5vh, 64px);
-  color: #fff;
-  text-shadow: 0 2px 0 rgba(0, 0, 0, .35);
+  font-weight: var(--peso-fuerte);
+  font-size: clamp(16px, 6.5vh, 74px);         /* alto de la barra / φ */
+  letter-spacing: var(--espaciado-titulo);
+  font-variant-numeric: tabular-nums;
+  color: var(--nitido);
+  /* Contorno fino para leerse igual sobre el relleno claro y sobre el fondo oscuro. */
+  -webkit-text-stroke: .05em var(--carbon);
+  paint-order: stroke fill;
 }
-
-/* ---------- Etiqueta: "Meta de likes - 120 / 1.000 Likes" ---------- */
-.etiqueta {
-  display: inline-block;
-  margin-left: 4%;
-  padding: .25em 1.2em .3em .8em;
-  background: color-mix(in srgb, var(--color) 70%, #10131a);
-  color: #fff;
-  font-weight: 800;
-  font-size: clamp(16px, 4.6vh, 54px);
-  transform: skewX(-18deg);
-}
-.etiqueta span { display: inline-block; transform: skewX(18deg); }
 
 /* ---------- Meta alcanzada ---------- */
-.meta.lograda .barra { animation: brillo 1.2s ease-in-out 3; }
-@keyframes brillo { 50% { filter: brightness(1.6); } }
+.meta.lograda { animation: brillo 1.2s ease-in-out 3; }
+@keyframes brillo { 50% { box-shadow: var(--brillo); border-color: var(--oro); } }
 
 @media (prefers-reduced-motion: reduce) {
   .relleno { transition: none; }
-  .meta.lograda .barra { animation: none; }
+  .meta.lograda { animation: none; }
 }

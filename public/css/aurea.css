@@ -1,0 +1,105 @@
+/* ==========================================================================
+   aurea.css — Sistema de diseño ÁUREA NETWORK (lo cargan el panel y todos los widgets)
+
+   Solo define tokens y utilidades; no da estilo a ninguna página por sí solo.
+   panel.css y widget.css construyen encima de estas variables.
+
+   Secciones:
+     1. Proporción áurea (φ) y escala de espacios
+     2. Color: oro, carbón, blanco y texto
+     3. Líneas y bordes
+     4. Tipografía
+     5. Utilidades (clases .au-…)
+   ========================================================================== */
+
+
+/* ---------- 1. Proporción áurea ---------- */
+/* Cada paso de la escala es el anterior × φ (1,618). Base: 10 px. */
+:root {
+  --phi: 1.618;
+  --phi-inv: .618;            /* 1 / φ */
+  --e-1: 4px;                 /* 10 / φ² */
+  --e-2: 6px;                 /* 10 / φ  */
+  --e-3: 10px;                /* base    */
+  --e-4: 16px;                /* 10 × φ  */
+  --e-5: 26px;                /* 10 × φ² */
+  --e-6: 42px;                /* 10 × φ³ */
+}
+
+
+/* ---------- 2. Color ---------- */
+:root {
+  /* Oro */
+  --oro: #D4AF37;
+  --oro-claro: #FFD700;
+  --oro-oscuro: #AA771C;
+  --oro-metal: linear-gradient(135deg, #D4AF37 0%, #FFD700 50%, #AA771C 100%);
+  --oro-suave: rgba(212, 175, 55, .12);   /* fondos de resalte */
+
+  /* Superficies */
+  --blanco: #FFFFFF;
+  --carbon: #0F0F12;                      /* fondo oscuro principal */
+  --carbon-2: #16161A;                    /* superficie (tarjetas, barras) */
+  --carbon-3: #1E1E23;                    /* campos */
+  --carbon-4: #27272D;                    /* campos al pasar el mouse */
+
+  /* Texto */
+  --pizarra: #1A1A1A;                     /* texto sobre fondo claro */
+  --nitido: #F5F3EE;                      /* texto sobre fondo oscuro */
+  --apagado: #9C9AA3;                     /* texto secundario sobre oscuro */
+
+  /* Estados (sobrios, para no competir con el oro) */
+  --ok: #4ADE80;
+  --mal: #F28C5B;
+}
+
+
+/* ---------- 3. Líneas y bordes ---------- */
+:root {
+  --linea: 1px solid rgba(212, 175, 55, .4);
+  --linea-tenue: 1px solid rgba(212, 175, 55, .16);
+  --linea-oro: 1px solid var(--oro);
+  --radio: 4px;
+  --radio-grande: 8px;
+  --brillo: 0 0 18px rgba(212, 175, 55, .35);   /* solo para alertas activas */
+}
+
+
+/* ---------- 4. Tipografía ---------- */
+/* La fuente se carga con <link> en cada HTML (Google Fonts: Montserrat). */
+:root {
+  --fuente: "Montserrat", "Inter", "Segoe UI", system-ui, sans-serif;
+  --peso-fino: 300;
+  --peso-medio: 500;
+  --peso-fuerte: 700;
+  --espaciado-titulo: .15em;
+  --espaciado-sub: .08em;
+}
+
+
+/* ---------- 5. Utilidades ---------- */
+/* Títulos: mayúsculas, espaciado amplio. */
+.au-titulo {
+  font-family: var(--fuente);
+  font-weight: var(--peso-fuerte);
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-titulo);
+}
+/* Subtítulos: finos y aireados. */
+.au-sub {
+  font-family: var(--fuente);
+  font-weight: var(--peso-fino);
+  letter-spacing: var(--espaciado-sub);
+}
+/* Texto con relleno de oro metálico. */
+.au-texto-oro {
+  background: var(--oro-metal);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* Contenedores en proporción áurea. */
+.au-phi       { aspect-ratio: 1.618 / 1; }   /* horizontal */
+.au-phi-alto  { aspect-ratio: 1 / 1.618; }   /* vertical */
+/* Borde fino dorado. */
+.au-borde     { border: var(--linea); border-radius: var(--radio); }

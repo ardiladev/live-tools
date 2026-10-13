@@ -2,18 +2,15 @@
    widget.css — Base común de todos los widgets que van en OBS / LIVE Studio
    (ruleta.html, meta.html, alertas.html). Cada widget añade su propio CSS
    en css/widgets/<nombre>.css.
+   Colores, escala φ y tipografía: css/aurea.css (sistema de diseño ÁUREA NETWORK).
    La fuente se carga con <link> en cada HTML (más rápido que @import).
    ========================================================================== */
 
-/* ---------- Paleta y tipografía ---------- */
+/* ---------- Placa ---------- */
+/* La superficie oscura de los widgets: carbón casi opaco para leerse sobre cualquier
+   video, con borde fino dorado. Sin sombras ni relieves. */
 :root {
-  --rosa: #E5386F;
-  --ciruela: #3B1446;
-  --rubor: #FFC9D6;
-  --vino: #8E2A5E;
-  --oro: #F7B731;
-  --crema: #FFF6F0;
-  --fuente: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --placa: rgba(15, 15, 18, .92);
 }
 
 /* ---------- Lienzo ---------- */
@@ -23,12 +20,13 @@ body {
   margin: 0;
   height: 100%;
   background: transparent;
+  color: var(--nitido);
   font-family: var(--fuente);
   overflow: hidden;
 }
 
 /* Solo en la vista previa del panel (?fondo=1): un gris para ver el widget. */
-body.vista-previa { background: #6b6b6b; }
+body.vista-previa { background: #3a3a40; }
 
 /* El atributo hidden siempre gana, aunque una clase ponga display. */
 [hidden] { display: none !important; }
@@ -42,10 +40,12 @@ body.vista-previa { background: #6b6b6b; }
   z-index: 50;
   max-width: calc(100vw - 24px);
   padding: .35em .8em;
-  border-radius: 999px;
-  font: 500 14px/1.3 var(--fuente);
-  color: var(--crema);
-  background: rgba(59, 20, 70, .85);
+  border: var(--linea);
+  border-radius: var(--radio);
+  font: 500 12px/1.3 var(--fuente);
+  letter-spacing: var(--espaciado-sub);
+  color: var(--nitido);
+  background: var(--placa);
 }
-.pildora-estado::before { content: "●"; margin-right: .4em; color: #FB8A5A; }
-.pildora-estado.ok::before { color: #3CCB91; }
+.pildora-estado::before { content: "●"; margin-right: .4em; color: var(--mal); }
+.pildora-estado.ok::before { color: var(--ok); }

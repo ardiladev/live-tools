@@ -1,6 +1,7 @@
 /* ==========================================================================
    alertas.css — Widget "Alertas de eventos" (alertas.html)
-   Una tarjeta redondeada con ícono, quién y qué hizo. Entra y sale animada.
+   Una placa rectangular en proporción áurea: ícono en un marco dorado, quién (título
+   en mayúsculas) y qué hizo (subtítulo fino). Entra y sale con un desvanecido.
    ========================================================================== */
 
 /* ---------- Escena ---------- */
@@ -12,22 +13,34 @@
   box-sizing: border-box;
 }
 
-/* ---------- Tarjeta de la alerta ---------- */
+/* ---------- Placa de la alerta ---------- */
 .alerta {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 3vmin;
+  gap: 3.7vmin;                                  /* 6vmin / φ */
   max-width: 92vw;
-  padding: 2.4vmin 4vmin 2.4vmin 2.4vmin;
-  border-radius: 999px;
-  background: var(--ciruela);
-  color: var(--crema);
-  box-shadow: 0 .8vmin 0 var(--rosa);
+  padding: 2.3vmin 6vmin 2.3vmin 2.3vmin;
+  border: var(--linea-oro);
+  border-radius: var(--radio);
+  background: var(--placa);
+  color: var(--nitido);
   opacity: 0;
-  transform: translateY(30%) scale(.9);
-  transition: opacity .35s ease, transform .45s cubic-bezier(.2, 1.5, .4, 1);
+  transform: translateY(12%);
+  transition: opacity .35s ease, transform .45s cubic-bezier(.2, .9, .3, 1), box-shadow .45s ease;
 }
-.alerta.visible { opacity: 1; transform: none; }
+.alerta.visible { opacity: 1; transform: none; box-shadow: var(--brillo); }
+
+/* Línea de oro metálico en la base: el único adorno. */
+.alerta::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  bottom: -1px;
+  height: max(2px, .4vmin);
+  background: var(--oro-metal);
+}
 
 /* ---------- Ícono (emoji o imagen del regalo) ---------- */
 .icono {
@@ -36,15 +49,29 @@
   place-items: center;
   width: clamp(48px, 13vmin, 150px);
   aspect-ratio: 1;
-  border-radius: 50%;
-  background: var(--rubor);
+  border: var(--linea);
+  border-radius: var(--radio);
+  background: var(--oro-suave);
   font-size: clamp(28px, 8vmin, 90px);
 }
 .icono img { width: 80%; height: 80%; object-fit: contain; }
 
 /* ---------- Textos ---------- */
-.quien { font-weight: 800; font-size: clamp(20px, 6.5vmin, 72px); line-height: 1.05; }
-.que   { font-weight: 500; font-size: clamp(16px, 4.5vmin, 50px); color: var(--rubor); }
+.quien {
+  font-weight: var(--peso-fuerte);
+  font-size: clamp(20px, 5.5vmin, 64px);
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: var(--espaciado-titulo);
+  color: var(--oro);
+}
+.que {
+  margin-top: .3em;
+  font-weight: var(--peso-fino);
+  font-size: clamp(14px, 3.4vmin, 40px);       /* 5.5vmin / φ */
+  letter-spacing: var(--espaciado-sub);
+  color: var(--nitido);
+}
 
 @media (prefers-reduced-motion: reduce) {
   .alerta { transform: none; transition: opacity .2s; }

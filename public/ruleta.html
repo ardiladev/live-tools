@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
   ruleta.html — Widget "Ruleta de regalos" para OBS / TikTok LIVE Studio (1080 × 1920).
-  Estilos: css/widget.css + css/widgets/ruleta.css · Lógica: js/widgets/ruleta.js
+  Estilos: css/aurea.css + css/widget.css + css/widgets/ruleta.css · Lógica: js/widgets/ruleta.js
   La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
   y la configuración llega en vivo desde Supabase (o, sin Supabase, va completa en el #c=).
 -->
@@ -13,7 +13,8 @@
 
   <!-- Estilos -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
   <link rel="stylesheet" href="css/widget.css">
   <link rel="stylesheet" href="css/widgets/ruleta.css">
 
@@ -27,9 +28,15 @@
 
     <!-- La rueda: el canvas la dibuja y el puntero marca el premio -->
     <div class="rueda">
-      <svg class="puntero" id="puntero" viewBox="0 0 78 100" aria-hidden="true">
-        <path d="M39 100 C10 62 0 40 0 26 A39 26 0 0 1 78 26 C78 40 68 62 39 100Z" fill="#F7B731" stroke="#3B1446" stroke-width="6"/>
-        <circle cx="39" cy="28" r="10" fill="#3B1446"/>
+      <!-- Puntero: chevrón blanco con filo de oro metálico (proporción 1 : φ) -->
+      <svg class="puntero" id="puntero" viewBox="0 0 100 162" aria-hidden="true">
+        <defs>
+          <linearGradient id="oroPuntero" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#D4AF37"/><stop offset=".5" stop-color="#FFD700"/><stop offset="1" stop-color="#AA771C"/>
+          </linearGradient>
+        </defs>
+        <path d="M4 4 H96 L50 158 Z" fill="#0F0F12" stroke="url(#oroPuntero)" stroke-width="6" stroke-linejoin="miter"/>
+        <path d="M22 18 H78 L50 112 Z" fill="#FFFFFF"/>
       </svg>
       <canvas id="lienzo" width="1000" height="1000" aria-label="Ruleta de premios"></canvas>
     </div>

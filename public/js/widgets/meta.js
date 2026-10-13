@@ -46,7 +46,7 @@ function aplicarConfig(cfg) {
   titulo = String(cfg.ti || 'Meta');
   alAlcanzar = cfg.al || 'nada';
   sonido = cfg.s !== 0;
-  const color = /^#[0-9a-f]{6}$/i.test(cfg.col) ? cfg.col : '#3aa0d8';
+  const color = /^#[0-9a-f]{6}$/i.test(cfg.col) ? cfg.col : '#D4AF37';
   document.documentElement.style.setProperty('--color', color);
 
   // Si la persona cambió la meta, manda la suya; si no, se respeta la que se duplicó en el LIVE.
