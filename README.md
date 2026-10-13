@@ -4,7 +4,7 @@ Herramientas para transmisiones de TikTok LIVE, al estilo de TikFinity: una **ru
 **metas** con barra de progreso, **alertas** animadas, una **carrera de regalos** entre integrantes con reloj
 por rondas, una **batalla de regalos** (tira y afloja entre dos equipos), un **jefe del LIVE** (reto cooperativo con
 barra de vida), un reloj de **subathon** al que el público le suma tiempo, una **bóveda dorada** que revela un premio
-secreto al llegar a una meta y herramientas para ver la **actividad** del LIVE
+secreto al llegar a una meta, un **trono** con el rey del LIVE (top supporter) y herramientas para ver la **actividad** del LIVE
 y armar un **catálogo con el ID de cada regalo**.
 
 Los widgets se pegan como **URL** en OBS o en TikTok LIVE Studio y funcionan solos: no hay que dejar
@@ -69,7 +69,7 @@ con **Supabase** para los cambios en vivo: no hay servidor propio, ni Node.js, n
    premios y regalo y prueba con el botón **Test**.
 4. Pulsa **Copy URL** y, en OBS, agrega una **Fuente de navegador** con esa URL
    (en TikTok LIVE Studio: fuente **Enlace**). Tamaños recomendados:
-   ruleta 1080 × 1920 · meta 1200 × 400 · alertas 1280 × 720 · carrera 1920 × 400 · batalla 1600 × 300 · jefe 1920 × 300 (arriba de la escena) · subathon 900 × 300 · bóveda 1200 × 400.
+   ruleta 1080 × 1920 · meta 1200 × 400 · alertas 1280 × 720 · carrera 1920 × 400 · batalla 1600 × 300 · jefe 1920 × 300 (arriba de la escena) · subathon 900 × 300 · bóveda 1200 × 400 · trono 700 × 320.
 5. Listo. Cuando la cuenta esté en vivo, el widget se conecta solo. Si el LIVE todavía no empieza
    o se corta, reintenta cada minuto.
 
@@ -95,6 +95,7 @@ desplegables** (menú) → **vistas** (contenido).
 | | | Jefe del LIVE | Reto cooperativo (boss raid): el chat le quita vida a un jefe con likes y regalos antes de que se acabe el tiempo. Nombre, vida total, tiempo límite, texto de victoria y daño por like y por moneda. Raid con **Iniciar / Pausar / Reiniciar** que llegan a OBS al instante. En 0 muestra «Reto desbloqueado» con brillo dorado; si se acaba el tiempo, «Tiempo agotado». |
 | | | Subathon | Reloj hacia atrás al que el público le suma tiempo: segundos por cada 100 likes y por cada moneda de regalo, con un **tope**. Tiempo inicial y tope en minutos. **Iniciar / Pausar / +5 min / Reiniciar** llegan a OBS al instante. Pulso dorado al sumarse tiempo y color de alerta con menos de 1 minuto. |
 | | | Bóveda dorada | Caja sorpresa: los regalos llenan una barra hacia una meta de monedas; el premio queda oculto hasta llegar. Entonces el candado se abre y aparece el **texto secreto** en letras de oro. Meta, texto secreto, título y pista. **Cerrar y reiniciar** y **Abrir ahora** llegan a OBS al instante. |
+| | | Trono | El rey del LIVE: muestra a quien más ha dado, en uno de dos modos: **combo más grande** (de una vez) o **más acumulado en la sesión**. Corona dorada, título («Áurea VIP»), nombre y monedas; transición al cambiar de rey y aviso «Fulano desafía el trono…». Monedas mínimas para reinar y **Reiniciar trono** en vivo. |
 | Actividad | En vivo | Eventos en vivo | Conecta el panel al LIVE: contadores (espectadores, likes, seguidores, compartidos, monedas, regalos, mensajes), lista de eventos con filtros y regalos de la sesión. |
 | | Regalos | Buscador de regalos | Catálogo permanente con el ID de cada regalo recibido. Nombres propios, búsqueda, “Copiar ID”, “Usar en ruleta” / “Usar en premium”, agregar a mano, conexión automática y seguimiento de regalos que cambian de código. |
 | Ajustes | Cuenta | Conexión con TikTok | Usuario de TikTok y API key de Euler Stream, compartidos por todos los widgets. |
@@ -109,7 +110,7 @@ Cada widget tiene una tarjeta con:
   (obsidiana o perla, opacidad, desenfoque), bordes (grosor, metálico o liso), resplandor, esquinas, colores
   (acento con degradado, texto, bordes, activo, insignias) y tipografía (fuente, espaciado, mayúsculas). La vista
   previa cambia al instante y, con cambios en vivo, OBS también. «Aplicar este estilo a todos los widgets» lo copia
-  en las ruletas, las metas, las alertas, la carrera, la batalla, el jefe, el subathon y la bóveda.
+  en las ruletas, las metas, las alertas, la carrera, la batalla, el jefe, el subathon, la bóveda y el trono.
 - **Vista previa**: el widget real en modo prueba; **nunca** se conecta al LIVE.
 
 ---
@@ -129,6 +130,7 @@ flowchart LR
   EU -->|eventos JSON| W6[jefe.html]
   EU -->|eventos JSON| W7[subathon.html]
   EU -->|eventos JSON| W8[boveda.html]
+  EU -->|eventos JSON| W9[trono.html]
   EU -->|eventos JSON| P[Panel index.html<br/>Actividad / Buscador]
   P -->|genera la URL fija #c=u,k,w| W1
   P -->|guardar_widget| SB[Supabase<br/>tabla widgets + Realtime]
@@ -140,6 +142,7 @@ flowchart LR
   SB -->|configuración y reloj al instante| W6
   SB -->|reloj y +5 min al instante| W7
   SB -->|cerrar / abrir al instante| W8
+  SB -->|modo y reinicio al instante| W9
   P -->|eventos de prueba postMessage| W1
   W1 --> OBS[OBS / LIVE Studio]
   W2 --> OBS
@@ -149,6 +152,7 @@ flowchart LR
   W6 --> OBS
   W7 --> OBS
   W8 --> OBS
+  W9 --> OBS
 ```
 
 - **El panel no es un servidor.** Es una página estática que genera URLs. GitHub Pages solo sirve
@@ -183,6 +187,7 @@ La configuración de cada widget (en Supabase o en la URL completa) usa estas cl
 | `jefe.html` | `ti` nombre del jefe · `hp` vida total · `t` reloj (como en la carrera) · `ro` ronda (al cambiar, vida llena) · `dl` vida por like · `dr` vida por moneda de regalo · `v` monedas de un regalo sin precio · `tv` texto de victoria · `sr` solo con el reloj en marcha · `s` sonido |
 | `subathon.html` | `ti` título · `t` reloj base (como en la carrera) · `ro` ronda (al cambiar, se borra lo sumado) · `ex` ms agregados con «+5 min» · `cap` tope en segundos · `sl` segundos por 100 likes · `sd` segundos por moneda · `v` monedas de un regalo sin precio · `s` sonido |
 | `boveda.html` | `ti` título · `pi` pista (se ve con la bóveda cerrada) · `sec` texto secreto · `o` meta en monedas · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, se cierra y vuelve a 0) · `ab` 1 = abrir ahora · `s` sonido |
+| `trono.html` | `ti` título · `m` modo (`combo`/`total`) · `min` monedas mínimas para reinar · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, trono libre) · `s` sonido |
 | `carrera.html` | `ti` título · `j` integrantes `[{i id, n nombre, c color, g id del regalo, gn nombre del regalo, v monedas por regalo, m meta, img imagen}]` · `t` reloj `{e listo/corre/pausa, d segundos, fin hora de término, r ms restantes}` · `ro` ronda (al cambiar, puntos a 0) · `sr` solo cuenta con el reloj en marcha · `s` sonido |
 
 Además, el panel agrega `_v` (hora de guardado) a lo que sube a Supabase: si llegara tarde una versión
@@ -229,6 +234,14 @@ si la URL tiene `w`, cada vez que llega una configuración nueva. Cada widget la
   `ab = 1` = abrir aunque no se llegue a la meta. El texto secreto **no se escribe en la página** hasta que se abre.
   Ojo: viaja en la configuración (Supabase y URL), así que quien tenga la URL del widget podría leerlo; no es un
   secreto criptográfico, solo está oculto en pantalla. El panel no ve el progreso.
+- **Trono:** cada persona tiene una «jugada» abierta que se cierra tras **3 s sin regalos suyos**; recién entonces se
+  compara con el rey. Así se cuenta el combo completo aunque el rastreador lo entregue en dos partes (lo que llevaba a
+  los 2 s y lo que faltaba al final). Modo `combo`: vale la jugada; modo `total`: lo acumulado por esa persona en la
+  sesión. Hay que **superar** al rey (empatar no basta) y llegar a `min`. Mientras una jugada abierta ya supera al
+  rey, se ve «Fulano desafía el trono…». Si dos jugadas se cierran casi juntas, hay un solo cambio de rey. Las personas
+  se distinguen por su nombre visible. Rey y totales en `live-tools:trono:<w>`; cambiar de modo deja el trono libre.
+  Las medidas del CSS usan `--u` = el menor entre 1 % del ancho y 2,2 % del alto, así la insignia cabe en cualquier
+  tamaño de fuente.
 
 El widget guarda una copia de la última configuración en su navegador (`localStorage`, clave
 `live-tools:widget:<w>`): si al abrir OBS Supabase no responde, arranca con esa copia.
@@ -360,7 +373,8 @@ live-tools/
 │   ├── batalla.html                widget batalla    │
 │   ├── jefe.html                   widget jefe       │
 │   ├── subathon.html               widget subathon   │
-│   ├── boveda.html                 widget bóveda     ┘
+│   ├── boveda.html                 widget bóveda     │
+│   ├── trono.html                  widget trono      ┘
 │   ├── css/
 │   │   ├── aurea.css               sistema de diseño ÁUREA NETWORK: oro/carbón, cristal (glassmorphism), escala φ, tipografía
 │   │   ├── panel.css               estilos del panel
@@ -373,7 +387,8 @@ live-tools/
 │   │       ├── batalla.css
 │   │       ├── jefe.css
 │   │       ├── subathon.css
-│   │       └── boveda.css
+│   │       ├── boveda.css
+│   │       └── trono.css
 │   └── js/
 │       ├── comun.js                URL ↔ config, eventos normalizados, rastreador de regalos,
 │       │                           conexión con Euler Stream, arranque de widgets, sonido
@@ -388,7 +403,8 @@ live-tools/
 │       │   ├── batalla.js          tira y afloja: puntos por equipo, barra y ventaja
 │       │   ├── jefe.js             boss raid: vida, daño por likes y regalos, victoria
 │       │   ├── subathon.js         reloj al que el público suma tiempo, con tope
-│       │   └── boveda.js           caja sorpresa: progreso, candado y texto secreto
+│       │   ├── boveda.js           caja sorpresa: progreso, candado y texto secreto
+│       │   └── trono.js            rey del LIVE: jugadas de 3 s, modos combo/total
 │       └── panel/
 │           ├── app.js
 │           ├── registro.js
@@ -406,6 +422,7 @@ live-tools/
 │               ├── jefe.js         jefe, daño y raid (iniciar/pausar/reiniciar)
 │               ├── subathon.js     tiempos, tasas y reloj (iniciar/pausar/+5 min/reiniciar)
 │               ├── boveda.js       meta, secreto y órdenes (cerrar y reiniciar / abrir ahora)
+│               ├── trono.js        modo, mínimo y "Reiniciar trono"
 │               ├── actividad.js
 │               ├── regalos.js
 │               └── conexion.js
@@ -584,5 +601,7 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
    previa para ver la victoria, e *Iniciar raid* / *Reiniciar* para el reloj y la vida. Para el **subathon**,
    inicia el reloj y usa las pruebas y *+5 min*: en la vista previa el tiempo sube sin recargarse. Para la
    **bóveda**, usa «Regalo de 1.000» o *Abrir ahora* para ver la apertura y *Cerrar y reiniciar* para volver a 0.
+   Para el **trono**, usa «Otro espectador: 250» y «…: 1.000» para ver el cambio de rey (tarda 3 s, la espera
+   del combo) y *Reiniciar trono* para dejarlo libre.
 5. **Publicado:** después del `git push`, espera la publicación (pestaña *Actions* del repositorio) y
    recarga el panel en `https://ardiladev.github.io/live-tools/`.

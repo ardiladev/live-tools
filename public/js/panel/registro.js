@@ -25,6 +25,7 @@ import batalla from './vistas/batalla.js';
 import jefe from './vistas/jefe.js';
 import subathon from './vistas/subathon.js';
 import boveda from './vistas/boveda.js';
+import trono from './vistas/trono.js';
 import actividad from './vistas/actividad.js';
 import buscadorRegalos from './vistas/regalos.js';
 import conexion from './vistas/conexion.js';
@@ -39,7 +40,7 @@ export const CATEGORIAS = [
       { id: 'ruletas', titulo: 'Ruletas', vistas: [ruletaNormal, ruletaPremium] },
       { id: 'metas', titulo: 'Metas', vistas: [metaLikes, metaSeguidores, metaCompartidos, metaMonedas] },
       { id: 'alertas', titulo: 'Alertas', vistas: [alertas] },
-      { id: 'juegos', titulo: 'Juegos', vistas: [carrera, batalla, jefe, subathon, boveda] },
+      { id: 'juegos', titulo: 'Juegos', vistas: [carrera, batalla, jefe, subathon, boveda, trono] },
     ],
   },
   {

@@ -1,0 +1,58 @@
+<!doctype html>
+<!--
+  trono.html — Widget "Trono" (rey del LIVE / top supporter) para OBS / TikTok LIVE Studio
+  (recomendado 700 × 320). Muestra a quien más ha dado: el combo más grande o lo más acumulado
+  en la sesión, según el modo. Cuando alguien lo supera, toma el trono con una transición.
+  Estilos: css/aurea.css + css/widget.css + css/widgets/trono.css · Lógica: js/widgets/trono.js
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración llega en vivo desde Supabase.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trono — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/trono.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/trono.js"></script>
+</head>
+<body>
+  <main class="escena">
+    <div class="trono cristal" id="trono" data-estado="libre">
+      <!-- Corona de trazo con el oro del estilo (colores en trono.css) -->
+      <svg class="corona" viewBox="0 0 64 40" aria-hidden="true">
+        <defs>
+          <linearGradient id="oro-corona" x1="0" y1="0" x2="1" y2="1">
+            <stop class="oro-1" offset="0"/>
+            <stop class="oro-2" offset=".5"/>
+            <stop class="oro-3" offset="1"/>
+          </linearGradient>
+        </defs>
+        <path class="contorno" d="M6 32 L4 10 L19 21 L32 4 L45 21 L60 10 L58 32 Z"/>
+        <path class="base" d="M7 36 H57"/>
+        <circle class="joya" cx="32" cy="4" r="2.6"/>
+        <circle class="joya" cx="4" cy="10" r="2.2"/>
+        <circle class="joya" cx="60" cy="10" r="2.2"/>
+      </svg>
+
+      <div class="titulo" id="titulo"></div>
+
+      <!-- El rey: nombre y monedas (sube y aparece al cambiar de rey) -->
+      <div class="rey" id="rey">
+        <div class="nombre" id="nombre"></div>
+        <div class="monedas"><span id="monedas">0</span> <span class="unidad" id="unidad">monedas</span></div>
+      </div>
+
+      <!-- "Destronó a Ana" o "Beto desafía el trono…" -->
+      <div class="linea" id="linea" role="status" aria-live="polite"></div>
+    </div>
+  </main>
+</body>
+</html>

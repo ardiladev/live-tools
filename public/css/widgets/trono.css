@@ -1,0 +1,143 @@
+/* ==========================================================================
+   trono.css — Widget "Trono" (trono.html), el rey del LIVE
+   Una insignia de cristal flotante y centrada: corona de trazo en oro metálico
+   (con los colores del estilo), el título en mayúsculas muy espaciadas, el
+   nombre del rey en grande y sus monedas debajo. Al cambiar de rey, el anterior
+   sube y se desvanece y el nuevo entra desde abajo. El estado va en
+   data-estado: libre | ocupado (js/widgets/trono.js).
+   Las medidas van en --u (el menor entre 1 % del ancho y 2,2 % del alto): la
+   insignia cabe entera en cualquier tamaño de fuente de OBS, ancha o alta.
+
+   Secciones: 1. Escena · 2. Corona · 3. Textos · 4. Estados · 5. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+:root { --u: min(1vw, 2.2vh); }
+.escena {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: calc(var(--u) * 3);
+  box-sizing: border-box;
+}
+.trono {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: min(calc(var(--u) * 88), 1100px);
+  padding: calc(var(--u) * 3.2) calc(var(--u) * 5) calc(var(--u) * 3);
+  box-sizing: border-box;
+  text-align: center;
+  overflow: hidden;
+}
+
+
+/* ---------- 2. Corona ---------- */
+/* Degradado con el oro del estilo (por defecto #D4AF37 → oro claro → oro oscuro). */
+.oro-1 { stop-color: var(--activo); }
+.oro-2 { stop-color: var(--borde-color); }
+.oro-3 { stop-color: color-mix(in srgb, var(--borde-color) 70%, #000); }
+
+.corona {
+  width: calc(var(--u) * 10);
+  overflow: visible;
+  filter: drop-shadow(0 0 calc(var(--u) * .8) color-mix(in srgb, var(--borde-color) 40%, transparent));
+  transition: opacity .6s ease, filter .6s ease;
+}
+.corona .contorno,
+.corona .base {
+  fill: none;
+  stroke: url(#oro-corona);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.corona .contorno { fill: color-mix(in srgb, var(--borde-color) 12%, transparent); }
+.corona .joya { fill: url(#oro-corona); }
+
+
+/* ---------- 3. Textos ---------- */
+.titulo {
+  margin-top: calc(var(--u) * 1.6);
+  color: var(--oro-texto);
+  font-weight: 600;
+  font-size: calc(var(--u) * 2.1);
+  letter-spacing: .45em;
+  text-transform: uppercase;
+  /* El espaciado deja un hueco a la derecha de la última letra: se compensa para centrar. */
+  margin-right: -.45em;
+}
+.titulo:empty { display: none; }
+.rey {
+  display: grid;
+  gap: calc(var(--u) * .6);
+  margin-top: calc(var(--u) * 1.4);
+  min-width: 0;
+  max-width: 100%;
+}
+.nombre {
+  overflow: hidden;
+  color: var(--texto-sec);
+  font-weight: 800;
+  font-size: calc(var(--u) * 6);
+  line-height: 1.1;
+  letter-spacing: .02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.monedas {
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 2.8);
+  font-variant-numeric: tabular-nums;
+}
+.unidad {
+  font-weight: 500;
+  font-size: calc(var(--u) * 1.9);
+  letter-spacing: var(--espaciado-widget);
+  text-transform: var(--mayus);
+  opacity: .8;
+}
+.linea {
+  min-height: 1.3em;
+  margin-top: calc(var(--u) * 1.4);
+  color: var(--texto-sec);
+  font-weight: 500;
+  font-size: calc(var(--u) * 1.9);
+  letter-spacing: .06em;
+  opacity: .7;
+  transition: color .4s ease, opacity .4s ease;
+}
+.linea.reto { color: var(--activo); opacity: 1; animation: latido 1.1s ease-in-out infinite; }
+
+
+/* ---------- 4. Estados ---------- */
+/* Trono libre: corona apagada y nombre más discreto. */
+.trono[data-estado="libre"] .corona { opacity: .45; filter: none; }
+.trono[data-estado="libre"] .nombre { color: var(--oro-texto); font-weight: 600; font-size: calc(var(--u) * 4); opacity: .8; }
+.trono[data-estado="libre"] .monedas { font-weight: 500; font-size: calc(var(--u) * 1.9); opacity: .75; }
+
+
+/* ---------- 5. Animaciones ---------- */
+/* Cambio de rey: el anterior sube y se desvanece; el nuevo entra desde abajo con la corona brillando. */
+.saliendo .rey { animation: salir .45s ease-in forwards; }
+.entrando .rey { animation: entrar .7s cubic-bezier(.2, .9, .3, 1); }
+.entrando .corona { animation: coronar 1.6s ease-out; }
+.entrando { animation: resplandor 1.6s ease-out; }
+/* El mismo rey sube su marca: brillo breve. */
+.brillo { animation: resplandor 1.2s ease-out; }
+
+@keyframes salir { to { opacity: 0; transform: translateY(calc(var(--u) * -2)); filter: blur(calc(var(--u) * .3)); } }
+@keyframes entrar { from { opacity: 0; transform: translateY(calc(var(--u) * 2.4)); filter: blur(calc(var(--u) * .3)); } }
+@keyframes coronar {
+  30% { filter: drop-shadow(0 0 calc(var(--u) * 2) var(--activo)); transform: translateY(calc(var(--u) * -.6)); }
+}
+@keyframes resplandor {
+  30% { box-shadow: var(--resplandor-activo), 0 0 calc(var(--u) * 4) color-mix(in srgb, var(--borde-color) 55%, transparent); }
+}
+@keyframes latido { 50% { opacity: .55; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .saliendo .rey, .entrando .rey, .entrando .corona, .entrando, .brillo, .linea.reto { animation: none; }
+}
