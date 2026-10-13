@@ -382,6 +382,10 @@ button.enlace { color: var(--enlace); }
 .color-opcional { display: flex; align-items: center; gap: 4px; }
 .color-opcional input[type="color"] { flex: 1; min-width: 0; }
 .integrante-fila.encabezado { margin-bottom: 4px; color: var(--suave); font-size: 12px; }
+/* Tragamonedas: una fila por texto del rodillo (texto · quitar). */
+.texto-fila { display: grid; grid-template-columns: minmax(0, 1fr) 34px; gap: 6px; margin-bottom: 6px; }
+.texto-fila button { padding: 0; }
+
 /* Repertorio: estado · nombre · meta · activar · hecha · subir · bajar · quitar. */
 .cancion-fila {
   display: grid;

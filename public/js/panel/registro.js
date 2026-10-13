@@ -29,6 +29,7 @@ import trono from './vistas/trono.js';
 import marcador from './vistas/marcador.js';
 import repertorio from './vistas/repertorio.js';
 import destacado from './vistas/destacado.js';
+import tragamonedas from './vistas/tragamonedas.js';
 import actividad from './vistas/actividad.js';
 import buscadorRegalos from './vistas/regalos.js';
 import conexion from './vistas/conexion.js';
@@ -43,7 +44,7 @@ export const CATEGORIAS = [
       { id: 'ruletas', titulo: 'Ruletas', vistas: [ruletaNormal, ruletaPremium] },
       { id: 'metas', titulo: 'Metas', vistas: [metaLikes, metaSeguidores, metaCompartidos, metaMonedas] },
       { id: 'alertas', titulo: 'Alertas', vistas: [alertas, destacado] },
-      { id: 'juegos', titulo: 'Juegos', vistas: [carrera, marcador, batalla, jefe, subathon, boveda, trono, repertorio] },
+      { id: 'juegos', titulo: 'Juegos', vistas: [carrera, marcador, batalla, jefe, subathon, boveda, trono, repertorio, tragamonedas] },
     ],
   },
   {

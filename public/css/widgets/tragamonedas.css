@@ -1,0 +1,171 @@
+/* ==========================================================================
+   tragamonedas.css — Widget "Tragamonedas" (tragamonedas.html)
+   Minimalista y arquitectónico: una placa de cristal horizontal con tres
+   ventanas verticales, separadas por filos de oro. Cada ventana muestra tres
+   celdas (la del centro es la que cuenta); una sombra interior arriba y abajo
+   hace que se lea como un cilindro, y dos líneas finas marcan la fila central.
+   Proporción áurea: cada ventana es 1 de ancho por 1/φ de alto (≈ 1,618 : 1).
+   Las medidas usan --u (el menor entre 1 % del ancho y 2,4 % del alto): la
+   máquina cabe entera en cualquier tamaño de fuente de OBS.
+
+   Secciones: 1. Escena · 2. Máquina y rodillos · 3. Ventana y celdas
+              4. Cilindro y fila central · 5. Estados y animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+:root {
+  --u: min(1vw, 2.4vh);
+  --celda: calc(var(--u) * 7.4);
+}
+
+.escena {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 1.4);
+  padding: calc(var(--u) * 2);
+  box-sizing: border-box;
+  transition: opacity .6s ease;
+}
+/* "Ocultar cuando no hay giros". */
+.oculta .escena { opacity: 0; }
+
+.aviso {
+  min-height: 1.3em;
+  color: var(--oro-texto);
+  font-weight: 600;
+  font-size: calc(var(--u) * 2);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  text-shadow: var(--sombra-texto);
+}
+.cola {
+  min-height: 1.2em;
+  color: var(--texto-sec);
+  font-weight: 500;
+  font-size: calc(var(--u) * 1.5);
+  letter-spacing: .1em;
+  text-shadow: var(--sombra-texto);
+  opacity: .8;
+}
+
+
+/* ---------- 2. Máquina y rodillos ---------- */
+.maquina {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(100%, calc(var(--u) * 96));
+  padding: calc(var(--u) * 1.6) calc(var(--u) * 1.2);
+  box-sizing: border-box;
+  transition: box-shadow .6s ease;
+}
+.rodillo {
+  position: relative;
+  display: grid;
+  gap: calc(var(--u) * 1);
+  padding: 0 calc(var(--u) * 1.6);
+  min-width: 0;
+}
+/* Filo de oro entre rodillos (a la izquierda del 2.º y del 3.º). */
+.rodillo + .rodillo::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: var(--borde-ancho, 1px);
+  background: linear-gradient(180deg, transparent, var(--borde-color) 20%, var(--activo) 50%, var(--borde-color) 80%, transparent);
+}
+.titulo-rodillo {
+  color: var(--oro-texto);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.3);
+  letter-spacing: .32em;
+  text-align: center;
+  text-transform: uppercase;
+  margin-right: -.32em; /* el espaciado deja un hueco tras la última letra */
+}
+.titulo-rodillo:empty { display: none; }
+
+
+/* ---------- 3. Ventana y celdas ---------- */
+.ventana {
+  position: relative;
+  height: calc(var(--celda) * 3);
+  overflow: hidden;
+  border-radius: var(--radio);
+  background: var(--cristal-claro);
+}
+.tira { will-change: transform; }
+/* El desplazamiento: frena suave al final (la duración la pone el widget en --duracion). */
+.tira.girando { transition: transform var(--duracion, 2s) cubic-bezier(.12, .62, .18, 1); }
+.celda {
+  display: grid;
+  place-items: center;
+  height: var(--celda);
+  padding: 0 calc(var(--u) * .8);
+  box-sizing: border-box;
+  overflow: hidden;
+  color: var(--texto-sec);
+  font-weight: 800;
+  font-size: calc(var(--u) * 2.3);
+  line-height: 1.1;
+  letter-spacing: .06em;
+  text-align: center;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+
+/* ---------- 4. Cilindro y fila central ---------- */
+/* Sombra interior arriba y abajo: el rodillo se lee como un cilindro. */
+.ventana::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(180deg,
+    rgba(0, 0, 0, .78) 0%,
+    rgba(0, 0, 0, .25) 30%,
+    transparent 42%,
+    transparent 58%,
+    rgba(0, 0, 0, .25) 70%,
+    rgba(0, 0, 0, .78) 100%);
+  pointer-events: none;
+}
+/* Fila central: dos líneas finas de oro, arriba y abajo de la celda que cuenta. */
+.ventana::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--celda);
+  height: var(--celda);
+  z-index: 3;
+  border-top: 1px solid color-mix(in srgb, var(--borde-color) 70%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--borde-color) 70%, transparent);
+  pointer-events: none;
+}
+
+
+/* ---------- 5. Estados y animaciones ---------- */
+/* Resultado: la fila central brilla y la placa se ilumina. */
+.resultado { box-shadow: var(--resplandor-activo), 0 0 calc(var(--u) * 3) color-mix(in srgb, var(--borde-color) 45%, transparent); }
+.resultado .celda:nth-child(2) {
+  color: var(--activo);
+  text-shadow: 0 0 calc(var(--u) * 1.2) color-mix(in srgb, var(--activo) 60%, transparent);
+}
+/* Freno: el rodillo da un pequeño rebote al detenerse. */
+.freno .tira { animation: rebote .35s ease-out; }
+
+@keyframes rebote {
+  40% { transform: translateY(calc(var(--u) * .6)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tira.girando { transition-duration: .4s; }
+  .freno .tira { animation: none; }
+}

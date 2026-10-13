@@ -1,0 +1,50 @@
+<!doctype html>
+<!--
+  tragamonedas.html — Widget "Tragamonedas" para OBS / TikTok LIVE Studio (recomendado 1200 × 500).
+  Como la ruleta, se activa con un regalo; en vez de una rueda tiene tres rodillos verticales
+  (Quién · Qué · Cómo) que giran y se detienen uno tras otro.
+  Estilos: css/aurea.css + css/widget.css + css/widgets/tragamonedas.css · Lógica: js/widgets/tragamonedas.js
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración llega en vivo desde Supabase.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tragamonedas — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/tragamonedas.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/tragamonedas.js"></script>
+</head>
+<body>
+  <main class="escena">
+    <!-- "Fulano envió una rosa" y los giros en espera -->
+    <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+
+    <div class="maquina cristal" id="maquina">
+      <!-- Tres rodillos: título arriba y ventana con la tira que se desplaza. Los separan filos de oro. -->
+      <div class="rodillo">
+        <div class="titulo-rodillo"></div>
+        <div class="ventana"><div class="tira"></div></div>
+      </div>
+      <div class="rodillo">
+        <div class="titulo-rodillo"></div>
+        <div class="ventana"><div class="tira"></div></div>
+      </div>
+      <div class="rodillo">
+        <div class="titulo-rodillo"></div>
+        <div class="ventana"><div class="tira"></div></div>
+      </div>
+    </div>
+
+    <div class="cola" id="cola"></div>
+  </main>
+</body>
+</html>
