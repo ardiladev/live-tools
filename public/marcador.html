@@ -1,0 +1,51 @@
+<!doctype html>
+<!--
+  marcador.html — Widget "Marcador" para OBS / TikTok LIVE Studio (recomendado 1920 × 400, arriba
+  de la escena). Un marcador sencillo: de 1 a 6 integrantes, cada uno con su regalo; cada regalo
+  le suma monedas a su puntaje. Sin barras ni metas. Arriba, aparte, el reloj de la ronda.
+  Estilos: css/aurea.css + css/widget.css + css/widgets/marcador.css · Lógica: js/widgets/marcador.js
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración (integrantes, reloj) llega en vivo desde Supabase.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marcador — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/marcador.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/marcador.js"></script>
+</head>
+<body>
+  <main class="escena">
+    <!-- Arriba: el reloj, en una píldora pequeña -->
+    <div class="reloj cristal" id="reloj">
+      <span class="titulo" id="titulo"></span>
+      <span class="tiempo" id="tiempo" role="timer">00:00</span>
+      <span class="estado-reloj" id="estado-reloj"></span>
+    </div>
+
+    <!-- Abajo: los integrantes en fila -->
+    <div class="fila" id="fila"></div>
+  </main>
+
+  <!-- Tarjeta de un integrante (la clona js/widgets/marcador.js) -->
+  <template id="plantilla-integrante">
+    <article class="integrante cristal filo-oro">
+      <div class="nombre"></div>
+      <div class="regalo">
+        <img alt="" hidden>
+        <span class="sin-imagen" aria-hidden="true">🎁</span>
+      </div>
+      <div class="puntos">0</div>
+    </article>
+  </template>
+</body>
+</html>

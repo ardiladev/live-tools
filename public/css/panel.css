@@ -377,9 +377,14 @@ button.enlace { color: var(--enlace); }
   margin-bottom: 6px;
 }
 .integrante-fila button { padding: 0; }
+/* Marcador: sin columna de meta; el color lleva una casilla para activarlo. */
+.integrante-fila.sin-meta { grid-template-columns: 64px minmax(0, 1.3fr) minmax(0, .9fr) minmax(0, 1.2fr) 82px 34px; }
+.color-opcional { display: flex; align-items: center; gap: 4px; }
+.color-opcional input[type="color"] { flex: 1; min-width: 0; }
 .integrante-fila.encabezado { margin-bottom: 4px; color: var(--suave); font-size: 12px; }
 @media (max-width: 760px) {
-  .integrante-fila { grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 34px; }
+  .integrante-fila,
+  .integrante-fila.sin-meta { grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) 34px; }
   .integrante-fila.encabezado { display: none; }
   .integrante-fila { padding-bottom: 6px; border-bottom: var(--linea-tenue); }
 }

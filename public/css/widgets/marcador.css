@@ -1,0 +1,150 @@
+/* ==========================================================================
+   marcador.css — Widget "Marcador" (marcador.html)
+   Dos secciones, una encima de la otra: arriba, el reloj en una píldora de
+   cristal pequeña y discreta; abajo, la fila de integrantes. Cada tarjeta es de
+   cristal con filo de oro fino y apila el nombre (mayúsculas espaciadas), el
+   ícono del regalo (pequeño) y el puntaje (grande, en oro). Sin barras ni metas.
+   El color propio de un integrante (opcional) llega en --color; sin él, el
+   acento del estilo. Las medidas usan --u (el menor entre 1 % del ancho y 4,5 %
+   del alto): el marcador cabe entero en cualquier tamaño de fuente de OBS.
+
+   Secciones: 1. Escena · 2. Reloj · 3. Tarjetas · 4. Estados · 5. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+:root { --u: min(1vw, 4.5vh); }
+
+.escena {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * 1.2) calc(var(--u) * 1.6);
+  box-sizing: border-box;
+}
+.fila {
+  display: flex;
+  justify-content: center;
+  gap: calc(var(--u) * 1.2);
+  width: 100%;
+}
+
+
+/* ---------- 2. Reloj ---------- */
+/* Píldora pequeña: más discreta que los puntajes. */
+.reloj {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * .8);
+  padding: calc(var(--u) * .45) calc(var(--u) * 1.6);
+  border-radius: 999px;
+}
+.titulo {
+  color: var(--oro-texto);
+  font-weight: 600;
+  font-size: calc(var(--u) * .8);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+}
+.titulo:empty { display: none; }
+.tiempo {
+  color: var(--texto-sec);
+  font-weight: 700;
+  font-size: calc(var(--u) * 1.5);
+  letter-spacing: .06em;
+  font-variant-numeric: tabular-nums;
+}
+.estado-reloj {
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: calc(var(--u) * .7);
+  letter-spacing: var(--espaciado-widget);
+  text-transform: uppercase;
+  opacity: .7;
+}
+.estado-reloj:empty { display: none; }
+
+
+/* ---------- 3. Tarjetas ---------- */
+.integrante {
+  --color: var(--acento, #D4AF37);
+  display: flex;
+  flex: 0 1 calc(var(--u) * 15);
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * .7);
+  min-width: 0;
+  padding: calc(var(--u) * 1.2) calc(var(--u) * 1) calc(var(--u) * 1.1);
+  box-sizing: border-box;
+  text-align: center;
+  transition: box-shadow .5s ease;
+}
+/* Acento de color (opcional) arriba de la tarjeta, muy fino. */
+.integrante::after {
+  content: "";
+  position: absolute;
+  inset: 0 25% auto;
+  height: 2px;
+  border-radius: 0 0 2px 2px;
+  background: var(--color);
+  box-shadow: 0 0 10px var(--color);
+  opacity: .85;
+}
+.nombre {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--oro-texto);
+  font-weight: 600;
+  font-size: calc(var(--u) * .95);
+  letter-spacing: .18em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  /* El espaciado deja un hueco a la derecha de la última letra: se compensa para centrar. */
+  margin-right: -.18em;
+}
+.regalo {
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 2.2);
+  height: calc(var(--u) * 2.2);
+}
+.regalo img { width: 100%; height: 100%; object-fit: contain; }
+.sin-imagen { font-size: calc(var(--u) * 1.5); line-height: 1; }
+.puntos {
+  /* Oro metálico con el color activo del estilo en el centro: más luminoso que el acento solo. */
+  background: linear-gradient(100deg, var(--borde-color) 0%, var(--activo) 50%, var(--borde-color) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;          /* la sombra de .cristal oscurecería las cifras de oro */
+  font-weight: 800;
+  font-size: calc(var(--u) * 2.8);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, .55));
+}
+
+
+/* ---------- 4. Estados ---------- */
+/* Quien va primero: brillo de su color. */
+.lider { box-shadow: var(--resplandor), 0 0 calc(var(--u) * 1.8) color-mix(in srgb, var(--color) 45%, transparent); }
+.reloj[data-estado="pausa"] .tiempo { animation: parpadeo 1.2s ease-in-out infinite; }
+.reloj[data-estado="fin"] .estado-reloj { color: var(--activo); opacity: 1; }
+.reloj.urgente .tiempo { color: var(--mal); }
+/* Al terminar: los que no van primero quedan en segundo plano. */
+.final .integrante:not(.lider) { opacity: .55; }
+
+
+/* ---------- 5. Animaciones ---------- */
+.golpe { animation: golpe .5s ease-out; }
+
+@keyframes golpe {
+  35% { transform: translateY(calc(var(--u) * -.3)); box-shadow: var(--resplandor-activo); }
+}
+@keyframes parpadeo { 50% { opacity: .4; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .golpe, .reloj[data-estado="pausa"] .tiempo { animation: none; }
+}
