@@ -1,0 +1,65 @@
+<!doctype html>
+<!--
+  boveda.html — Widget "Bóveda dorada" para OBS / TikTok LIVE Studio (recomendado 1200 × 400).
+  Una caja sorpresa: los regalos llenan una barra hacia una meta de monedas y, al llegar, el
+  candado se abre y aparece el texto secreto. El panel puede cerrarla de nuevo o abrirla a la fuerza.
+  Estilos: css/aurea.css + css/widget.css + css/widgets/boveda.css · Lógica: js/widgets/boveda.js
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración llega en vivo desde Supabase.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bóveda dorada — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/boveda.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/boveda.js"></script>
+</head>
+<body>
+  <main class="escena">
+    <div class="boveda cristal" id="boveda" data-estado="cerrada">
+      <!-- Candado: el arco sube al abrirse (los colores salen del estilo, en boveda.css) -->
+      <svg class="candado" viewBox="0 0 64 72" aria-hidden="true">
+        <defs>
+          <linearGradient id="oro-candado" x1="0" y1="0" x2="1" y2="1">
+            <stop class="oro-1" offset="0"/>
+            <stop class="oro-2" offset=".5"/>
+            <stop class="oro-3" offset="1"/>
+          </linearGradient>
+        </defs>
+        <path class="arco" d="M19 34V22a13 13 0 0 1 26 0v12"/>
+        <rect class="cuerpo" x="9" y="34" width="46" height="32" rx="5"/>
+        <circle class="ojo" cx="32" cy="47" r="4"/>
+        <path class="ojo-linea" d="M32 50v7"/>
+      </svg>
+
+      <div class="contenido">
+        <div class="titulo" id="titulo"></div>
+
+        <!-- Cerrada: la pista y el secreto tapado · Abierta: el texto secreto en grande -->
+        <div class="secreto">
+          <div class="pista" id="pista"></div>
+          <div class="tapado" aria-hidden="true">• • • • • • • •</div>
+          <div class="revelado" id="revelado" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="progreso">
+          <div class="barra filo-oro"><div class="relleno" id="relleno"></div></div>
+          <div class="cifras">
+            <span class="porcentaje" id="porcentaje">0%</span>
+            <span class="monedas" id="monedas"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
