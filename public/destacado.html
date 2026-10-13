@@ -1,0 +1,41 @@
+<!doctype html>
+<!--
+  destacado.html — Widget "Mensaje VIP destacado" para OBS / TikTok LIVE Studio (recomendado 900 × 300).
+  Cuando alguien envía un regalo de al menos cierto valor, se fija en pantalla su último mensaje
+  del chat durante unos segundos (o, si no ha escrito, un agradecimiento con su nombre).
+  Estilos: css/aurea.css + css/widget.css + css/widgets/destacado.css · Lógica: js/widgets/destacado.js
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración llega en vivo desde Supabase.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mensaje VIP destacado — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/destacado.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/destacado.js"></script>
+</head>
+<body>
+  <main class="escena">
+    <div class="destacado cristal" id="destacado" role="status" aria-live="polite">
+      <!-- Avatar: la inicial dentro de un anillo de oro que brilla -->
+      <div class="avatar"><span id="inicial"></span></div>
+      <div class="contenido">
+        <div class="etiqueta"><span id="etiqueta"></span><span class="monedas" id="monedas"></span></div>
+        <div class="nombre" id="nombre"></div>
+        <div class="mensaje" id="mensaje"></div>
+      </div>
+      <!-- Tiempo que le queda en pantalla -->
+      <div class="tiempo" id="tiempo"></div>
+    </div>
+  </main>
+</body>
+</html>

@@ -28,6 +28,7 @@ import boveda from './vistas/boveda.js';
 import trono from './vistas/trono.js';
 import marcador from './vistas/marcador.js';
 import repertorio from './vistas/repertorio.js';
+import destacado from './vistas/destacado.js';
 import actividad from './vistas/actividad.js';
 import buscadorRegalos from './vistas/regalos.js';
 import conexion from './vistas/conexion.js';
@@ -41,7 +42,7 @@ export const CATEGORIAS = [
     grupos: [
       { id: 'ruletas', titulo: 'Ruletas', vistas: [ruletaNormal, ruletaPremium] },
       { id: 'metas', titulo: 'Metas', vistas: [metaLikes, metaSeguidores, metaCompartidos, metaMonedas] },
-      { id: 'alertas', titulo: 'Alertas', vistas: [alertas] },
+      { id: 'alertas', titulo: 'Alertas', vistas: [alertas, destacado] },
       { id: 'juegos', titulo: 'Juegos', vistas: [carrera, marcador, batalla, jefe, subathon, boveda, trono, repertorio] },
     ],
   },

@@ -1,0 +1,159 @@
+/* ==========================================================================
+   destacado.css — Widget "Mensaje VIP destacado" (destacado.html)
+   Una tarjeta flotante de cristal con un tinte de oro más fuerte y un degradado
+   que se mueve muy despacio. A la izquierda, el avatar (la inicial dentro de un
+   anillo de oro que brilla); a la derecha, la etiqueta "VIP · 500 monedas", el
+   nombre en oro y el mensaje en blanco nítido. Debajo, una línea fina que se
+   vacía con el tiempo que le queda. Entra desde abajo y sale desvaneciéndose.
+   Los colores salen del estilo (--borde-color, --activo…): con el estilo por
+   defecto, el tinte es el oro #D4AF37. Las medidas usan --u (el menor entre 1 %
+   del ancho y 3 % del alto): la tarjeta cabe en cualquier tamaño de fuente.
+
+   Secciones: 1. Escena · 2. Tarjeta · 3. Avatar · 4. Textos · 5. Tiempo
+              6. Entrada y salida
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+:root { --u: min(1vw, 3vh); }
+
+.escena {
+  height: 100%;
+  display: grid;
+  place-items: end center;
+  padding: calc(var(--u) * 3);
+  box-sizing: border-box;
+}
+
+
+/* ---------- 2. Tarjeta ---------- */
+.destacado {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: calc(var(--u) * 2.6);
+  width: min(100%, calc(var(--u) * 90));
+  padding: calc(var(--u) * 2.4) calc(var(--u) * 3.2) calc(var(--u) * 2.8);
+  box-sizing: border-box;
+  overflow: hidden;
+  /* Cristal con tinte de oro: degradado diagonal que se desplaza muy despacio. */
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb, var(--borde-color) 22%, transparent) 0%,
+      color-mix(in srgb, var(--borde-color) 6%, transparent) 45%,
+      color-mix(in srgb, var(--borde-color) 18%, transparent) 100%),
+    var(--cristal-oscuro);
+  background-size: 220% 220%, auto;
+  box-shadow: var(--resplandor-activo), 0 calc(var(--u) * 1) calc(var(--u) * 4) rgba(0, 0, 0, .35);
+  animation: tinte 9s ease-in-out infinite alternate;
+  /* Oculta hasta que llega un VIP. */
+  opacity: 0;
+  transform: translateY(calc(var(--u) * 6));
+  visibility: hidden;
+}
+
+
+/* ---------- 3. Avatar ---------- */
+.avatar {
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 9);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--activo) 45%, transparent), transparent 65%),
+    var(--cristal-oscuro);
+  box-shadow:
+    0 0 0 calc(var(--u) * .25) var(--borde-color),
+    0 0 calc(var(--u) * 2.2) color-mix(in srgb, var(--borde-color) 70%, transparent);
+  animation: halo 2.4s ease-in-out infinite;
+}
+.avatar span {
+  color: var(--activo);
+  font-weight: 800;
+  font-size: calc(var(--u) * 4.2);
+  text-shadow: 0 0 calc(var(--u) * 1) color-mix(in srgb, var(--activo) 60%, transparent);
+}
+
+
+/* ---------- 4. Textos ---------- */
+.contenido { display: grid; gap: calc(var(--u) * .7); min-width: 0; }
+.etiqueta {
+  display: flex;
+  gap: calc(var(--u) * 1.2);
+  align-items: baseline;
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 1.4);
+  letter-spacing: .3em;
+  text-transform: uppercase;
+}
+.etiqueta .monedas { font-weight: 500; letter-spacing: .12em; opacity: .8; }
+.nombre {
+  overflow: hidden;
+  background: linear-gradient(100deg, var(--borde-color), var(--activo) 50%, var(--borde-color));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  font-weight: 800;
+  font-size: calc(var(--u) * 3.6);
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mensaje {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  color: #FFFFFF;
+  font-weight: 500;
+  font-size: calc(var(--u) * 2.3);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+/* Sin mensaje del chat: el agradecimiento, en cursiva y un poco más tenue. */
+.sin-mensaje .mensaje { font-style: italic; opacity: .85; }
+
+
+/* ---------- 5. Tiempo que le queda ---------- */
+.tiempo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--borde-color), var(--activo));
+  transform-origin: left;
+  transform: scaleX(0);
+}
+.tiempo.corriendo { animation: vaciar var(--duracion, 30s) linear forwards; }
+
+
+/* ---------- 6. Entrada y salida ---------- */
+.destacado.visible {
+  visibility: visible;
+  animation: entrar .8s cubic-bezier(.2, .9, .3, 1.15) forwards, tinte 9s ease-in-out .8s infinite alternate;
+}
+.destacado.saliendo { animation: salir .7s ease-in forwards; }
+
+@keyframes entrar {
+  from { opacity: 0; transform: translateY(calc(var(--u) * 6)); filter: blur(calc(var(--u) * .4)); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@keyframes salir {
+  from { opacity: 1; transform: none; visibility: visible; }
+  to { opacity: 0; transform: translateY(calc(var(--u) * -1.5)); filter: blur(calc(var(--u) * .3)); visibility: visible; }
+}
+@keyframes tinte { from { background-position: 0% 0%, 0 0; } to { background-position: 100% 100%, 0 0; } }
+@keyframes halo {
+  50% { box-shadow: 0 0 0 calc(var(--u) * .25) var(--borde-color), 0 0 calc(var(--u) * 3.6) color-mix(in srgb, var(--activo) 80%, transparent); }
+}
+@keyframes vaciar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .destacado.visible { animation: none; opacity: 1; transform: none; }
+  .destacado.saliendo { animation: none; opacity: 0; }
+  .avatar, .destacado { animation: none; }
+}
