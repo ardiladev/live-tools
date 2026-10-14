@@ -6,7 +6,7 @@
 // generadas con la misma función: agregar otra es agregar una entrada en TIPOS y su id en
 // almacen.RULETAS. Lo que se guarda aquí llega al widget por su URL o, con cambios en vivo,
 // por Supabase (ver js/widgets/ruleta.js para las claves).
-// Secciones: 1. Tipos de ruleta · 2. Fábrica de vistas (configuración · tarjeta · premios · regalo)
+// Secciones: 1. Tipos de ruleta · 2. Fábrica de vistas (configuración · tarjeta · premios · regalo con su miniatura)
 //            3. Vistas exportadas
 // =============================================================================
 
@@ -91,6 +91,7 @@ function crearVista(tipo) {
         p: premiosValidos().map((p) => [String(p.texto).trim().slice(0, MAX_TEXTO_PREMIO), Math.max(0, Number(p.peso) || 0)]),
         oc: cfg.ocultar ? 1 : 0,
         so: cfg.sonido ? 1 : 0,
+        img: almacen.regalos()[String(cfg.giftId).trim()]?.imagen || '', // la imagen sale del Buscador de regalos
       };
     },
     validar: () => {
@@ -181,6 +182,45 @@ function crearVista(tipo) {
 
       pintarPremios();
 
+      // ---------- Regalo que la activa ----------
+      // Miniatura, nombre y precio del regalo según el Buscador de regalos; se repinta al
+      // escribir o elegir otro ID.
+      const miniatura = el('img', { class: 'icono-regalo grande', alt: '' });
+      const sinMiniatura = el('span', { class: 'sin-miniatura', 'aria-hidden': 'true' }, '🎁');
+      const nombreElegido = el('b');
+      const detalleElegido = el('span', { class: 'nota sin-margen' });
+      const datalist = el('datalist', { id: `regalos-${id}` });
+
+      function pintarRegaloElegido() {
+        const giftId = String(cfg.giftId).trim();
+        const r = almacen.regalos()[giftId];
+        if (r?.imagen) miniatura.src = r.imagen;
+        else miniatura.removeAttribute('src');
+        miniatura.hidden = !r?.imagen;
+        sinMiniatura.hidden = Boolean(r?.imagen);
+        if (r) {
+          nombreElegido.textContent = almacen.nombreRegalo(r) || 'Sin nombre';
+          detalleElegido.textContent = `ID ${giftId}${r.diamantes ? ` · ${r.diamantes} moneda${r.diamantes === 1 ? '' : 's'}` : ''}`;
+        } else {
+          nombreElegido.textContent = giftId ? `Regalo ${giftId}` : 'Sin regalo';
+          detalleElegido.textContent = 'No está en el Buscador de regalos: la miniatura aparece cuando el regalo llegue una vez a tu LIVE.';
+        }
+      }
+
+      const regalos = Object.values(almacen.regalos()).sort((a, b) => (b.veces || 0) - (a.veces || 0));
+      datalist.replaceChildren(...regalos.map((r) => el('option', {
+        value: r.giftId,
+        label: `${almacen.nombreRegalo(r) || 'Sin nombre'}${r.diamantes ? ` · ${r.diamantes} monedas` : ''}`,
+      })));
+
+      const campoGiftId = campo('ID del regalo:', {
+        valor: cfg.giftId, inputMode: 'numeric',
+        alCambiar: (v) => { cfg.giftId = v.trim(); cambio(); pintarRegaloElegido(); },
+      });
+      campoGiftId.querySelector('input').setAttribute('list', datalist.id); // `list` es de solo lectura como propiedad
+
+      pintarRegaloElegido();
+
       // ---------- Estructura ----------
       return [
         widget.elemento,
@@ -192,8 +232,12 @@ function crearVista(tipo) {
           nota('El peso define qué tan seguido sale cada premio: un peso de 2 sale el doble que uno de 1.')),
 
         tarjeta('Regalo que activa la ruleta', {},
+          el('div', { class: 'regalo-elegido' },
+            miniatura, sinMiniatura,
+            el('div', {}, nombreElegido, detalleElegido)),
+          datalist,
           el('div', { class: 'campos' },
-            campo('ID del regalo:', { valor: cfg.giftId, inputMode: 'numeric', alCambiar: (v) => { cfg.giftId = v.trim(); cambio(); } }),
+            campoGiftId,
             campo('Texto en pantalla:', { valor: cfg.regalo, maxLength: 30, alCambiar: (v) => { cfg.regalo = v; cambio(); } }),
             campo('Giros por regalo:', { tipo: 'number', valor: cfg.gpr, min: 1, max: 10, alCambiar: (v) => { cfg.gpr = v; cambio(); } }),
             campo('Máx. por combo:', { tipo: 'number', valor: cfg.max, min: 1, max: 100, alCambiar: (v) => { cfg.max = v; cambio(); } })),

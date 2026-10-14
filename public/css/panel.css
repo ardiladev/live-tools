@@ -358,6 +358,11 @@ button.enlace { color: var(--enlace); }
 .premio button { padding: 0; }
 .encabezado-premios { margin-bottom: 4px; color: var(--suave); }
 .probabilidad { margin: 0 0 8px; color: var(--suave); font-size: 12px; }
+/* Regalo que activa la ruleta: miniatura, nombre y precio (del Buscador de regalos) */
+.regalo-elegido { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 10px 12px; border: var(--linea-tenue); border-left: var(--linea-oro); border-radius: var(--radio); background: var(--campo); }
+.regalo-elegido .icono-regalo.grande { width: 48px; height: 48px; flex: none; object-fit: contain; }
+.regalo-elegido .sin-miniatura { width: 48px; flex: none; font-size: 32px; line-height: 48px; text-align: center; }
+.regalo-elegido b { display: block; }
 
 
 /* ---------- 9b. Carrera de regalos (vista de la carrera) ---------- */
