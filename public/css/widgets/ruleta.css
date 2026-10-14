@@ -1,6 +1,6 @@
 /* ==========================================================================
    ruleta.css — Widget "Ruleta de regalos" (ruleta.html)
-   Estructura: aviso (quién envió) → rueda (canvas + puntero) → resultado → cola
+   Estructura: aviso (quién envió; en reposo, con qué regalo se gira) → rueda (canvas + puntero) → resultado → cola
    El aviso, el resultado y la cola son placas de cristal (.cristal, widget.css).
    La rueda: un disco de cristal esmerilado (aquí) y encima los sectores
    traslúcidos que dibuja js/widgets/ruleta.js.
@@ -14,12 +14,13 @@
   align-items: center;
   justify-content: center;
   gap: 3vmin;
-  transition: opacity .4s ease, transform .4s ease;
 }
-/* Con la opción "Ocultar la ruleta cuando no hay giros" (oc = 1 o ?ocultar=1) la escena se esconde en reposo. */
-.escena.oculta { opacity: 0; transform: scale(.96); }
+.escena > * { transition: opacity .4s ease, transform .4s ease; }
+/* Con la opción "Ocultar la ruleta cuando no hay giros" (oc = 1 o ?ocultar=1) la escena se esconde en
+   reposo, menos el letrero "Envía … para girar" (si está encendido): así el público sabe cómo activarla. */
+.escena.oculta > :not(.indicando) { opacity: 0; transform: scale(.96); }
 
-/* ---------- Aviso: "Fulano envió una rosa" ---------- */
+/* ---------- Aviso: "Fulano envió una rosa" · en reposo, letrero "Envía una rosa para girar" ---------- */
 .aviso {
   min-height: 1.2em;
   max-width: 90vw;

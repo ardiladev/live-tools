@@ -36,6 +36,7 @@ const TIPOS = {
       gpr: 1,                  // giros por regalo
       max: 20,                 // tope de giros por combo
       ocultar: true,
+      indicar: true,           // letrero en pantalla: "Envía una rosa para girar"
       sonido: true,
       premios: [
         { texto: 'Baile sencillo', peso: 2 },
@@ -55,6 +56,7 @@ const TIPOS = {
       gpr: 1,
       max: 10,
       ocultar: true,
+      indicar: true,
       sonido: true,
       premios: [
         { texto: 'Reto que elijas', peso: 2 },
@@ -91,6 +93,7 @@ function crearVista(tipo) {
         p: premiosValidos().map((p) => [String(p.texto).trim().slice(0, MAX_TEXTO_PREMIO), Math.max(0, Number(p.peso) || 0)]),
         oc: cfg.ocultar ? 1 : 0,
         so: cfg.sonido ? 1 : 0,
+        in: cfg.indicar ? 1 : 0,
         img: almacen.regalos()[String(cfg.giftId).trim()]?.imagen || '', // la imagen sale del Buscador de regalos
       };
     },
@@ -125,6 +128,7 @@ function crearVista(tipo) {
         archivo: 'ruleta.html',
         senal,
         personalizar: [
+          casilla('Mostrar a los espectadores con qué regalo se gira', { marcada: cfg.indicar, alCambiar: (v) => { cfg.indicar = v; cambio(); } }),
           casilla('Ocultar la ruleta cuando no hay giros', { marcada: cfg.ocultar, alCambiar: (v) => { cfg.ocultar = v; cambio(); } }),
           casilla('Sonido de clic', { marcada: cfg.sonido, alCambiar: (v) => { cfg.sonido = v; cambio(); } }),
           ...editorEstilo(id, () => widget.actualizar()),

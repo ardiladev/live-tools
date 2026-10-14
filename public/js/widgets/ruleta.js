@@ -5,6 +5,7 @@
 //   u, k = usuario y clave · g = id del regalo · r = texto en pantalla
 //   gpr = giros por regalo · max = tope por combo · p = premios [[texto, peso], …]
 //   oc = ocultar cuando no hay giros (1/0) · so = sonido de clic (1/0)
+//   in = letrero "Envía … para girar" mientras no hay giros (1/0; sigue a la vista aunque la ruleta se oculte)
 //   img = miniatura del regalo (del Buscador de regalos; si falta, se usa la que mande TikTok)
 //   est = estilo visual (js/tema.js; lo aplica comun.js y aquí se usa para el canvas)
 //
@@ -62,6 +63,7 @@ const ajustes = {
   maxGiros: 20,
   ocultar: params.get('ocultar') === '1',
   sonido: params.get('sonido') !== '0',
+  indicar: true,
 };
 
 let premios = [];          // [{ texto, peso }]
@@ -366,6 +368,24 @@ function actualizarCola() {
 
 const miniatura = Object.assign(new Image(), { className: 'miniatura', alt: '' });
 
+/** La miniatura del regalo: la del panel o, si no la tenía, la que mandó TikTok. */
+const imagenRegalo = () => ajustes.imagen || (imagenAprendida.giftId === ajustes.giftId ? imagenAprendida.imagen : '');
+
+/** En reposo el aviso se vuelve letrero: con qué regalo se gira (o nada, si está apagado). */
+function mostrarIndicacion() {
+  const imagen = imagenRegalo();
+  aviso.classList.toggle('indicando', ajustes.indicar);
+  if (!ajustes.indicar) {
+    aviso.classList.remove('visible');
+    return;
+  }
+  const texto = `Envía ${ajustes.textoRegalo} para girar`;
+  // Si ya dice lo mismo, no se repite la animación de entrada (llegan configuraciones en vivo).
+  const igual = aviso.classList.contains('visible') && aviso.textContent === texto
+    && (aviso.querySelector('img')?.getAttribute('src') || '') === imagen;
+  if (!igual) mostrarAviso(texto, imagen);
+}
+
 function mostrarAviso(texto, imagen) {
   if (imagen) {
     if (miniatura.getAttribute('src') !== imagen) miniatura.src = imagen;
@@ -387,6 +407,7 @@ async function procesar() {
   while (pendientes.length) {
     const giro = pendientes.shift();
     actualizarCola();
+    aviso.classList.remove('indicando');
     mostrarAviso(`${giro.usuario} envió ${giro.regalo || 'una rosa 🌹'}`, giro.imagen);
     resultado.classList.remove('visible');
 
@@ -398,7 +419,7 @@ async function procesar() {
   }
 
   girando = false;
-  aviso.classList.remove('visible');
+  mostrarIndicacion();
   resultado.classList.remove('visible');
   if (premiosNuevos) {
     premios = premiosNuevos;
@@ -451,6 +472,7 @@ function aplicarConfig(cfg) {
   });
   if (cfg.oc !== undefined) ajustes.ocultar = Boolean(cfg.oc);
   if (cfg.so !== undefined) ajustes.sonido = Boolean(cfg.so);
+  if (cfg.in !== undefined) ajustes.indicar = Boolean(cfg.in);
 
   if (girando) {
     premiosNuevos = nuevos;
@@ -458,6 +480,7 @@ function aplicarConfig(cfg) {
     premios = nuevos;
     dibujar();
     escena.classList.toggle('oculta', ajustes.ocultar);
+    mostrarIndicacion();
   }
 }
 
@@ -467,7 +490,7 @@ function alEvento(evento) {
   const giros = Math.min(evento.cantidad * ajustes.girosPorRegalo, ajustes.maxGiros);
   // Si el panel no tenía la miniatura del regalo y TikTok la manda, se usa desde ya.
   if (evento.imagen && !ajustes.imagen) imagenAprendida = { giftId: ajustes.giftId, imagen: evento.imagen };
-  const imagen = ajustes.imagen || (imagenAprendida.giftId === ajustes.giftId ? imagenAprendida.imagen : '');
+  const imagen = imagenRegalo();
   for (let i = 0; i < giros; i++) {
     const indice = elegirPremio();
     encolar({ usuario: evento.usuario, indice, premio: premios[indice].texto, regalo: ajustes.textoRegalo, imagen });
