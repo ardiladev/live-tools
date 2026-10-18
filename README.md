@@ -56,7 +56,7 @@ con **Supabase** para los cambios en vivo: no hay servidor propio, ni Node.js, n
 | ¿Dónde se configura? | En el panel (`index.html`, publicado en GitHub Pages). |
 | ¿Quién se conecta a TikTok? | Cada widget, desde el navegador, vía Euler Stream. |
 | ¿Cómo se cambia la configuración? | Se ajusta en el panel y el widget en OBS cambia solo. La URL no cambia. |
-| ¿Cuándo hay que volver a copiar la URL? | Solo si cambias el usuario de TikTok o la API key de Euler (van dentro de la URL). |
+| ¿Cuándo hay que volver a copiar la URL? | Solo si cambias la API key de Euler (va dentro de la URL). Si cambias el usuario de TikTok, los widgets se pasan solos a la cuenta nueva. |
 
 ---
 
@@ -77,7 +77,8 @@ con **Supabase** para los cambios en vivo: no hay servidor propio, ni Node.js, n
 
 > Después de copiar la URL, **todo lo que cambies en el panel llega solo al widget**. Debajo de la URL
 > verás el estado: “☁ Cambios en vivo: el widget en OBS ya tiene esta configuración”.
-> Solo hay que volver a copiarla si cambias el usuario de TikTok o la API key.
+> Eso incluye el usuario de TikTok: si lo cambias, los widgets en OBS se conectan solos a la cuenta nueva.
+> Solo hay que volver a copiarla si cambias la API key.
 
 ---
 
@@ -188,7 +189,7 @@ Hay dos formas de URL, y el widget entiende las dos:
 
 | Forma | Qué lleva `#c=` | De dónde sale la configuración |
 |---|---|---|
-| **Con cambios en vivo** (la que genera el panel) | `u` usuario · `k` API key · `w` identificador del widget | De Supabase, al abrir el widget y cada vez que cambia |
+| **Con cambios en vivo** (la que genera el panel) | `u` usuario · `k` API key · `w` identificador del widget | De Supabase, al abrir el widget y cada vez que cambia. Incluye `u`, que gana sobre el de la URL |
 | **Completa** (sin Supabase, o URLs viejas) | `u` · `k` · y toda la configuración (tabla de abajo) | De la propia URL; cambiarla = copiar otra URL |
 
 La configuración de cada widget (en Supabase o en la URL completa) usa estas claves cortas:
@@ -580,7 +581,9 @@ sequenceDiagram
   listar la tabla**, solo usar las dos funciones (`security definer`).
 - El **secreto** lo crea el panel la primera vez y se queda en su navegador. Quien vea la URL de un widget
   puede leer su configuración (premios, colores), pero **no cambiarla**.
-- La **API key de Euler nunca se guarda en Supabase.**
+- La **API key de Euler nunca se guarda en Supabase.** El usuario de TikTok sí (`u`, es público): así un cambio de cuenta
+  en *Ajustes → Conexión* llega solo a los widgets. El widget espera 2 s sin cambios y se reconecta con la cuenta nueva;
+  la conexión del panel (Actividad) hace lo mismo a los 1,5 s y pone en 0 los contadores de la sesión.
 
 Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard → **SQL Editor** → pegar
 `supabase/esquema.sql` → **Run**, y poner la URL y la clave pública del proyecto nuevo en `public/js/nube.js`.

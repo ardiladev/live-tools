@@ -11,7 +11,9 @@
 // Sin Supabase configurado, solo arma la configuración (con el estilo) para la URL.
 //
 // El estilo visual de cada widget (almacen.temaDe, ver js/tema.js) se agrega aquí a su
-// configuración con la clave `est`.
+// configuración con la clave `est`. Al subir se agrega también `u`, el usuario de TikTok de
+// Ajustes → Conexión: si se cambia, los widgets en OBS se pasan solos a la cuenta nueva (la
+// API key nunca se sube: sigue solo en la URL).
 //
 // Secciones: 1. Registro · 2. Subida · 3. Estado · 4. Arranque
 // =============================================================================
@@ -62,7 +64,7 @@ async function subirAhora(id) {
     cambiarEstado(id, 'error', `Los cambios no llegan a OBS hasta corregir esto: ${problema}`);
     return false;
   }
-  const config = w.config();
+  const config = { ...w.config(), u: almacen.conexion().usuario.replace(/^@/, '').trim() };
   const texto = JSON.stringify(config);
   if (texto === w.ultima) {
     if (w.estado.tipo !== 'ok') cambiarEstado(id, 'ok', 'Cambios en vivo: el widget en OBS ya tiene esta configuración.');

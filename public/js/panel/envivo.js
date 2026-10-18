@@ -28,6 +28,7 @@ export const estado = {
 };
 
 let conexion = null;              // lo que devuelve conectarTikTok, o null si no hay conexión activa
+let conectadoCon = null;          // { usuario, clave } con los que se abrió `conexion`
 
 
 // -----------------------------------------------------------------------------
@@ -96,6 +97,7 @@ export function conectar() {
     return;
   }
   desconectar();
+  conectadoCon = { usuario, clave };
   conexion = conectarTikTok({
     usuario,
     clave,
@@ -114,6 +116,30 @@ export function desconectar() {
   conexion = null;
   anterior.cerrar();
 }
+
+// La conexión toma el usuario y la clave al abrirse. Si se cambian en Ajustes → Conexión con
+// la conexión activa (o reintentando porque la cuenta no está en vivo), se reconecta con los
+// nuevos. Se espera un momento para no abrir una conexión por cada tecla: el plan gratuito
+// de Euler limita las solicitudes. Con otra cuenta, los contadores de la sesión vuelven a 0.
+const ESPERA_CAMBIO_CUENTA_MS = 1500;
+let esperaCuenta = null;
+
+const cuentaCambio = () => {
+  const { usuario, clave } = almacen.conexion();
+  return conexion !== null && (usuario !== conectadoCon.usuario || clave !== conectadoCon.clave);
+};
+
+almacen.alCambiar(() => {
+  if (!cuentaCambio()) return;
+  clearTimeout(esperaCuenta);
+  esperaCuenta = setTimeout(() => {
+    if (!cuentaCambio()) return;
+    const otraCuenta = almacen.conexion().usuario !== conectadoCon.usuario;
+    desconectar();
+    if (otraCuenta) reiniciarContadores();
+    conectar();
+  }, ESPERA_CAMBIO_CUENTA_MS);
+});
 
 
 // -----------------------------------------------------------------------------

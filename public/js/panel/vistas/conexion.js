@@ -10,7 +10,7 @@ import { el, tarjeta, campo, nota } from '../ui.js';
 export default {
   id: 'conexion',
   titulo: 'Conexión con TikTok',
-  descripcion: 'La cuenta y la clave que usan todos los widgets. Si las cambias, vuelve a copiar las URLs de tus widgets.',
+  descripcion: 'La cuenta y la clave que usan todos los widgets. Si cambias el usuario, los widgets en OBS se pasan solos a la cuenta nueva; si cambias la clave, vuelve a copiar sus URLs.',
 
   render() {
     const con = almacen.conexion();

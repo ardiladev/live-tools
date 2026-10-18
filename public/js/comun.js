@@ -330,16 +330,18 @@ function guardarCache(id, config) {
  * Primero se usa la última configuración recibida (guardada en este navegador, por si
  * Supabase no responde) y después la que llega de Supabase, cada vez que el panel cambia algo.
  * `_v` es la hora en que el panel la guardó: una versión más vieja que llegue tarde se ignora.
+ * El usuario que manda el panel (`u`) gana sobre el de la URL: así un cambio de cuenta en
+ * Ajustes → Conexión llega a OBS sin volver a copiar la URL. La clave sale siempre de la URL.
  */
 function sincronizarConfig(cfgUrl, alConfig) {
-  const propios = { u: cfgUrl.u, k: cfgUrl.k, w: cfgUrl.w };
+  const propios = { k: cfgUrl.k, w: cfgUrl.w };
   let version = 0;
 
   function aplicar(config) {
     const v = Number(config?._v) || 0;
     if (v && v <= version) return;
     version = v;
-    alConfig({ ...config, ...propios });
+    alConfig({ ...config, u: config?.u || cfgUrl.u, ...propios });
   }
 
   aplicar(leerCache(cfgUrl.w) || {});
@@ -355,6 +357,8 @@ function sincronizarConfig(cfgUrl, alConfig) {
     .catch((error) => console.warn(`[widget] Sin cambios en vivo: ${error.message}`));
 }
 
+const ESPERA_CAMBIO_USUARIO_MS = 2000; // tras un cambio de usuario desde el panel, antes de reconectar
+
 /**
  * Arranque común de un widget:
  *   ?fondo=1  → fondo gris y píldora de estado (vista previa del panel)
@@ -367,9 +371,11 @@ function sincronizarConfig(cfgUrl, alConfig) {
  * al widget, así cada widget solo se ocupa de su contenido.
  */
 export function iniciarWidget({ cfg, alEvento, alConfig: alConfigWidget = () => {} }) {
+  let usuarioPedido = cfg?.u || '';
   const alConfig = (config) => {
     aplicarTema(config.est);
     alConfigWidget(config);
+    if (config.u) seguirUsuario(config.u);
   };
 
   const params = new URLSearchParams(location.search);
@@ -403,13 +409,36 @@ export function iniciarWidget({ cfg, alEvento, alConfig: alConfigWidget = () => 
     if (ev.data?.tipo === 'config' && ev.data.config) alConfig(ev.data.config);
   });
 
+  // Conexión al LIVE. Con cambios en vivo, el panel puede cambiar el usuario (`u`): se espera
+  // un momento, para no abrir una conexión por cada tecla, y se reconecta con el nuevo.
+  let puedeConectar = false;
+  let conexion = null;
+  let usuarioConectado = '';
+  let esperaUsuario = null;
+
+  function conectarCon(usuario) {
+    usuario = String(usuario || '').replace(/^@/, '').trim();
+    if (!usuario || usuario === usuarioConectado) return;
+    usuarioConectado = usuario;
+    conexion?.cerrar();
+    conexion = conectarTikTok({ usuario, clave: cfg.k, alEvento, alEstado });
+  }
+
+  function seguirUsuario(usuario) {
+    usuarioPedido = usuario;
+    if (!puedeConectar) return;
+    clearTimeout(esperaUsuario);
+    esperaUsuario = setTimeout(() => conectarCon(usuarioPedido), ESPERA_CAMBIO_USUARIO_MS);
+  }
+
   if (cfg?.error) return alEstado(false, 'La configuración de la URL está dañada. Cópiala de nuevo desde el panel.');
   if (cfg?.w) sincronizarConfig(cfg, alConfig);
   else alConfig(cfg || {});
   if (params.get('prueba') === '1') return alEstado(true, 'Modo prueba: sin conexión a TikTok');
-  if (!cfg?.u || !cfg?.k) return alEstado(false, 'Falta el usuario de TikTok o la clave de Euler Stream en la URL.');
+  if (!usuarioPedido || !cfg?.k) return alEstado(false, 'Falta el usuario de TikTok o la clave de Euler Stream en la URL.');
 
-  conectarTikTok({ usuario: cfg.u, clave: cfg.k, alEvento, alEstado });
+  puedeConectar = true;
+  conectarCon(usuarioPedido);
 }
 
 
