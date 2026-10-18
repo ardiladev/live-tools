@@ -37,6 +37,7 @@ con **Supabase** para los cambios en vivo: no hay servidor propio, ni Node.js, n
 9. [Límites y cosas que conviene saber](#9-límites-y-cosas-que-conviene-saber)
 10. [Seguridad y privacidad](#10-seguridad-y-privacidad)
 11. [Cómo probar los cambios](#11-cómo-probar-los-cambios)
+12. [Solución de problemas](#12-solución-de-problemas)
 
 ---
 
@@ -355,6 +356,11 @@ le mandan **eventos normalizados** por `postMessage`, y el widget los procesa ig
 responde con su estado (por ejemplo, “Modo prueba”), que el panel muestra junto al punto verde o naranja.
 Los mensajes solo se aceptan si vienen del mismo origen.
 
+> **Ojo: la vista previa es más permisiva que el LIVE.** En modo prueba, el subathon, la carrera, el marcador y el
+> jefe cuentan los eventos aunque el reloj esté detenido, y la vista previa nunca se conecta a TikTok. Que una prueba
+> funcione confirma la lógica del widget, pero no la conexión de la fuente en OBS / LIVE Studio (cuenta, clave,
+> versión cargada). Para eso, ver la [sección 12](#12-solución-de-problemas).
+
 ### 4.8 El panel por dentro
 
 | Archivo | Responsabilidad |
@@ -542,6 +548,9 @@ Ejemplo: un widget **“Último seguidor”**.
   `ardiladev.github.io` es el mismo.
 - La publicación tarda uno o dos minutos. GitHub puede servir la versión anterior hasta unos 10 minutos
   por caché: en OBS, usa **“Actualizar la caché de la página actual”** en las propiedades de la fuente.
+- **Una fuente abierta sigue con el código viejo** hasta que se recarga, aunque ya se haya publicado el nuevo: una
+  fuente que lleva horas abierta en OBS o en TikTok LIVE Studio no se entera sola de una corrección. En OBS, actualiza
+  la caché de la fuente; en LIVE Studio, edita la fuente de enlace y vuelve a pegar la URL (o bórrala y créala de nuevo).
 
 ---
 
@@ -674,3 +683,28 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
    chat» y «2. Regalo VIP» (aparece a los ~2,5 s). **Tragamonedas**: «Probar giro» o *Probar en OBS*.
 5. **Publicado:** después del `git push`, espera la publicación (pestaña *Actions* del repositorio) y
    recarga el panel en `https://ardiladev.github.io/live-tools/`.
+
+---
+
+## 12. Solución de problemas
+
+**Primer paso para cualquier widget que no reacciona en el LIVE:** agrega `?fondo=1` justo antes del `#` de su URL
+en OBS / LIVE Studio (`…/subathon.html?fondo=1#c=…`). Aparece una píldora abajo a la izquierda con el estado de la
+conexión: «Conectado al LIVE de @cuenta», «@cuenta no está en vivo…», «Demasiadas conexiones…» o «La clave… no es
+válida». Quítalo al terminar (con `fondo=1` el fondo deja de ser transparente).
+
+| Síntoma | Causa probable | Solución |
+|---|---|---|
+| El reloj de un juego corre (Iniciar / Pausar funcionan) pero los regalos y likes no suman | La fuente está conectada a **otra cuenta**: su URL se copió con el usuario anterior y la fuente sigue abierta con código de antes del 2026-10-17 | Copia de nuevo la URL (**Copy URL**) y reemplázala en la fuente. El reloj llega por Supabase y los eventos por Euler: por eso uno funciona y el otro no |
+| El subathon no suma y bajo el reloj dice «Listo para empezar» o «Terminó» | El público solo suma con el reloj en marcha o en pausa (en la vista previa suma siempre) | Pulsa **Iniciar**; si llegó a 0, **+5 min** lo revive |
+| Pulso Iniciar y el widget no cambia | La URL se copió desde el panel de **otro navegador** (cada navegador tiene sus identificadores) | Copia la URL desde el panel que usas y reemplázala en la fuente |
+| Un widget cuenta los likes y otro no, en el mismo LIVE | Las dos fuentes no están conectadas igual (cuenta, clave o versión) | Revisa las dos con `?fondo=1` y vuelve a copiar la URL de la que falla |
+| La meta de likes va por detrás del contador de TikTok | La meta cuenta desde que se abrió la fuente (o la fuente tiene código de antes de la corrección de likes) | Abre o recarga la fuente al empezar el LIVE |
+| Cambié de cuenta en Ajustes y todo sigue con la anterior | Panel o fuentes con código viejo | Recarga el panel y las fuentes; desde entonces el usuario llega solo a los widgets (la clave no: si la cambias, copia de nuevo las URLs) |
+| «Demasiadas conexiones» o deja de conectar al final del día | Límites del plan gratuito de Euler (2.500 solicitudes al día): cada fuente abierta reintenta cada minuto mientras no estás en vivo | Cierra o desactiva las fuentes que no usas |
+| Publiqué un cambio y no se ve | Caché de GitHub Pages o fuente abierta desde antes | Ver la [sección 7](#7-publicación-en-github-pages) |
+
+**Ver qué cuenta usa cada fuente de TikTok LIVE Studio** sin abrirlas: los registros de LIVE Studio
+(`%APPDATA%\TikTok LIVE Studio\logs\LS-main.<fecha>*.log`) guardan la URL de cada fuente. En `#c=` va un JSON en
+base64 url-safe con `u` (cuenta), `k` (API key) y `w` (identificador). Al revisarlos, **no compartas ni muestres `k`**.
+
