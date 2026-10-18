@@ -292,7 +292,7 @@ Euler Stream entrega los mensajes de TikTok (`WebcastGiftMessage`, `WebcastLikeM
 
 ```js
 { tipo: 'regalo', usuario, giftId, nombre, cantidad, diamantes, imagen }
-{ tipo: 'like', usuario, cantidad, total }
+{ tipo: 'like', usuario, cantidad, total, propios }
 { tipo: 'follow', usuario }
 { tipo: 'share', usuario }
 { tipo: 'chat', usuario, texto }
@@ -304,6 +304,14 @@ Si algún día cambia la fuente de datos, solo hay que tocar `normalizar` y `cre
 > **TikTok no siempre manda los detalles del regalo** (`giftDetails`). Cuando los manda, `nombre` llega
 > en inglés (“Rose”); cuando no, `nombre` llega vacío y `diamantes` en 0. **El `giftId` sí llega siempre**,
 > y por eso todo se identifica por ID.
+
+> **TikTok tampoco entrega todos los mensajes de likes**: cuando llegan muchos, manda solo una parte, y sumar
+> `likeCount` se quedaba corto (una meta de 5.000 se llenaba con 13.000 likes en TikTok). Cada mensaje trae
+> `totalLikeCount`, el contador que se ve en TikTok, así que `crearContadorLikes` (en `js/comun.js`) pone en
+> `cantidad` lo que subió ese total desde el mensaje anterior. Así se cuentan también los likes que no llegaron
+> y los de un corte de conexión. El primer mensaje solo cuenta su `likeCount` (el total incluye los likes de
+> antes de abrir el widget); tras reconectar, un total menor = LIVE nuevo. `propios` es lo que dio esa persona
+> (lo muestra la lista de Actividad). Metas, jefe, subathon y el contador del panel usan `cantidad`.
 
 ### 4.5 Regalos en combo y regalos sueltos
 

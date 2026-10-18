@@ -9,7 +9,7 @@
 //
 // Secciones:
 //   1. Configuración en la URL       codificar · decodificar · leerConfig
-//   2. Eventos normalizados          normalizar · crearRastreadorRegalos
+//   2. Eventos normalizados          normalizar · crearRastreadorRegalos · crearContadorLikes
 //   3. Conexión con TikTok           conectarTikTok
 //   4. Arranque de widgets           iniciarWidget · avisarPadre · configuración en vivo (Supabase)
 //   5. Utilidades                    sonar · esperar
@@ -59,7 +59,7 @@ export function leerConfig() {
 // solo conocen esta forma: si mañana cambia la fuente de datos, solo cambia este archivo.
 //
 //   { tipo: 'regalo', usuario, giftId, nombre, cantidad, diamantes, imagen }
-//   { tipo: 'like', usuario, cantidad, total }
+//   { tipo: 'like', usuario, cantidad, total, propios }   (cantidad: ver crearContadorLikes)
 //   { tipo: 'follow', usuario }
 //   { tipo: 'share', usuario }
 //   { tipo: 'chat', usuario, texto }
@@ -82,6 +82,7 @@ export function normalizar({ type, data }) {
         usuario: nombreDe(data.user),
         cantidad: Number(data.likeCount) || 1,
         total: Number(data.totalLikeCount) || 0,
+        propios: Number(data.likeCount) || 1, // los que dio esta persona (para mostrarlos)
       };
     case 'WebcastSocialMessage': {
       // Seguir y compartir llegan en el mismo tipo de mensaje; los distingue esta clave
@@ -162,6 +163,42 @@ export function crearRastreadorRegalos(emitir) {
   };
 }
 
+// ---------- Likes: manda el total de TikTok ----------
+// TikTok no entrega todos los mensajes de likes: cuando llegan muchos, manda solo una parte.
+// Sumar `likeCount` se queda corto y el desfase crece con el LIVE (una meta de 5.000 se
+// llenaba con 13.000 likes en TikTok). Cada mensaje trae también `totalLikeCount`, el contador
+// que se ve en TikTok. Por eso la `cantidad` de un like es lo que subió ese total desde el
+// mensaje anterior: incluye los likes que no llegaron y los de un corte de conexión.
+//   - Primer mensaje: el total incluye likes de antes de abrir el widget; se cuenta solo `likeCount`.
+//   - Tras reconectar, un total menor que el último = LIVE nuevo: se vuelve a empezar.
+//   - Un total viejo (mensajes desordenados) da cantidad 0: sus likes ya estaban en el total.
+
+/** Devuelve `{ ajustar(eventoLike), reconectado() }`, con la memoria del último total. */
+export function crearContadorLikes() {
+  let ultimo = 0;            // último totalLikeCount visto
+  let recienConectado = true;
+
+  return {
+    reconectado() {
+      recienConectado = true;
+    },
+    ajustar(evento) {
+      const { total } = evento;
+      if (!total) return evento; // sin total, se usa likeCount tal cual
+      let cantidad;
+      if (!ultimo || (recienConectado && total < ultimo)) {
+        cantidad = evento.cantidad;
+        ultimo = total;
+      } else {
+        cantidad = Math.max(0, total - ultimo);
+        ultimo = Math.max(ultimo, total);
+      }
+      recienConectado = false;
+      return { ...evento, cantidad };
+    },
+  };
+}
+
 
 // -----------------------------------------------------------------------------
 // 3. Conexión con TikTok vía Euler Stream
@@ -200,6 +237,7 @@ export function conectarTikTok({ usuario, clave, alEvento, alEstado }) {
   let cerrado = false;
   let espera = ESPERA_INICIAL_MS;
   const alRegalo = crearRastreadorRegalos(alEvento);
+  const likes = crearContadorLikes(); // vive entre reconexiones: recupera los likes del corte
 
   function procesarMensaje(m) {
     // Euler confirma que ya está conectado a la sala con cualquiera de estos dos.
@@ -213,11 +251,12 @@ export function conectarTikTok({ usuario, clave, alEvento, alEstado }) {
       return;
     }
     const evento = normalizar(m);
-    if (evento) alEvento(evento);
+    if (evento) alEvento(evento.tipo === 'like' ? likes.ajustar(evento) : evento);
   }
 
   function conectar() {
     alEstado(false, `Conectando con @${usuario}…`);
+    likes.reconectado();
     ws = new WebSocket(`${URL_EULER}?${new URLSearchParams({ uniqueId: usuario, apiKey: clave })}`);
 
     ws.onmessage = (ev) => {

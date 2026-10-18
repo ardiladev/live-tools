@@ -22,7 +22,7 @@ const ETIQUETAS = {
   regalo: { icono: '🎁', nombre: 'Regalos', texto: (e) => `envió ${e.cantidad}× ${nombreRegalo(e) || 'regalo'} (id ${e.giftId})` },
   follow: { icono: '💖', nombre: 'Seguidores', texto: () => 'te empezó a seguir' },
   share: { icono: '📣', nombre: 'Compartidos', texto: () => 'compartió el LIVE' },
-  like: { icono: '👍', nombre: 'Likes', texto: (e) => `dio ${e.cantidad} likes` },
+  like: { icono: '👍', nombre: 'Likes', texto: (e) => `dio ${e.propios ?? e.cantidad} likes` }, // cantidad sigue el total de TikTok (comun.js)
   chat: { icono: '💬', nombre: 'Chat', texto: (e) => e.texto }, // texto del chat: siempre como texto, nunca HTML
 };
 
