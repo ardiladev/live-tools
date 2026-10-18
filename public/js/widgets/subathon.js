@@ -169,20 +169,22 @@ function formatoCorto(ms) {
 }
 
 let flotante = null; // el "+1:30" que se está mostrando
-let flotanteMs = 0;
+let flotanteMs = 0;  // lo que lleva ese "+", o lo que se va juntando hasta llegar a 1 s
 
 /** "+1:30" que sube desde el reloj y el pulso dorado de la píldora. */
 function mostrarSuma(ms) {
-  // Si todavía se ve el "+" anterior, se acumula en él (varios regalos seguidos no se enciman).
-  if (flotante?.isConnected) {
-    flotanteMs += ms;
-  } else {
-    flotanteMs = ms;
-    flotante = document.createElement('span');
-    flotante.className = 'suma';
-    flotante.addEventListener('animationend', (ev) => ev.target.remove());
-  }
+  // Las sumas se acumulan mientras se ve el "+" anterior (varios regalos seguidos no se enciman)
+  // y también mientras lo juntado no llega a 1 s: cada like suma una fracción de segundo, y sin
+  // juntarlas los likes nunca mostraban su "+" aunque el tiempo sí subía.
+  const visible = flotante?.isConnected;
+  if (!visible && flotanteMs >= MIN_SUMA_VISIBLE_MS) flotanteMs = 0; // el "+" anterior ya terminó
+  flotanteMs += ms;
   if (flotanteMs >= MIN_SUMA_VISIBLE_MS) {
+    if (!visible) {
+      flotante = document.createElement('span');
+      flotante.className = 'suma';
+      flotante.addEventListener('animationend', (ev) => ev.target.remove());
+    }
     flotante.textContent = `+${formatoCorto(flotanteMs)}`;
     flotante.remove();
     void flotante.offsetWidth;
