@@ -91,7 +91,7 @@ las URLs de OBS y lo guardado siguen igual.
 
 | Categoría | Grupo | Vista | Qué hace |
 |---|---|---|---|
-| Juegos | Sorteos | Ruleta de regalos | Gira y sortea un premio cada vez que llega el regalo configurado. Premios con peso (probabilidad), giros por regalo, tope por combo, ocultar en reposo y sonido. |
+| Juegos | Sorteos | Ruleta de regalos | Gira y sortea un premio cada vez que llega el regalo configurado. Premios con peso (probabilidad), giros por regalo, tope por combo, ocultar en reposo y sonido. Muestra la **miniatura del regalo** que la activa (del Buscador de regalos) y, en reposo, un **letrero** «Envía … para girar» que sigue a la vista aunque la ruleta se oculte. |
 |  |  | Ruleta premium | Una segunda ruleta independiente (mismo `ruleta.html`, otra URL y otra fuente en OBS) para un regalo más caro y premios más grandes. Tiene su propio regalo, premios, opciones y estilo. |
 |  |  | Tragamonedas | Como la ruleta, pero con **tres rodillos** (por ejemplo Quién · Qué · Cómo): con el regalo configurado giran y frenan uno tras otro. Textos de cada rodillo, tope por combo, ocultar en reposo y **Probar en OBS**. |
 |  | Competencias | Carrera de regalos | Franja horizontal con 1 a 6 integrantes: cada uno tiene su regalo, color y meta; cada regalo suma monedas (precio × cantidad) a su barra. Reloj por rondas en el centro que se **inicia, pausa y reinicia desde el panel** y llega a OBS al instante. Al terminar, muestra quién ganó. |
@@ -222,6 +222,10 @@ si la URL tiene `w`, cada vez que llega una configuración nueva. Cada widget la
 
 - **Ruleta:** si está girando, los premios nuevos esperan a que se vacíe la cola, para que el premio
   anunciado sea el mismo sobre el que se detuvo la rueda. El resto (regalo, giros, sonido…) cambia al instante.
+  Sin giros en cola, el aviso se vuelve **letrero** («Envía una rosa 🌹 para girar», con `in`): con `oc` la ruleta
+  se desvanece, pero el letrero queda visible. Si llega la misma configuración, el letrero no repite su animación.
+  La **miniatura** (`img`) sale del Buscador de regalos; si el panel no la tiene, el widget usa la que manda TikTok
+  con el primer regalo que llegue.
 - **Meta:** conserva el conteo. Si cambias la meta, manda la tuya; si no, se respeta la que se duplicó
   durante el LIVE. Solo vuelve a 0 si cambia el tipo de meta.
 - **Alertas:** cambian al instante; las alertas que ya estaban en fila se muestran igual.
@@ -437,7 +441,7 @@ live-tools/
 │       │                           conexión con Euler Stream, arranque de widgets, sonido
 │       ├── nube.js                 Supabase: proyecto, leer/guardar configuración, Realtime
 │       ├── tema.js                 estilo de los widgets: presets, variables CSS, colores de la ruleta
-│       ├── reloj.js                reloj por rondas (hora de término): carrera, marcador, jefe y sus vistas
+│       ├── reloj.js                reloj por rondas (hora de término): carrera, marcador, jefe y sus vistas (el subathon solo usa formatoReloj)
 │       ├── widgets/
 │       │   ├── ruleta.js           dibujo, giro, cola y sorteo de premios
 │       │   ├── meta.js
@@ -601,8 +605,9 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
 - **El catálogo de regalos vive en un solo navegador** y solo anota mientras el panel está abierto y conectado.
   Puedes poner el panel en OBS como **dock de navegador** para que esté abierto siempre que transmites.
   Ese dock tendrá su propia lista, separada de la de Chrome.
-- **Las metas empiezan en 0** cada vez que se abre o recarga la fuente en OBS. La **carrera de regalos**, en
-  cambio, guarda los puntos de la ronda en el navegador de OBS y los conserva al recargar.
+- **Las metas empiezan en 0** cada vez que se abre o recarga la fuente en OBS. Los **juegos** (carrera, marcador,
+  batalla, jefe, subathon, bóveda, trono y repertorio), en cambio, guardan su progreso en el navegador de OBS
+  (`live-tools:<juego>:<w>`) y lo conservan al recargar, hasta que el panel los reinicia.
 - **El reloj de la carrera usa la hora del computador.** El panel guarda la hora en que termina la ronda; si el
   panel y OBS están en computadores distintos con la hora desajustada, los relojes no coinciden.
 - **Carrera:** cada integrante necesita un regalo distinto (si dos tienen el mismo, solo suma el primero). Como

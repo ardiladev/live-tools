@@ -1,5 +1,6 @@
 // =============================================================================
-// reloj.js — Reloj de una ronda (lo usan el panel y el widget de la carrera de regalos)
+// reloj.js — Reloj de una ronda (lo usan el panel y los widgets de la carrera, el marcador y el jefe;
+// el subathon solo usa formatoReloj)
 //
 // El reloj no cuenta segundos: guarda la HORA en que termina. Así, el panel y el widget en
 // OBS muestran lo mismo aunque el cambio tarde un segundo en llegar por Supabase, y el widget
