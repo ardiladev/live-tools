@@ -98,6 +98,38 @@ function guardarEnUnMomento() {
   guardadoPendiente = setTimeout(guardar, RETRASO_GUARDADO_MS);
 }
 
+// ---------- Varias pestañas del panel ----------
+// Cada pestaña tiene su copia en memoria y `guardar()` escribe todo de una vez: sin esto, la
+// última pestaña en guardar borraría lo de las demás (por ejemplo, el identificador recién
+// creado de un widget, y el widget en OBS dejaría de recibir cambios). Cuando otra pestaña
+// guarda, se toma lo suyo. Las vistas guardan referencias a `conexion`, `preferencias` y a la
+// configuración de cada widget, así que esos objetos se actualizan en su sitio.
+
+function reemplazarEnSuSitio(destino, origen = {}) {
+  for (const clave of Object.keys(destino)) if (!(clave in origen)) delete destino[clave];
+  return Object.assign(destino, origen);
+}
+
+addEventListener('storage', (ev) => {
+  if (ev.key !== CLAVE || ev.storageArea !== localStorage) return;
+  const otro = leer(CLAVE);
+  if (!otro) return;
+  const { conexion: con, preferencias: pref, widgets, nube, ...resto } = otro;
+  Object.assign(estado, resto);
+  if (con) reemplazarEnSuSitio(estado.conexion, con);
+  if (pref) reemplazarEnSuSitio(estado.preferencias, pref);
+  for (const [id, config] of Object.entries(widgets || {})) {
+    if (estado.widgets[id]) reemplazarEnSuSitio(estado.widgets[id], config);
+    else estado.widgets[id] = config;
+  }
+  // Los identificadores se suman (nunca se pierde uno que ya esté en una URL de OBS).
+  estado.nube = {
+    secreto: nube?.secreto || estado.nube.secreto,
+    ids: { ...estado.nube.ids, ...nube?.ids },
+  };
+  oyentes.forEach((fn) => fn(estado));
+});
+
 
 // -----------------------------------------------------------------------------
 // 2. Conexión y widgets

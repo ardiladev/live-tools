@@ -574,9 +574,17 @@ sequenceDiagram
   W->>S: al abrir: se suscribe al canal "widget-<w>" y lee leer_widget(w)
   P->>S: editas algo → guardar_widget(w, secreto, config) (0,6 s después de la última tecla)
   S->>S: guarda en la tabla widgets y llama realtime.send(...)
-  S-->>W: Broadcast "config" con la configuración nueva
+  S-->>W: Broadcast "config" (aviso de que hay cambios)
+  W->>S: leer_widget(w): la configuración nueva, desde la tabla
   W->>W: alConfig(config): se aplica sin recargar
 ```
+
+El widget no usa lo que trae el aviso: el canal es público y cualquiera que conozca el `w` podría mandar
+mensajes por él. Lee siempre la tabla, que solo cambia quien tiene el secreto.
+
+Si una subida falla (corte de red), el panel la reintenta solo a los 5 s, luego 10, 20… hasta cada minuto,
+y la tarjeta del widget lo muestra. Con varias pestañas del panel abiertas, cada una toma lo que guardan
+las otras, así ninguna borra lo de las demás.
 
 ### 8.2 Base de datos (`supabase/esquema.sql`)
 

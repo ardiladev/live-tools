@@ -22,8 +22,10 @@ import * as almacen from './almacen.js';
 import { nubeActiva, guardarConfigNube } from '../nube.js';
 
 const RETRASO_SUBIDA_MS = 600; // no subir en cada tecla
+const REINTENTO_INICIAL_MS = 5000; // si Supabase falla, se reintenta solo; la espera se duplica…
+const REINTENTO_MAXIMO_MS = 60000; // …hasta 1 min
 
-/** id → { config, validar, ultima, estado, temporizador, cola } */
+/** id → { config, validar, ultima, estado, temporizador, reintento, cola } */
 const widgets = new Map();
 const oyentes = new Set();
 
@@ -45,7 +47,8 @@ export function registrar(id, { config, validar = () => '' }) {
     ultima: null,                                 // última configuración subida (JSON)
     estado: { tipo: 'pendiente', mensaje: '' },   // pendiente | guardando | ok | error
     temporizador: null,
-    cola: Promise.resolve(),                      // las subidas van de una en una, en orden
+    reintento: REINTENTO_INICIAL_MS,              // espera antes del próximo reintento
+    cola:Promise.resolve(),                      // las subidas van de una en una, en orden
   });
 }
 
@@ -76,10 +79,17 @@ async function subirAhora(id) {
     // _v (hora de guardado) le permite al widget descartar una versión vieja que llegue tarde.
     await guardarConfigNube(almacen.idNube(id), almacen.secretoNube(), { ...config, _v: Date.now() });
     w.ultima = texto;
+    w.reintento = REINTENTO_INICIAL_MS;
     cambiarEstado(id, 'ok', 'Cambios en vivo: el widget en OBS ya tiene esta configuración.');
     return true;
   } catch (error) {
-    cambiarEstado(id, 'error', `No se pudo guardar en Supabase (${error.message}). Se reintentará con el próximo cambio.`);
+    // Reintento automático: una orden del panel (reiniciar, abrir la bóveda, iniciar el reloj)
+    // no puede quedarse sin llegar a OBS por un corte de red de unos segundos.
+    const espera = w.reintento;
+    w.reintento = Math.min(espera * 2, REINTENTO_MAXIMO_MS);
+    clearTimeout(w.temporizador);
+    w.temporizador = setTimeout(() => subir(id), espera);
+    cambiarEstado(id, 'error', `No se pudo guardar en Supabase (${error.message}). Reintentando en ${Math.round(espera / 1000)} s…`);
     return false;
   }
 }

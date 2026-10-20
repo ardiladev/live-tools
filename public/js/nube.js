@@ -75,25 +75,32 @@ export const guardarConfigNube = (id, secreto, config) =>
  * Llama `alRecibir(config)` con la configuración actual y cada vez que el panel la cambie.
  * Al conectarse (y al reconectarse tras un corte) vuelve a leerla, por si hubo cambios
  * mientras no estaba escuchando. `alEstado(ok, mensaje)` informa cómo va la conexión.
+ *
+ * El canal es público: cualquiera que conozca el id podría mandar un mensaje por él. Por eso
+ * el aviso solo sirve de señal y la configuración se lee siempre de la tabla (leer_widget),
+ * que solo cambia quien tiene el secreto. (El aviso sigue trayendo la configuración para los
+ * widgets que aún tengan el código anterior en memoria.)
  */
 export async function escucharConfigNube(id, alRecibir, alEstado = () => {}) {
   const { createClient } = await import(LIBRERIA);
   const cliente = createClient(SUPABASE_URL, SUPABASE_CLAVE, { auth: { persistSession: false } });
 
+  async function releer() {
+    try {
+      const config = await leerConfigNube(id);
+      if (config) alRecibir(config);
+    } catch (error) {
+      alEstado(false, `No se pudo leer la configuración: ${error.message}`);
+    }
+  }
+
   cliente
     .channel(`widget-${id}`, { config: { private: false } })
-    .on('broadcast', { event: 'config' }, ({ payload }) => {
-      if (payload?.config) alRecibir(payload.config);
-    })
-    .subscribe(async (estado) => {
+    .on('broadcast', { event: 'config' }, releer)
+    .subscribe((estado) => {
       if (estado === 'SUBSCRIBED') {
         alEstado(true, 'Cambios en vivo activos');
-        try {
-          const config = await leerConfigNube(id);
-          if (config) alRecibir(config);
-        } catch (error) {
-          alEstado(false, `No se pudo leer la configuración: ${error.message}`);
-        }
+        releer();
       } else if (estado !== 'CLOSED') {
         // CHANNEL_ERROR o TIMED_OUT: la librería reintenta sola.
         alEstado(false, 'Cambios en vivo: reconectando…');
