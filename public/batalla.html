@@ -2,7 +2,8 @@
 <!--
   batalla.html — Widget "Batalla de regalos" (tira y afloja) para OBS / TikTok LIVE Studio
   (recomendado 1600 × 300). Dos equipos, cada uno con su regalo: los regalos de cada equipo
-  empujan la barra central hacia su lado. Empieza en 50 % (empate).
+  empujan la barra central hacia su lado. Empieza en 50 % (empate). Con cronómetro, arriba
+  van el reloj (los regalos solo cuentan mientras corre) y las victorias de cada equipo.
   Estilos: css/aurea.css + css/widget.css + css/widgets/batalla.css · Lógica: js/widgets/batalla.js
   La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
   y la configuración llega en vivo desde Supabase.
@@ -25,6 +26,22 @@
 </head>
 <body>
   <main class="escena">
+    <!-- Victorias del equipo A · reloj de la batalla · victorias del equipo B (solo con cronómetro) -->
+    <div class="cabecera" id="cabecera" hidden>
+      <div class="victorias a" id="victorias-a">
+        <span class="copas"></span>
+        <span class="racha" hidden></span>
+      </div>
+      <div class="reloj cristal" id="reloj" role="timer">
+        <span class="tiempo" id="tiempo">00:00</span>
+        <span class="estado-reloj" id="estado-reloj"></span>
+      </div>
+      <div class="victorias b" id="victorias-b">
+        <span class="racha" hidden></span>
+        <span class="copas"></span>
+      </div>
+    </div>
+
     <!-- Equipo A · barra · Equipo B -->
     <div class="batalla cristal" id="batalla">
       <div class="equipo" id="equipo-a">
@@ -66,3 +83,4 @@
   </main>
 </body>
 </html>
+

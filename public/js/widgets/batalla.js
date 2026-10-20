@@ -5,18 +5,28 @@
 // (precio × cantidad) y la barra central se corre hacia el que lleva más: la parte del
 // equipo A es A / (A + B). Sin puntos, la barra está en 50 %.
 //
+// Con cronómetro (`cr` = 1), los regalos solo cuentan mientras el reloj corre (y unos segundos
+// de gracia al final, por los combos que se cuentan tarde). Al terminar, la ronda queda con su
+// ganador y suma una victoria a ese equipo; con 2 o más seguidas se muestra su racha. Un empate
+// no suma victoria ni corta la racha. Solo el widget sabe los puntos, así que es él quien lleva
+// las victorias; el panel solo puede ponerlas en 0 (`rv`).
+//
 // Configuración (la genera el panel; llega en #c=… o, con cambios en vivo, desde Supabase):
 //   u, k = usuario y clave
 //   a, b = equipos { n: nombre, g: id del regalo, v: monedas por regalo (si TikTok no manda el
 //          precio), c: color, av: foto (URL, opcional), img: imagen del regalo }
 //   ro = ronda (al cambiar, los puntos vuelven a 0: botón "Reiniciar batalla") · s = sonido (1/0)
+//   cr = con cronómetro (1/0) · t = reloj { e, d, fin, r } (ver js/reloj.js)
+//   rv = ronda de victorias (al cambiar, las victorias vuelven a 0: botón "Reiniciar victorias")
 //   est = estilo visual (js/tema.js; lo aplica comun.js)
 //
-// Los puntos se guardan en este navegador: si OBS recarga la fuente, se conservan.
-// Secciones: 1. Configuración · 2. Puntos guardados · 3. Pintado · 4. Regalos · 5. Arranque
+// Los puntos y las victorias se guardan en este navegador: si OBS recarga la fuente, se conservan.
+// Secciones: 1. Configuración · 2. Puntos y victorias guardados · 3. Pintado · 4. Reloj y victorias
+//            5. Regalos · 6. Arranque
 // =============================================================================
 
 import { leerConfig, iniciarWidget, sonar } from '../comun.js';
+import { leerReloj, formatoReloj } from '../reloj.js';
 
 
 // -----------------------------------------------------------------------------
@@ -27,6 +37,10 @@ const MARGEN_MIN = 4;   // la barra nunca llega al 0 % ni al 100 %: los dos lado
 const ANCHO_ETIQUETA = 12; // % mínimo de un lado para mostrar su porcentaje
 const CONTEO_MS = 500;  // duración de la animación del número
 const COLORES = ['#D4AF37', '#C9CDD4'];
+const GRACIA_MS = 3000; // un combo se cuenta ~2 s después de enviarse: los del último segundo valen
+const AVISO_FINAL_S = 5; // segundos finales con "tic" de aviso
+const MAX_RESULTADOS = 500; // rondas que se recuerdan para contar victorias
+const ESTADOS = { listo: 'Lista', corre: 'En juego', pausa: 'En pausa', fin: 'Final' };
 
 // En la vista previa del panel (?prueba=1) los puntos no se guardan.
 const prueba = new URLSearchParams(location.search).get('prueba') === '1';
@@ -36,6 +50,12 @@ let sonido = true;
 let ronda = null;
 let claveGuardado = '';
 const puntos = [0, 0];
+
+let conReloj = false;
+let reloj = { e: 'listo', d: 180 };
+let rondaVictorias = null;
+let claveVictorias = '';
+let resultados = []; // [[ronda, ganador]]: 0 = A, 1 = B, -1 = empate (una entrada por ronda)
 
 const urlSegura = (texto) => (/^https?:\/\//i.test(String(texto || '')) ? String(texto) : '');
 
@@ -50,13 +70,16 @@ function normalizarEquipo(e, i) {
   };
 }
 
-/** Aplica una configuración. Puede llegar en cualquier momento (cambios en vivo, reinicio). */
+/** Aplica una configuración. Puede llegar en cualquier momento (cambios en vivo, reinicio, reloj). */
 function aplicarConfig(cfg) {
   equipos = [cfg.a, cfg.b].map(normalizarEquipo);
   sonido = cfg.s !== 0;
+  conReloj = cfg.cr === 1; // sin `cr` (URLs viejas), la batalla funciona como antes: sin reloj
+  reloj = cfg.t && typeof cfg.t === 'object' ? cfg.t : { e: 'listo', d: 180 };
   claveGuardado = `${CLAVE_PUNTOS}${cfg.w || 'url'}`;
+  claveVictorias = `${CLAVE_VICTORIAS}${cfg.w || 'url'}`;
 
-  // Ronda nueva (el panel pulsó "Reiniciar batalla"): los puntos vuelven a 0.
+  // Ronda nueva (el panel pulsó "Reiniciar batalla" o "Nueva ronda"): los puntos vuelven a 0.
   const nuevaRonda = Number(cfg.ro) || 0;
   if (nuevaRonda !== ronda) {
     ronda = nuevaRonda;
@@ -64,16 +87,27 @@ function aplicarConfig(cfg) {
     restaurarPuntos();
   }
 
+  // Victorias nuevas (el panel pulsó "Reiniciar victorias"): vuelven a 0.
+  const nuevasVictorias = Number(cfg.rv) || 0;
+  if (nuevasVictorias !== rondaVictorias) {
+    rondaVictorias = nuevasVictorias;
+    resultados = [];
+    restaurarVictorias();
+  }
+
   pintarEquipos();
+  pintarVictorias();
+  pintarReloj();
   pintar(false);
 }
 
 
 // -----------------------------------------------------------------------------
-// 2. Puntos guardados (para que una recarga de OBS no borre la batalla)
+// 2. Puntos y victorias guardados (para que una recarga de OBS no borre la batalla)
 // -----------------------------------------------------------------------------
 
 const CLAVE_PUNTOS = 'live-tools:batalla:';
+const CLAVE_VICTORIAS = 'live-tools:batalla-victorias:';
 
 function restaurarPuntos() {
   if (prueba) return;
@@ -92,6 +126,28 @@ function guardarPuntos() {
     localStorage.setItem(claveGuardado, JSON.stringify({ ro: ronda, p: puntos }));
   } catch {
     // Sin almacenamiento: el widget sigue contando, solo que una recarga empezaría de cero.
+  }
+}
+
+function restaurarVictorias() {
+  if (prueba) return;
+  try {
+    const guardado = JSON.parse(localStorage.getItem(claveVictorias) || 'null');
+    if (guardado?.rv !== rondaVictorias || !Array.isArray(guardado.res)) return;
+    resultados = guardado.res
+      .filter((r) => Array.isArray(r) && [0, 1, -1].includes(r[1]))
+      .slice(-MAX_RESULTADOS);
+  } catch {
+    // Dato dañado o almacenamiento bloqueado: las victorias empiezan en 0.
+  }
+}
+
+function guardarVictorias() {
+  if (prueba) return;
+  try {
+    localStorage.setItem(claveVictorias, JSON.stringify({ rv: rondaVictorias, res: resultados }));
+  } catch {
+    // Sin almacenamiento: el widget sigue, solo que una recarga perdería las victorias.
   }
 }
 
@@ -126,7 +182,7 @@ function ponerImagen(img, url) {
 
 /** Nombre, colores y avatar: la foto si hay; si no, la imagen del regalo; si no, la inicial. */
 function pintarEquipos() {
-  // En la raíz: los usan la placa y el aviso de ventaja.
+  // En la raíz: los usan la placa, la cabecera y el aviso de ventaja.
   const raiz = document.documentElement.style;
   raiz.setProperty('--color-a', equipos[0].color);
   raiz.setProperty('--color-b', equipos[1].color);
@@ -157,11 +213,17 @@ function pintar(animar = true) {
   lados.forEach((lado, i) => contar(lado, puntos[i], animar));
 
   const lider = quienGana();
+  const terminada = conReloj && leerReloj(reloj).estado === 'fin';
   lados.forEach((lado, i) => lado.nodo.classList.toggle('gana', lider === i));
   const ventaja = $('ventaja');
-  ventaja.textContent = lider === null
-    ? (total ? 'Empate' : '¡Que empiece la batalla!')
-    : `Gana ${equipos[lider].nombre} por ${formato.format(Math.abs(puntos[0] - puntos[1]))}`;
+  const diferencia = formato.format(Math.abs(puntos[0] - puntos[1]));
+  if (terminada) {
+    ventaja.textContent = lider === null ? 'Terminó en empate' : `¡Ganó ${equipos[lider].nombre} por ${diferencia}!`;
+  } else {
+    ventaja.textContent = lider === null
+      ? (total ? 'Empate' : '¡Que empiece la batalla!')
+      : `Gana ${equipos[lider].nombre} por ${diferencia}`;
+  }
   ventaja.dataset.lado = lider === null ? '' : 'ab'[lider];
 }
 
@@ -202,12 +264,101 @@ function mostrarSuma(i, suma) {
 
 
 // -----------------------------------------------------------------------------
-// 4. Regalos
+// 4. Reloj y victorias
 // -----------------------------------------------------------------------------
+
+const marcas = ['victorias-a', 'victorias-b'].map((id) => ({
+  copas: $(id).querySelector('.copas'),
+  racha: $(id).querySelector('.racha'),
+}));
+
+/** Victorias de cada equipo y la racha actual (quién ganó las últimas rondas seguidas). */
+function contarVictorias() {
+  const victorias = [0, 0];
+  let racha = { equipo: null, veces: 0 };
+  for (const [, ganador] of resultados) {
+    if (ganador < 0) continue; // empate: no suma victoria ni corta la racha
+    victorias[ganador] += 1;
+    racha = racha.equipo === ganador ? { equipo: ganador, veces: racha.veces + 1 } : { equipo: ganador, veces: 1 };
+  }
+  return { victorias, racha };
+}
+
+/** Contadores de la cabecera. Con `nueva` (índice del equipo), su contador entra con animación. */
+function pintarVictorias(nueva = null) {
+  $('cabecera').hidden = !conReloj;
+  const { victorias, racha } = contarVictorias();
+  marcas.forEach((m, i) => {
+    m.copas.textContent = `🏆 ${victorias[i]} ${victorias[i] === 1 ? 'victoria' : 'victorias'}`;
+    const enRacha = racha.equipo === i && racha.veces >= 2;
+    m.racha.hidden = !enRacha;
+    m.racha.textContent = enRacha ? `🔥 ${racha.veces} seguidas` : '';
+    if (nueva === i) {
+      [m.copas, m.racha].forEach((nodo) => {
+        nodo.classList.remove('estrena');
+        void nodo.offsetWidth; // reinicia la animación
+        nodo.classList.add('estrena');
+      });
+    }
+  });
+}
+
+/**
+ * Pasada la gracia del final, la ronda queda con su ganador (una sola vez por ronda: el
+ * resultado se guarda con el número de ronda, así una recarga de OBS no lo cuenta otra vez).
+ */
+function cerrarRonda() {
+  if (!conReloj || leerReloj(reloj).estado !== 'fin') return;
+  if (Date.now() - (Number(reloj.fin) || 0) < GRACIA_MS) return;
+  if (resultados.some(([r]) => r === ronda)) return;
+  const ganador = quienGana();
+  resultados = [...resultados, [ronda, ganador ?? -1]].slice(-MAX_RESULTADOS);
+  guardarVictorias();
+  pintarVictorias(ganador);
+  if (sonido && ganador !== null) sonar({ frecuencia: 784, duracion: 0.7, subida: 1.5 });
+}
+
+let estadoAnterior = null;
+let ultimoTic = null;
+
+function pintarReloj() {
+  if (!conReloj) return;
+  const { estado, restanteMs } = leerReloj(reloj);
+  const caja = $('reloj');
+  caja.dataset.estado = estado;
+  caja.classList.toggle('urgente', estado === 'corre' && restanteMs <= 10000);
+  $('tiempo').textContent = formatoReloj(restanteMs);
+  $('estado-reloj').textContent = ESTADOS[estado];
+
+  // Sonidos: "tic" en los últimos segundos y campana al terminar (solo si se vio terminar).
+  const segundo = Math.ceil(restanteMs / 1000);
+  if (sonido && estado === 'corre' && segundo <= AVISO_FINAL_S && segundo !== ultimoTic) {
+    ultimoTic = segundo;
+    sonar({ frecuencia: 990, duracion: 0.08, volumen: 0.08, subida: 1 });
+  }
+  if (sonido && estado === 'fin' && estadoAnterior === 'corre') sonar({ frecuencia: 523, duracion: 0.9, subida: 2 });
+  if (estado !== estadoAnterior && estadoAnterior !== null) pintar(false); // el aviso dice "Ganó…" al terminar
+  estadoAnterior = estado;
+
+  cerrarRonda();
+}
+
+
+// -----------------------------------------------------------------------------
+// 5. Regalos
+// -----------------------------------------------------------------------------
+
+/** ¿Cuenta un regalo que llega ahora? Con cronómetro, solo con el reloj en marcha (y la gracia final). */
+function cuentaAhora() {
+  if (prueba || !conReloj) return true;
+  const { estado } = leerReloj(reloj);
+  if (estado === 'corre') return true;
+  return estado === 'fin' && Date.now() - (Number(reloj.fin) || 0) < GRACIA_MS;
+}
 
 function alRegalo(evento) {
   const i = equipos.findIndex((e) => e.giftId && e.giftId === String(evento.giftId ?? ''));
-  if (i < 0) return;
+  if (i < 0 || !cuentaAhora()) return;
 
   // Si el panel no tenía la imagen del regalo y TikTok la manda, se usa desde ya.
   if (evento.imagen && !equipos[i].imagen) {
@@ -228,7 +379,7 @@ function alRegalo(evento) {
 
 
 // -----------------------------------------------------------------------------
-// 5. Arranque
+// 6. Arranque
 // -----------------------------------------------------------------------------
 
 iniciarWidget({
@@ -238,3 +389,7 @@ iniciarWidget({
     if (evento.tipo === 'regalo') alRegalo(evento);
   },
 });
+
+// El reloj se repinta con setInterval (no con requestAnimationFrame) para que siga
+// aunque la página no se esté dibujando.
+setInterval(pintarReloj, 200);
