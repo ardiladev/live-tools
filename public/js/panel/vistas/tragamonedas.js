@@ -13,6 +13,7 @@ import * as almacen from '../almacen.js';
 import { editorEstilo } from '../estilo.js';
 import * as sincronizar from '../sincronizar.js';
 import { el, tarjeta, tarjetaWidget, campo, casilla, nota, crearAviso } from '../ui.js';
+import { idCola, asegurarCola } from './cola.js';
 
 
 // -----------------------------------------------------------------------------
@@ -30,6 +31,7 @@ const POR_DEFECTO = {
   ocultar: false,
   sonido: true,
   probar: 0,               // orden "Probar en OBS" (cambia al pulsar)
+  aCola: false,            // mandar cada resultado a la Cola de retos
   rodillos: [
     { titulo: 'Quién', textos: ['Valentina', 'Camilo', 'Sofía', 'Mateo'] },
     { titulo: 'Qué', textos: ['Salsa', 'K-pop', 'Champeta', 'Reggaetón', 'Tango'] },
@@ -58,6 +60,7 @@ sincronizar.registrar(ID, {
       oc: cfg.ocultar ? 1 : 0,
       pr: cfg.probar,
       s: cfg.sonido ? 1 : 0,
+      rc: cfg.aCola ? idCola() : '',
     };
   },
   validar: () => {
@@ -99,6 +102,10 @@ export default {
       sinRecargar: ['pr'],
       senal,
       personalizar: [
+        casilla('Mandar cada resultado a la Cola de retos (para hacerlos con calma)', {
+          marcada: cfg.aCola,
+          alCambiar: (v) => { cfg.aCola = v; cambio(); if (v) asegurarCola(); },
+        }),
         casilla('Ocultar la máquina cuando no hay giros', { marcada: cfg.ocultar, alCambiar: (v) => { cfg.ocultar = v; cambio(); } }),
         casilla('Sonidos (cada rodillo al frenar y el resultado)', { marcada: cfg.sonido, alCambiar: (v) => { cfg.sonido = v; cambio(); } }),
         ...editorEstilo(ID, () => widget.actualizar()),

@@ -15,11 +15,13 @@
 //   u, k = usuario y clave · g = id del regalo · r = texto del regalo en pantalla ("una rosa 🌹")
 //   rd = rodillos [{ t: título, i: [textos] }] (3) · max = tope de giros por combo
 //   oc = ocultar sin giros (1/0) · pr = "Probar en OBS" (cuenta cuando cambia) · s = sonido (1/0)
+//   rc = id de la Cola de retos a la que va cada resultado (vacío = no se manda)
 //   est = estilo visual (js/tema.js; lo aplica comun.js)
 // Secciones: 1. Configuración · 2. Rodillos · 3. Giro · 4. Fila de giros · 5. Arranque
 // =============================================================================
 
 import { leerConfig, iniciarWidget, sonar, esperar } from '../comun.js';
+import { mandarReto } from '../juego.js';
 
 
 // -----------------------------------------------------------------------------
@@ -38,6 +40,7 @@ let maxPorCombo = 10;
 let ocultar = false;
 let sonido = true;
 let ordenProbar = null;
+let cola = ''; // id de la Cola de retos (rc)
 
 /** Aplica una configuración. Puede llegar en cualquier momento (cambios en vivo). */
 function aplicarConfig(cfg) {
@@ -46,6 +49,7 @@ function aplicarConfig(cfg) {
   maxPorCombo = Math.max(1, Number(cfg.max) || 10);
   ocultar = cfg.oc === 1;
   sonido = cfg.s !== 0;
+  cola = String(cfg.rc || '');
 
   const lista = Array.isArray(cfg.rd) ? cfg.rd : [];
   rodillos.forEach((rodillo, i) => {
@@ -135,8 +139,11 @@ async function girarRodillo(rodillo, resultado, duracionMs, cantidadAlAzar) {
   if (sonido) sonar({ frecuencia: 660 + 110 * rodillos.indexOf(rodillo), duracion: 0.12, volumen: 0.1, onda: 'triangle', subida: 1 });
 }
 
-/** Un giro completo: los tres rodillos arrancan juntos y se detienen uno tras otro. */
-async function girar() {
+/**
+ * Un giro completo: los tres rodillos arrancan juntos y se detienen uno tras otro. Cuando ya se
+ * ve el resultado llama `alResultado(textos)`, con el texto de cada rodillo.
+ */
+async function girar(alResultado = () => {}) {
   girando = true;
   const maquina = $('maquina');
   maquina.classList.remove('resultado');
@@ -144,6 +151,7 @@ async function girar() {
   await Promise.all(rodillos.map((r, i) => girarRodillo(r, resultados[i], DURACIONES_MS[i], CELDAS_AL_AZAR[i])));
   maquina.classList.add('resultado');
   if (sonido) sonar({ frecuencia: 784, duracion: 0.6, subida: 1.5 });
+  alResultado(rodillos.map((r, i) => r.textos[resultados[i]]));
   await esperar(RESULTADO_MS);
   maquina.classList.remove('resultado');
   girando = false;
@@ -176,7 +184,10 @@ async function procesar() {
     const usuario = fila.shift();
     $('aviso').textContent = usuario === 'Prueba' ? 'Giro de prueba' : `${usuario} envió ${textoRegalo}`;
     pintarCola();
-    await girar();
+    // El resultado ("Quién · Qué · Cómo") va a la Cola de retos; el de "Probar en OBS", no.
+    await girar((textos) => {
+      if (cola && usuario !== 'Prueba') mandarReto(cola, { texto: textos.filter((x) => x && x !== '—').join(' · '), usuario, origen: 'Tragamonedas' });
+    });
     await esperar(PAUSA_ENTRE_GIROS_MS);
   }
   $('aviso').textContent = '';

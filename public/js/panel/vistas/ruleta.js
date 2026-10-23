@@ -5,7 +5,9 @@
 // Hay dos ruletas independientes (cada una con su regalo, premios, estilo y URL para OBS),
 // generadas con la misma función: agregar otra es agregar una entrada en TIPOS y su id en
 // almacen.RULETAS. Lo que se guarda aquí llega al widget por su URL o, con cambios en vivo,
-// por Supabase (ver js/widgets/ruleta.js para las claves).
+// por Supabase (ver js/widgets/ruleta.js para las claves). Con "Mandar los premios a la Cola de
+// retos" (Personalizar), cada premio anunciado entra a esa cola (vistas/cola.js), salvo los que
+// tengan la casilla "Cola" apagada (p. ej. "Nada").
 // Secciones: 1. Tipos de ruleta · 2. Fábrica de vistas (configuración · tarjeta · premios · regalo con su miniatura)
 //            3. Vistas exportadas
 // =============================================================================
@@ -14,6 +16,7 @@ import * as almacen from '../almacen.js';
 import { editorEstilo } from '../estilo.js';
 import * as sincronizar from '../sincronizar.js';
 import { el, tarjeta, tarjetaWidget, campo, casilla, nota } from '../ui.js';
+import { idCola, asegurarCola } from './cola.js';
 
 
 // -----------------------------------------------------------------------------
@@ -38,6 +41,7 @@ const TIPOS = {
       ocultar: true,
       indicar: true,           // letrero en pantalla: "Envía una rosa para girar"
       sonido: true,
+      aCola: false,            // mandar los premios a la Cola de retos
       premios: [
         { texto: 'Baile sencillo', peso: 2 },
         { texto: 'Saludo especial', peso: 3 },
@@ -58,6 +62,7 @@ const TIPOS = {
       ocultar: true,
       indicar: true,
       sonido: true,
+      aCola: false,
       premios: [
         { texto: 'Reto que elijas', peso: 2 },
         { texto: 'Mención en el próximo video', peso: 1 },
@@ -90,11 +95,17 @@ function crearVista(tipo) {
         r: String(cfg.regalo).trim() || POR_DEFECTO.regalo,
         gpr: Math.max(1, Number(cfg.gpr) || 1),
         max: Math.max(1, Number(cfg.max) || POR_DEFECTO.max),
-        p: premiosValidos().map((p) => [String(p.texto).trim().slice(0, MAX_TEXTO_PREMIO), Math.max(0, Number(p.peso) || 0)]),
+        // Tercer valor 0 = este premio no va a la Cola de retos (solo se manda si es 0).
+        p: premiosValidos().map((p) => {
+          const premio = [String(p.texto).trim().slice(0, MAX_TEXTO_PREMIO), Math.max(0, Number(p.peso) || 0)];
+          return p.cola === false ? [...premio, 0] : premio;
+        }),
         oc: cfg.ocultar ? 1 : 0,
         so: cfg.sonido ? 1 : 0,
         in: cfg.indicar ? 1 : 0,
         img: almacen.regalos()[String(cfg.giftId).trim()]?.imagen || '', // la imagen sale del Buscador de regalos
+        rc: cfg.aCola ? idCola() : '',
+        rcn: titulo,
       };
     },
     validar: () => {
@@ -128,6 +139,15 @@ function crearVista(tipo) {
         archivo: 'ruleta.html',
         senal,
         personalizar: [
+          casilla('Mandar los premios a la Cola de retos (para hacerlos con calma)', {
+            marcada: cfg.aCola,
+            alCambiar: (v) => {
+              cfg.aCola = v;
+              cambio();
+              pintarPremios(); // aparece o se va la columna "Cola"
+              if (v) asegurarCola();
+            },
+          }),
           casilla('Mostrar a los espectadores con qué regalo se gira', { marcada: cfg.indicar, alCambiar: (v) => { cfg.indicar = v; cambio(); } }),
           casilla('Ocultar la ruleta cuando no hay giros', { marcada: cfg.ocultar, alCambiar: (v) => { cfg.ocultar = v; cambio(); } }),
           casilla('Sonido de clic', { marcada: cfg.sonido, alCambiar: (v) => { cfg.sonido = v; cambio(); } }),
@@ -141,6 +161,8 @@ function crearVista(tipo) {
 
       // ---------- Premios ----------
       const lista = el('div');
+      const colaEncabezado = el('span', { title: 'Los marcados entran a la Cola de retos' }, 'Cola:');
+      const encabezadoPremios = el('div', { class: 'encabezado-premios' }, el('span', {}, 'Premio:'), el('span', {}, 'Peso:'), colaEncabezado, el('span'));
       let probabilidades = []; // los <div> de porcentaje, en el mismo orden que cfg.premios
 
       // Al cambiar un peso solo se reescriben los porcentajes: redibujar la lista quitaría el foco del campo.
@@ -164,6 +186,13 @@ function crearVista(tipo) {
               type: 'number', min: 0, step: 1, value: premio.peso, 'aria-label': `Peso del premio ${i + 1}`,
               oninput: (e) => { premio.peso = Number(e.target.value); cambio(); pintarProbabilidades(); },
             }),
+            cfg.aCola
+              ? el('input', {
+                type: 'checkbox', class: 'casilla-cola', checked: premio.cola !== false,
+                title: 'Mandar este premio a la Cola de retos', 'aria-label': `Mandar el premio ${i + 1} a la Cola de retos`,
+                onchange: (e) => { premio.cola = e.target.checked; cambio(); },
+              })
+              : null,
             el('button', {
               title: 'Quitar', 'aria-label': `Quitar premio ${i + 1}`,
               onclick: () => { cfg.premios.splice(i, 1); cambio(); pintarPremios(); },
@@ -174,6 +203,9 @@ function crearVista(tipo) {
 
       function pintarPremios() {
         probabilidades = [];
+        lista.classList.toggle('con-cola', cfg.aCola);
+        encabezadoPremios.classList.toggle('con-cola', cfg.aCola);
+        colaEncabezado.hidden = !cfg.aCola;
         lista.replaceChildren(...cfg.premios.flatMap(filaPremio));
         pintarProbabilidades();
       }
@@ -230,7 +262,7 @@ function crearVista(tipo) {
         widget.elemento,
 
         tarjeta('Premios', {},
-          el('div', { class: 'encabezado-premios' }, el('span', {}, 'Premio:'), el('span', {}, 'Peso:'), el('span')),
+          encabezadoPremios,
           lista,
           el('button', { class: 'enlace separado-arriba', onclick: agregarPremio }, '+ Agregar premio'),
           nota('El peso define qué tan seguido sale cada premio: un peso de 2 sale el doble que uno de 1.')),

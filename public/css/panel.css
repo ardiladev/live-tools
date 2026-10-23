@@ -357,6 +357,10 @@ button.enlace { color: var(--enlace); }
 .premio { margin-bottom: 4px; }
 .premio button { padding: 0; }
 .encabezado-premios { margin-bottom: 4px; color: var(--suave); }
+/* Con "Mandar los premios a la Cola de retos": columna "Cola" con una casilla por premio. */
+.con-cola .premio,
+.encabezado-premios.con-cola { grid-template-columns: minmax(0, 1fr) 72px 40px 34px; }
+.casilla-cola { justify-self: center; width: 18px; height: 18px; accent-color: var(--oro); }
 .probabilidad { margin: 0 0 8px; color: var(--suave); font-size: 12px; }
 /* Regalo que activa la ruleta: miniatura, nombre y precio (del Buscador de regalos) */
 .regalo-elegido { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding: 10px 12px; border: var(--linea-tenue); border-left: var(--linea-oro); border-radius: var(--radio); background: var(--campo); }
@@ -405,6 +409,41 @@ button.enlace { color: var(--enlace); }
 .cancion-fila.activa .cancion-estado { color: var(--oro); font-weight: 600; }
 .cancion-fila.hecha .cancion-estado { color: var(--ok); }
 .cancion-fila.hecha input { opacity: .6; }
+
+/* Cola de retos (vistas/cola.js): pendientes, hechos, agregar a mano y retos por regalo. */
+.cola-lista { display: grid; gap: 6px; margin-top: 8px; }
+.cola-fila {
+  display: grid;
+  grid-template-columns: 30px 32px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 10px;
+  border: var(--linea-tenue);
+  border-radius: var(--radio);
+  background: var(--campo);
+}
+.cola-fila.actual { border-color: var(--oro); box-shadow: var(--brillo); }
+.cola-fila.hecha { opacity: .65; }
+.cola-numero { color: var(--oro); font-weight: 700; text-align: center; font-variant-numeric: tabular-nums; }
+.cola-fila.hecha .cola-numero { color: var(--ok); }
+.cola-texto { display: grid; gap: 2px; min-width: 0; overflow-wrap: anywhere; }
+.cola-texto b { font-weight: 600; }
+.cola-subtitulo { margin: 18px 0 0; color: var(--suave); font: 600 12px/1.4 var(--fuente); text-transform: uppercase; letter-spacing: var(--espaciado-titulo); }
+.cola-agregar { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: 6px; }
+.reto-regalo-fila {
+  display: grid;
+  grid-template-columns: 32px minmax(110px, 160px) minmax(0, 1fr) 34px;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.reto-regalo-fila button { padding: 0; }
+.reto-regalo-id { display: grid; gap: 2px; }
+@media (max-width: 760px) {
+  .cola-agregar { grid-template-columns: 1fr; }
+  .reto-regalo-fila { grid-template-columns: 32px minmax(0, 1fr) 34px; }
+  .reto-regalo-fila > input { grid-column: 1 / -1; order: 1; } /* el reto abajo, a lo ancho */
+}
 @media (max-width: 760px) {
   .cancion-fila { grid-template-columns: 70px minmax(0, 1fr) 90px; }
   .cancion-fila.encabezado { display: none; }

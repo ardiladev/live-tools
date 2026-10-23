@@ -1,0 +1,190 @@
+/* ==========================================================================
+   cola.css — Widget "Cola de retos" (cola.html)
+   Una pila vertical de tarjetas de cristal: la primera ("Ahora", clase .actual)
+   es más grande, opaca y con el filo de oro brillando; las que siguen van más
+   pequeñas y atenuadas. Debajo, "+N más en espera". Un reto que acaba de
+   llegar entra deslizándose (clase .nuevo).
+   Las medidas usan --u (el menor entre 1 % del alto y 1,5 % del ancho): la
+   lista cabe en cualquier tamaño de fuente de OBS.
+
+   Secciones: 1. Escena · 2. Tarjeta · 3. Reto actual · 4. Pie y vacía
+              5. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+:root { --u: min(1vh, 1.5vw); }
+
+.escena {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1.4);
+  padding: calc(var(--u) * 2.4);
+  box-sizing: border-box;
+  transition: opacity .5s ease;
+}
+/* "Ocultar cuando no hay retos" (clave oc). */
+.escena.oculta { opacity: 0; }
+
+.cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(var(--u) * 2);
+}
+.titulo {
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 2.4);
+  letter-spacing: .3em;
+  text-transform: var(--mayus);
+  text-shadow: var(--sombra-texto);
+}
+.contador {
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.6);
+  letter-spacing: var(--espaciado-widget);
+  font-variant-numeric: tabular-nums;
+  text-shadow: var(--sombra-texto);
+  opacity: .85;
+}
+.titulo:empty,
+.contador:empty { display: none; }
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1.1);
+}
+
+
+/* ---------- 2. Tarjeta de un reto ---------- */
+.reto {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: calc(var(--u) * 1.8);
+  padding: calc(var(--u) * 1.4) calc(var(--u) * 2.2);
+  opacity: .62;
+}
+.reto::before { opacity: .35; }
+
+.lado {
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 4.4);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid var(--insignia-borde);
+  background: var(--insignia-fondo);
+}
+.lado > * { grid-area: 1 / 1; }
+.numero {
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 1.6);
+  font-variant-numeric: tabular-nums;
+}
+.imagen {
+  width: 78%;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+/* Con imagen del regalo, el número no se ve (la posición ya la dice el orden). */
+.lado:has(.imagen:not([hidden])) .numero { display: none; }
+
+.cuerpo { display: grid; gap: calc(var(--u) * .5); min-width: 0; }
+.etiqueta { display: none; }
+.texto {
+  overflow: hidden;
+  color: var(--texto-sec);
+  font-weight: 700;
+  font-size: calc(var(--u) * 2.1);
+  letter-spacing: var(--espaciado-sub);
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cantidad {
+  color: var(--activo);
+  font-variant-numeric: tabular-nums;
+}
+.cantidad:empty { display: none; }
+.detalle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 calc(var(--u) * 1.2);
+  color: var(--oro-texto);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.3);
+  letter-spacing: .08em;
+  opacity: .85;
+}
+.usuario:empty,
+.origen:empty { display: none; }
+.origen { opacity: .75; }
+
+
+/* ---------- 3. Reto actual ("Ahora") ---------- */
+.reto.actual {
+  padding: calc(var(--u) * 2.2) calc(var(--u) * 2.6);
+  opacity: 1;
+  box-shadow: var(--resplandor-activo);
+}
+.reto.actual::before { opacity: 1; }
+.reto.actual .lado { width: calc(var(--u) * 6.2); }
+.reto.actual .etiqueta {
+  display: block;
+  color: var(--activo);
+  font-weight: 700;
+  font-size: calc(var(--u) * 1.3);
+  letter-spacing: .3em;
+  text-transform: uppercase;
+}
+/* El reto actual se lee completo: puede ocupar varias líneas. */
+.reto.actual .texto {
+  font-size: calc(var(--u) * 2.9);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.reto.actual .detalle { font-size: calc(var(--u) * 1.5); }
+
+
+/* ---------- 4. Pie y lista vacía ---------- */
+.mas {
+  align-self: center;
+  color: var(--oro-texto);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.5);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  text-shadow: var(--sombra-texto);
+}
+.vacia {
+  padding: calc(var(--u) * 2.2);
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.8);
+  letter-spacing: .14em;
+  text-align: center;
+  text-transform: uppercase;
+  opacity: .7;
+}
+
+
+/* ---------- 5. Animaciones ---------- */
+.reto.nuevo { animation: entrada .6s cubic-bezier(.2, .9, .3, 1) both; }
+.reto.actual.nuevo { animation: entrada .6s cubic-bezier(.2, .9, .3, 1) both, brillo 1.6s ease-out .2s; }
+
+@keyframes entrada {
+  from { opacity: 0; transform: translateX(-8%); }
+}
+@keyframes brillo {
+  30% { box-shadow: var(--resplandor-activo), 0 0 calc(var(--u) * 5) var(--activo); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .escena { transition: none; }
+  .reto.nuevo, .reto.actual.nuevo { animation: none; }
+}

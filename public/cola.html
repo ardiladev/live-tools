@@ -1,0 +1,54 @@
+<!doctype html>
+<!--
+  cola.html — Widget "Cola de retos" para OBS / TikTok LIVE Studio (recomendado 600 × 900, a un
+  costado de la escena). Muestra el reto que se está haciendo ("Ahora") y los que siguen, en el
+  orden en que llegaron. Los retos salen de la ruleta, el tragamonedas, los "retos por regalo" de
+  este mismo widget y los que se agregan a mano en el panel; el equipo los marca como hechos en
+  el panel y la lista avanza sola.
+  Estilos: css/aurea.css + css/widget.css + css/widgets/cola.css · Lógica: js/widgets/cola.js
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget
+  (que también es el de la cola en Supabase).
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cola de retos — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/cola.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/cola.js"></script>
+</head>
+<body>
+  <main class="escena" id="escena">
+    <div class="cabecera">
+      <div class="titulo" id="titulo"></div>
+      <div class="contador" id="contador"></div>
+    </div>
+    <div class="lista" id="lista"></div>
+    <div class="vacia cristal" id="vacia" hidden>Sin retos pendientes</div>
+    <div class="mas" id="mas" hidden></div>
+  </main>
+
+  <!-- Un reto (lo clona js/widgets/cola.js). El primero lleva la clase "actual". -->
+  <template id="plantilla-reto">
+    <article class="reto cristal">
+      <div class="lado">
+        <span class="numero"></span>
+        <img class="imagen" alt="" hidden>
+      </div>
+      <div class="cuerpo">
+        <div class="etiqueta">Ahora</div>
+        <div class="texto"><span class="frase"></span> <span class="cantidad"></span></div>
+        <div class="detalle"><span class="usuario"></span><span class="origen"></span></div>
+      </div>
+    </article>
+  </template>
+</body>
+</html>

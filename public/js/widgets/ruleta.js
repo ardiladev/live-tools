@@ -3,7 +3,9 @@
 //
 // Configuración (la genera el panel; llega en #c=… o, con cambios en vivo, desde Supabase):
 //   u, k = usuario y clave · g = id del regalo · r = texto en pantalla
-//   gpr = giros por regalo · max = tope por combo · p = premios [[texto, peso], …]
+//   gpr = giros por regalo · max = tope por combo · p = premios [[texto, peso, cola?], …]
+//   rc = id de la Cola de retos a la que van los premios (vacío = no se mandan) · rcn = origen ("Ruleta")
+//        (un premio con tercer valor 0, p. ej. "Nada", no va a la cola)
 //   oc = ocultar cuando no hay giros (1/0) · so = sonido de clic (1/0)
 //   in = letrero "Envía … para girar" mientras no hay giros (1/0; sigue a la vista aunque la ruleta se oculte)
 //   img = miniatura del regalo (del Buscador de regalos; si falta, se usa la que mande TikTok)
@@ -17,6 +19,7 @@
 
 import { leerConfig, iniciarWidget, sonar, esperar } from '../comun.js';
 import { paletaRuleta, fuenteLista } from '../tema.js';
+import { mandarReto } from '../juego.js';
 
 
 // -----------------------------------------------------------------------------
@@ -64,9 +67,11 @@ const ajustes = {
   ocultar: params.get('ocultar') === '1',
   sonido: params.get('sonido') !== '0',
   indicar: true,
+  cola: '',                // id de la Cola de retos (rc); vacío = los premios no van a la cola
+  origen: 'Ruleta',
 };
 
-let premios = [];          // [{ texto, peso }]
+let premios = [];          // [{ texto, peso, aCola }]
 let premiosNuevos = null;  // premios que llegaron en medio de un giro: se aplican al terminar
 let rotacion = 0;          // ángulo actual de la rueda, en radianes
 let girando = false;
@@ -415,6 +420,10 @@ async function procesar() {
 
     resultado.textContent = premios[giro.indice]?.texto ?? giro.premio;
     resultado.classList.add('visible');
+    // Ya anunciado en pantalla, el premio pasa a la Cola de retos (si está activada).
+    if (ajustes.cola && giro.aCola) {
+      mandarReto(ajustes.cola, { texto: giro.premio, usuario: giro.usuario, origen: ajustes.origen, imagen: giro.imagen });
+    }
     await esperar(PAUSA_RESULTADO_MS);
   }
 
@@ -460,7 +469,7 @@ const hayPremiosValidos = () => premios.length >= 2 && premios.some((p) => p.pes
  */
 function aplicarConfig(cfg) {
   const nuevos = (Array.isArray(cfg.p) ? cfg.p : [])
-    .map(([texto, peso]) => ({ texto: String(texto || ''), peso: Math.max(0, Number(peso) || 0) }))
+    .map(([texto, peso, aCola]) => ({ texto: String(texto || ''), peso: Math.max(0, Number(peso) || 0), aCola: aCola !== 0 }))
     .filter((p) => p.texto);
 
   Object.assign(ajustes, {
@@ -469,6 +478,8 @@ function aplicarConfig(cfg) {
     imagen: String(cfg.img || ''),
     girosPorRegalo: Math.max(1, Number(cfg.gpr) || 1),
     maxGiros: Math.max(1, Number(cfg.max) || 20),
+    cola: String(cfg.rc || ''),
+    origen: String(cfg.rcn || 'Ruleta').slice(0, 40),
   });
   if (cfg.oc !== undefined) ajustes.ocultar = Boolean(cfg.oc);
   if (cfg.so !== undefined) ajustes.sonido = Boolean(cfg.so);
@@ -493,7 +504,8 @@ function alEvento(evento) {
   const imagen = imagenRegalo();
   for (let i = 0; i < giros; i++) {
     const indice = elegirPremio();
-    encolar({ usuario: evento.usuario, indice, premio: premios[indice].texto, regalo: ajustes.textoRegalo, imagen });
+    const { texto, aCola } = premios[indice];
+    encolar({ usuario: evento.usuario, indice, premio: texto, aCola, regalo: ajustes.textoRegalo, imagen });
   }
 }
 

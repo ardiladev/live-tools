@@ -99,7 +99,8 @@ las URLs de OBS y lo guardado siguen igual.
 |  | Competencias | Carrera de regalos | Franja horizontal con 1 a 6 integrantes: cada uno tiene su regalo, color y meta; cada regalo suma monedas (precio × cantidad) a su barra. Reloj por rondas en el centro que se **inicia, pausa y reinicia desde el panel** y llega a OBS al instante. Al terminar, muestra quién ganó. |
 |  |  | Marcador | Versión sencilla de la carrera: de 1 a 6 integrantes con su regalo, y cada regalo suma a su **puntaje** (sin barras ni metas). Arriba, aparte, el reloj en una píldora pequeña (**Iniciar / Pausar / Reiniciar** en vivo). Color propio opcional por integrante. Por defecto los regalos suman siempre, hasta reiniciar. |
 |  |  | Batalla de regalos | Tira y afloja entre dos equipos: cada uno tiene su regalo, monedas por regalo, color y foto opcional. La barra central empieza en 50 % y se corre hacia el equipo que lleva más monedas. Botón **Reiniciar batalla** que pone los puntos en 0 en OBS al instante. **Con cronómetro** (opción en *Personalizar*, encendida por defecto): los regalos solo suman con el reloj en marcha (Iniciar / Pausar / Nueva ronda, duración en segundos) y, al llegar a 0, el equipo con más monedas gana la ronda; arriba se ven las victorias de cada equipo y la racha («🔥 2 seguidas») cuando uno gana 2 o más rondas seguidas. Botón **Reiniciar victorias**. |
-|  | Retos del público | Jefe del LIVE | Reto cooperativo (boss raid): el chat le quita vida a un jefe con likes y regalos antes de que se acabe el tiempo. Nombre, vida total, tiempo límite, texto de victoria y daño por like y por moneda. Raid con **Iniciar / Pausar / Reiniciar** que llegan a OBS al instante. En 0 muestra «Reto desbloqueado» con brillo dorado; si se acaba el tiempo, «Tiempo agotado». |
+|  | Retos del público | Cola de retos | Fila de retos pendientes para hacerlos con calma cuando llegan muchos regalos seguidos. En OBS se ve el reto de **Ahora** y los siguientes («+N más en espera»). Los retos llegan de la **ruleta** y el **tragamonedas** (casilla *Mandar a la Cola de retos* en su *Personalizar*; en la ruleta se elige qué premios van), de los **retos por regalo** (regalo → reto fijo; un combo es un solo reto «×5») y **a mano**. El panel muestra la cola real: **Hecho**, **Deshacer**, **Vaciar la cola** (pide un segundo clic). Necesita Supabase. |
+|  |  | Jefe del LIVE | Reto cooperativo (boss raid): el chat le quita vida a un jefe con likes y regalos antes de que se acabe el tiempo. Nombre, vida total, tiempo límite, texto de victoria y daño por like y por moneda. Raid con **Iniciar / Pausar / Reiniciar** que llegan a OBS al instante. En 0 muestra «Reto desbloqueado» con brillo dorado; si se acaba el tiempo, «Tiempo agotado». |
 |  |  | Bóveda dorada | Caja sorpresa: los regalos llenan una barra hacia una meta de monedas; el premio queda oculto hasta llegar. Entonces el candado se abre y aparece el **texto secreto** en letras de oro. Meta, texto secreto, título y pista. **Cerrar y reiniciar** y **Abrir ahora** llegan a OBS al instante. |
 |  |  | Subathon | Reloj hacia atrás al que el público le suma tiempo: segundos por cada 100 likes y por cada moneda de regalo, con un **tope**. Tiempo inicial y tope en minutos. **Iniciar / Pausar / +5 min / Reiniciar** llegan a OBS al instante. Pulso dorado al sumarse tiempo y color de alerta con menos de 1 minuto. |
 |  |  | Repertorio | Playlist o menú de bailes: lista de canciones, cada una con meta de monedas. Los regalos llenan la **activa**; al llegar a su meta queda «Desbloqueada · Sonando». **Activar**, **Hecha y siguiente**, **Deshacer**, ordenar y **Reiniciar repertorio** en vivo. |
@@ -206,6 +207,7 @@ La configuración de cada widget (en Supabase o en la URL completa) usa estas cl
 | `boveda.html` | `ti` título · `pi` pista (se ve con la bóveda cerrada) · `sec` texto secreto · `o` meta en monedas · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, se cierra y vuelve a 0) · `ab` 1 = abrir ahora · `s` sonido |
 | `trono.html` | `ti` título · `m` modo (`combo`/`total`) · `min` monedas mínimas para reinar · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, trono libre) · `s` sonido |
 | `marcador.html` | `ti` título junto al reloj · `j` integrantes `[{i id, n nombre, c color (vacío = acento del estilo), g id del regalo, gn nombre del regalo, v monedas por regalo, img imagen}]` · `t` reloj (como en la carrera) · `ro` ronda (al cambiar, puntos a 0) · `sr` solo con el reloj en marcha (por defecto 0) · `s` sonido |
+| `cola.html` | `ti` título · `mx` retos a la vista (3 a 8) · `us` mostrar quién lo pidió · `oc` ocultar sin retos · `s` sonido · `rg` retos por regalo `[{g id del regalo, gn nombre, t reto, img imagen}]` · `cl` id de la cola (el mismo `w`; lo usa la vista previa). La ruleta lleva además `rc` (id de la cola, vacío = no manda) y `rcn` (origen), y cada premio un tercer valor `0` si no va a la cola; el tragamonedas lleva `rc`. |
 | `repertorio.html` | `ti` título · `c` canciones `[{i id, n nombre, m meta}]` · `a` id de la activa · `h` ids hechas · `mx` cuántas se ven (3 a 5) · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, todo a 0) · `s` sonido |
 | `destacado.html` | `um` umbral VIP en monedas · `d` segundos en pantalla · `ti` etiqueta · `tx` agradecimiento si no escribió · `v` monedas de un regalo sin precio · `lp` quitar el mensaje actual · `pr` probar en OBS · `s` sonido |
 | `tragamonedas.html` | `g` id del regalo · `r` texto en pantalla · `rd` rodillos `[{t título, i [textos]}]` (3) · `max` tope por combo · `oc` ocultar sin giros · `pr` probar en OBS · `s` sonido |
@@ -244,6 +246,12 @@ si la URL tiene `w`, cada vez que llega una configuración nueva. Cada widget la
   reloj en una sección aparte arriba. A diferencia de la carrera, `sr` viene apagado: los regalos suman siempre hasta
   reiniciar. Al terminar el tiempo, quien va primero queda destacado y los demás atenuados. Medidas con
   `--u: min(1vw, 4.5vh)`, así cabe en cualquier tamaño de fuente.
+- **Cola de retos:** es el único caso en que los widgets **escriben** en Supabase (tabla `retos`): la ruleta y el
+  tragamonedas llaman `agregar_reto` cuando ya se vio el resultado en pantalla (con reintentos, `mandarReto` en
+  `js/juego.js`; nunca desde la vista previa), y `cola.html` lo hace con los retos por regalo (junta un combo hasta
+  3 s de silencio). La cola se lee con `leer_retos` y Realtime (canal `retos-<cola>`), y además cada 30 s. El panel
+  marca con `marcar_reto` / `vaciar_retos`, que piden el secreto. Pon la fuente una sola vez: abierta en dos
+  programas, los retos por regalo entrarían dos veces.
 - **Repertorio:** el widget cuenta las monedas de cada canción (en `live-tools:repertorio:<w>`); el panel manda cuál es
   la activa (`a`), cuáles están hechas (`h`) y el reinicio (`ro`). Los regalos solo van a la activa; al llegar a su
   meta queda «Sonando» y siguen sumando hasta que la persona pase a la siguiente. Se ven `mx` canciones a partir de la
@@ -437,6 +445,7 @@ live-tools/
 │   ├── trono.html                  widget trono      │
 │   ├── marcador.html               widget marcador   │
 │   ├── repertorio.html             widget repertorio │
+│   ├── cola.html                   widget cola retos │
 │   ├── destacado.html              widget mensaje VIP│
 │   ├── tragamonedas.html           widget tragamon.  ┘
 │   ├── css/
@@ -455,6 +464,7 @@ live-tools/
 │   │       ├── trono.css
 │   │       ├── marcador.css
 │   │       ├── repertorio.css
+│   │       ├── cola.css
 │   │       ├── destacado.css
 │   │       └── tragamonedas.css
 │   └── js/
@@ -477,6 +487,7 @@ live-tools/
 │       │   ├── trono.js            rey del LIVE: jugadas de 3 s, modos combo/total
 │       │   ├── marcador.js         puntajes por integrante y reloj arriba
 │       │   ├── repertorio.js       canciones con meta; la activa se desbloquea
+│       │   ├── cola.js             retos pendientes (Supabase + Realtime) y retos por regalo
 │       │   ├── destacado.js        mensaje del VIP: últimos mensajes, umbral, fila
 │       │   └── tragamonedas.js     tres rodillos con translateY y freno escalonado
 │       └── panel/
@@ -499,6 +510,7 @@ live-tools/
 │               ├── trono.js        modo, mínimo y "Reiniciar trono"
 │               ├── marcador.js     integrantes (color opcional) y reloj
 │               ├── repertorio.js   canciones, activar / hecha y siguiente / reiniciar
+│               ├── cola.js         cola real: hecho / deshacer / vaciar / agregar; retos por regalo
 │               ├── destacado.js    umbral, segundos, quitar y probar en OBS
 │               ├── tragamonedas.js regalo, textos de los rodillos y probar en OBS
 │               ├── actividad.js
@@ -603,6 +615,10 @@ las otras, así ninguna borra lo de las demás.
 | Tabla `widgets` | `id` (el `w` de la URL) · `secreto` · `config` (JSON, máx. 20 KB) · `actualizado` |
 | `leer_widget(id)` | Devuelve la configuración. Hay que conocer el `id`. |
 | `guardar_widget(id, secreto, config)` | La primera vez crea la fila con ese secreto; después solo deja cambiarla con el mismo secreto. Al guardar, avisa por Realtime. |
+| Tabla `retos` | Cola de retos: `cola` (id del widget cola.html) · `texto` · `usuario` · `origen` · `imagen` · `cantidad` · `hecho` (vacío = pendiente) · `creado` |
+| `agregar_reto(cola, texto, …)` | Agrega un reto. **Sin secreto** (lo llaman los widgets), pero solo a una cola que exista y con tope de 500 pendientes. Borra los hechos de hace más de 2 días. |
+| `leer_retos(cola)` | Pendientes (hasta 200, del más viejo al más nuevo), total y los 10 últimos hechos. |
+| `marcar_reto(cola, secreto, id, hecho)` · `vaciar_retos(cola, secreto)` | Marcar / deshacer y vaciar. Piden el secreto del panel. |
 
 - **RLS activo y sin políticas**, y sin permisos sobre la tabla: con la clave pública **no se puede leer ni
   listar la tabla**, solo usar las dos funciones (`security definer`).
@@ -699,6 +715,8 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
    del combo) y *Reiniciar trono* para dejarlo libre. El **marcador** se prueba igual que la carrera.
    **Repertorio**: «Regalo de 500» desbloquea la activa; luego *Hecha y siguiente*. **Mensaje VIP**: «1. Escribir en el
    chat» y «2. Regalo VIP» (aparece a los ~2,5 s). **Tragamonedas**: «Probar giro» o *Probar en OBS*.
+   **Cola de retos**: «Reto de prueba» y «Combo ×5» muestran retos de mentira en la vista previa (se van a los 15 s;
+   la cola real no se toca). Para probar la cola real, usa *+ Agregar a la cola* y luego *Hecho* / *Deshacer*.
 5. **Publicado:** después del `git push`, espera la publicación (pestaña *Actions* del repositorio) y
    recarga el panel en `https://ardiladev.github.io/live-tools/`.
 

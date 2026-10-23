@@ -1,17 +1,20 @@
 // =============================================================================
 // juego.js — Piezas que comparten los widgets de juegos (carrera, marcador, batalla, jefe,
-// bóveda, subathon, trono, repertorio)
+// bóveda, subathon, trono, repertorio; ruleta, tragamonedas y cola de retos usan la sección 6)
 //
 // Antes cada widget tenía su propia copia de estas funciones; aquí quedan una sola vez:
 //   - el modo prueba de la vista previa del panel (?prueba=1),
 //   - el guardado de la ronda en este navegador (para que una recarga de OBS no la borre),
 //   - la gracia del final del reloj (los combos del último segundo todavía cuentan),
 //   - la cifra que sube (o baja) poco a poco,
-//   - buscar a quién le corresponde un regalo (por ID y, si no, por nombre).
+//   - buscar a quién le corresponde un regalo (por ID y, si no, por nombre),
+//   - mandar un reto a la Cola de retos (con reintentos si se corta la red).
 // Secciones: 1. Modo prueba · 2. Guardado · 3. Reloj · 4. Cifras animadas · 5. Regalos
+//            6. Cola de retos
 // =============================================================================
 
 import { leerReloj } from './reloj.js';
+import { agregarReto } from './nube.js';
 
 
 // -----------------------------------------------------------------------------
@@ -110,4 +113,33 @@ export function buscarPorRegalo(lista, evento) {
   const nombre = normalizarTexto(evento.nombre);
   return lista.find((x) => x.giftId && x.giftId === id)
     || (nombre ? lista.find((x) => x.regalo && x.regalo === nombre) : undefined);
+}
+
+
+// -----------------------------------------------------------------------------
+// 6. Cola de retos
+// -----------------------------------------------------------------------------
+
+const REINTENTOS_RETO_MS = [2000, 5000, 15000, 30000]; // si falla, se reintenta (un corte corto no pierde el reto)
+
+/**
+ * Manda un reto a la cola `cola` (el `w` del widget cola.html, que el panel pone en la clave `rc`).
+ * En la vista previa (?prueba=1) no manda nada: las pruebas no llenan la cola real.
+ * `reto` = { texto, usuario, origen, imagen, cantidad }.
+ */
+export async function mandarReto(cola, reto) {
+  if (prueba || !cola || !String(reto.texto || '').trim()) return;
+  for (let intento = 0; ; intento++) {
+    try {
+      await agregarReto(cola, reto);
+      return;
+    } catch (error) {
+      // "no existe" o "llena" no se arreglan reintentando.
+      if (/no existe|llena/.test(error.message) || intento >= REINTENTOS_RETO_MS.length) {
+        console.warn(`[widget] No se pudo mandar el reto a la cola: ${error.message}`);
+        return;
+      }
+      await new Promise((resolver) => setTimeout(resolver, REINTENTOS_RETO_MS[intento]));
+    }
+  }
 }

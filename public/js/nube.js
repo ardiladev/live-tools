@@ -7,10 +7,15 @@
 //
 //   Panel  ──guardar_widget(id, secreto, config)──►  Supabase  ──Realtime "widget-<id>"──►  Widget
 //
+// Cola de retos (sección 5): al revés que la configuración, aquí los widgets SÍ escriben:
+//   Ruleta / tragamonedas / cola.html ──agregar_reto──►  Supabase  ──Realtime "retos-<cola>"──►  Cola y panel
+//   Panel ──marcar_reto / vaciar_retos (con el secreto)──►  Supabase
+//
 // La base de datos está descrita en supabase/esquema.sql. Si SUPABASE_URL o SUPABASE_CLAVE
 // están vacíos, todo funciona como antes (configuración completa en la URL).
 //
 // Secciones: 1. Proyecto · 2. Identificadores · 3. Leer y guardar · 4. Escuchar cambios
+//            5. Cola de retos
 // =============================================================================
 
 
@@ -82,9 +87,6 @@ export const guardarConfigNube = (id, secreto, config) =>
  * widgets que aún tengan el código anterior en memoria.)
  */
 export async function escucharConfigNube(id, alRecibir, alEstado = () => {}) {
-  const { createClient } = await import(LIBRERIA);
-  const cliente = createClient(SUPABASE_URL, SUPABASE_CLAVE, { auth: { persistSession: false } });
-
   async function releer() {
     try {
       const config = await leerConfigNube(id);
@@ -93,10 +95,21 @@ export async function escucharConfigNube(id, alRecibir, alEstado = () => {}) {
       alEstado(false, `No se pudo leer la configuración: ${error.message}`);
     }
   }
+  await escucharCanal(`widget-${id}`, 'config', releer, alEstado);
+}
 
-  cliente
-    .channel(`widget-${id}`, { config: { private: false } })
-    .on('broadcast', { event: 'config' }, releer)
+let cliente = null; // un solo cliente de Realtime por página (puede escuchar varios canales)
+
+/**
+ * Se suscribe al canal público `canal` y llama `releer()` al conectarse, al reconectarse y
+ * con cada aviso `evento`. Devuelve una función para dejar de escuchar.
+ */
+async function escucharCanal(canal, evento, releer, alEstado = () => {}) {
+  const { createClient } = await import(LIBRERIA);
+  cliente ??= createClient(SUPABASE_URL, SUPABASE_CLAVE, { auth: { persistSession: false } });
+  const suscripcion = cliente
+    .channel(canal, { config: { private: false } })
+    .on('broadcast', { event: evento }, releer)
     .subscribe((estado) => {
       if (estado === 'SUBSCRIBED') {
         alEstado(true, 'Cambios en vivo activos');
@@ -106,4 +119,55 @@ export async function escucharConfigNube(id, alRecibir, alEstado = () => {}) {
         alEstado(false, 'Cambios en vivo: reconectando…');
       }
     });
+  return () => cliente.removeChannel(suscripcion);
+}
+
+
+// -----------------------------------------------------------------------------
+// 5. Cola de retos (tabla `retos`, ver supabase/esquema.sql)
+// -----------------------------------------------------------------------------
+// La cola se identifica con el id del widget "Cola de retos" (su `w`). Un reto es
+// { id, texto, usuario, origen, imagen, cantidad, creado, hecho? }.
+
+/**
+ * Agrega un reto al final de la cola. Lo llaman los widgets en OBS (no hace falta el secreto).
+ * Devuelve el id del reto nuevo.
+ */
+export const agregarReto = (cola, { texto, usuario = '', origen = '', imagen = '', cantidad = 1 }) =>
+  llamar('agregar_reto', {
+    p_cola: cola, p_texto: texto, p_usuario: usuario, p_origen: origen, p_imagen: imagen, p_cantidad: cantidad,
+  });
+
+/** { pendientes: [reto…] (del más viejo al más nuevo, hasta 200), total, hechos: [los 10 últimos] } */
+export const leerRetos = (cola) => llamar('leer_retos', { p_cola: cola });
+
+/** Marca un reto como hecho (o, con `hecho = false`, lo devuelve a pendiente). Pide el secreto. */
+export const marcarReto = (cola, secreto, id, hecho = true) =>
+  llamar('marcar_reto', { p_cola: cola, p_secreto: secreto, p_id: id, p_hecho: hecho });
+
+/** Borra todos los retos de la cola (pendientes y hechos). Pide el secreto. */
+export const vaciarRetos = (cola, secreto) => llamar('vaciar_retos', { p_cola: cola, p_secreto: secreto });
+
+/**
+ * Llama `alRecibir(cola)` (lo que devuelve leerRetos) al conectarse y cada vez que la cola
+ * cambie. Además relee cada `respaldoMs`, por si se perdió un aviso. Devuelve una función
+ * para dejar de escuchar.
+ */
+export async function escucharRetos(cola, alRecibir, { alEstado = () => {}, respaldoMs = 30000 } = {}) {
+  let ultima = 0;
+  async function releer() {
+    const pedido = ++ultima;
+    try {
+      const datos = await leerRetos(cola);
+      if (pedido === ultima) alRecibir(datos); // si llegaron dos avisos seguidos, vale la última lectura
+    } catch (error) {
+      alEstado(false, `No se pudo leer la cola de retos: ${error.message}`);
+    }
+  }
+  const dejar = await escucharCanal(`retos-${cola}`, 'retos', releer, alEstado);
+  const respaldo = setInterval(releer, respaldoMs);
+  return () => {
+    clearInterval(respaldo);
+    dejar();
+  };
 }
