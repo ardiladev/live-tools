@@ -27,6 +27,7 @@
 
 import { leerConfig, iniciarWidget, sonar } from '../comun.js';
 import { leerReloj, formatoReloj } from '../reloj.js';
+import { prueba, leerGuardado, escribirGuardado, enGracia, relojCuenta, animarCifra } from '../juego.js';
 
 
 // -----------------------------------------------------------------------------
@@ -37,13 +38,9 @@ const MARGEN_MIN = 4;   // la barra nunca llega al 0 % ni al 100 %: los dos lado
 const ANCHO_ETIQUETA = 12; // % mínimo de un lado para mostrar su porcentaje
 const CONTEO_MS = 500;  // duración de la animación del número
 const COLORES = ['#D4AF37', '#C9CDD4'];
-const GRACIA_MS = 3000; // un combo se cuenta ~2 s después de enviarse: los del último segundo valen
 const AVISO_FINAL_S = 5; // segundos finales con "tic" de aviso
 const MAX_RESULTADOS = 500; // rondas que se recuerdan para contar victorias
 const ESTADOS = { listo: 'Lista', corre: 'En juego', pausa: 'En pausa', fin: 'Final' };
-
-// En la vista previa del panel (?prueba=1) los puntos no se guardan.
-const prueba = new URLSearchParams(location.search).get('prueba') === '1';
 
 let equipos = [];
 let sonido = true;
@@ -110,45 +107,25 @@ const CLAVE_PUNTOS = 'live-tools:batalla:';
 const CLAVE_VICTORIAS = 'live-tools:batalla-victorias:';
 
 function restaurarPuntos() {
-  if (prueba) return;
-  try {
-    const guardado = JSON.parse(localStorage.getItem(claveGuardado) || 'null');
-    if (guardado?.ro !== ronda || !Array.isArray(guardado.p)) return;
-    guardado.p.slice(0, 2).forEach((valor, i) => { puntos[i] = Math.max(0, Number(valor) || 0); });
-  } catch {
-    // Dato dañado o almacenamiento bloqueado: la batalla empieza en 0.
-  }
+  const guardado = leerGuardado(claveGuardado);
+  if (guardado?.ro !== ronda || !Array.isArray(guardado.p)) return; // la batalla empieza en 0
+  guardado.p.slice(0, 2).forEach((valor, i) => { puntos[i] = Math.max(0, Number(valor) || 0); });
 }
 
 function guardarPuntos() {
-  if (prueba) return;
-  try {
-    localStorage.setItem(claveGuardado, JSON.stringify({ ro: ronda, p: puntos }));
-  } catch {
-    // Sin almacenamiento: el widget sigue contando, solo que una recarga empezaría de cero.
-  }
+  escribirGuardado(claveGuardado, { ro: ronda, p: puntos });
 }
 
 function restaurarVictorias() {
-  if (prueba) return;
-  try {
-    const guardado = JSON.parse(localStorage.getItem(claveVictorias) || 'null');
-    if (guardado?.rv !== rondaVictorias || !Array.isArray(guardado.res)) return;
-    resultados = guardado.res
-      .filter((r) => Array.isArray(r) && [0, 1, -1].includes(r[1]))
-      .slice(-MAX_RESULTADOS);
-  } catch {
-    // Dato dañado o almacenamiento bloqueado: las victorias empiezan en 0.
-  }
+  const guardado = leerGuardado(claveVictorias);
+  if (guardado?.rv !== rondaVictorias || !Array.isArray(guardado.res)) return; // las victorias empiezan en 0
+  resultados = guardado.res
+    .filter((r) => Array.isArray(r) && [0, 1, -1].includes(r[1]))
+    .slice(-MAX_RESULTADOS);
 }
 
 function guardarVictorias() {
-  if (prueba) return;
-  try {
-    localStorage.setItem(claveVictorias, JSON.stringify({ rv: rondaVictorias, res: resultados }));
-  } catch {
-    // Sin almacenamiento: el widget sigue, solo que una recarga perdería las victorias.
-  }
+  escribirGuardado(claveVictorias, { rv: rondaVictorias, res: resultados });
 }
 
 
@@ -232,21 +209,7 @@ const quienGana = () => (puntos[0] === puntos[1] ? null : puntos[0] > puntos[1] 
 
 /** Anima el número de un lado hasta `hasta` (requestAnimationFrame; en OBS siempre corre). */
 function contar(lado, hasta, animar) {
-  cancelAnimationFrame(lado.animacion);
-  const desde = lado.mostrado;
-  lado.mostrado = hasta;
-  if (!animar || desde === hasta) {
-    lado.puntos.textContent = formato.format(hasta);
-    return;
-  }
-  const inicio = performance.now();
-  const paso = (ahora) => {
-    const avance = Math.min(1, (ahora - inicio) / CONTEO_MS);
-    const suave = 1 - (1 - avance) ** 3;
-    lado.puntos.textContent = formato.format(Math.round(desde + (hasta - desde) * suave));
-    if (avance < 1) lado.animacion = requestAnimationFrame(paso);
-  };
-  lado.animacion = requestAnimationFrame(paso);
+  animarCifra(lado, hasta, { animar, ms: CONTEO_MS, escribir: (valor) => { lado.puntos.textContent = formato.format(valor); } });
 }
 
 /** "+25" que sube desde el equipo y desaparece, y un golpe en su avatar. */
@@ -309,7 +272,7 @@ function pintarVictorias(nueva = null) {
  */
 function cerrarRonda() {
   if (!conReloj || leerReloj(reloj).estado !== 'fin') return;
-  if (Date.now() - (Number(reloj.fin) || 0) < GRACIA_MS) return;
+  if (enGracia(reloj)) return;
   if (resultados.some(([r]) => r === ronda)) return;
   const ganador = quienGana();
   resultados = [...resultados, [ronda, ganador ?? -1]].slice(-MAX_RESULTADOS);
@@ -350,10 +313,7 @@ function pintarReloj() {
 
 /** ¿Cuenta un regalo que llega ahora? Con cronómetro, solo con el reloj en marcha (y la gracia final). */
 function cuentaAhora() {
-  if (prueba || !conReloj) return true;
-  const { estado } = leerReloj(reloj);
-  if (estado === 'corre') return true;
-  return estado === 'fin' && Date.now() - (Number(reloj.fin) || 0) < GRACIA_MS;
+  return prueba || !conReloj || relojCuenta(reloj);
 }
 
 function alRegalo(evento) {

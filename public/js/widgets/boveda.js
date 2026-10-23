@@ -19,6 +19,7 @@
 // =============================================================================
 
 import { leerConfig, iniciarWidget, sonar } from '../comun.js';
+import { leerGuardado, escribirGuardado, animarCifra } from '../juego.js';
 
 
 // -----------------------------------------------------------------------------
@@ -26,9 +27,6 @@ import { leerConfig, iniciarWidget, sonar } from '../comun.js';
 // -----------------------------------------------------------------------------
 
 const CONTEO_MS = 600; // duración de la animación de las cifras
-
-// En la vista previa del panel (?prueba=1) el progreso no se guarda.
-const prueba = new URLSearchParams(location.search).get('prueba') === '1';
 
 let titulo = 'Bóveda dorada';
 let pista = 'Premio secreto';
@@ -78,24 +76,14 @@ function aplicarConfig(cfg) {
 const CLAVE_GUARDADO = 'live-tools:boveda:';
 
 function restaurar() {
-  if (prueba) return;
-  try {
-    const guardado = JSON.parse(localStorage.getItem(claveGuardado) || 'null');
-    if (guardado?.ro !== ronda) return;
-    monedas = Math.max(0, Number(guardado.m) || 0);
-    abierta = guardado.a === 1;
-  } catch {
-    // Dato dañado o almacenamiento bloqueado: la bóveda empieza cerrada y en 0.
-  }
+  const guardado = leerGuardado(claveGuardado);
+  if (guardado?.ro !== ronda) return; // la bóveda empieza cerrada y en 0
+  monedas = Math.max(0, Number(guardado.m) || 0);
+  abierta = guardado.a === 1;
 }
 
 function guardar() {
-  if (prueba) return;
-  try {
-    localStorage.setItem(claveGuardado, JSON.stringify({ ro: ronda, m: monedas, a: abierta ? 1 : 0 }));
-  } catch {
-    // Sin almacenamiento: el widget sigue, solo que una recarga empezaría de cero.
-  }
+  escribirGuardado(claveGuardado, { ro: ronda, m: monedas, a: abierta ? 1 : 0 });
 }
 
 
@@ -105,8 +93,7 @@ function guardar() {
 
 const $ = (id) => document.getElementById(id);
 const formato = new Intl.NumberFormat('es-CO');
-let mostradas = 0;
-let animacion = 0;
+const cifra = { mostrado: 0, animacion: 0 };
 
 /** Barra, porcentaje y "640 / 1.000 monedas". Con `animar`, las cifras suben poco a poco. */
 function pintarProgreso(animar = true) {
@@ -114,21 +101,8 @@ function pintarProgreso(animar = true) {
   $('relleno').style.width = `${porcentaje}%`;
   $('porcentaje').textContent = `${porcentaje}%`;
 
-  cancelAnimationFrame(animacion);
-  const desde = mostradas;
-  mostradas = monedas;
   const escribir = (valor) => { $('monedas').textContent = `${formato.format(valor)} / ${formato.format(meta)} monedas`; };
-  if (!animar || desde === monedas) {
-    escribir(monedas);
-    return;
-  }
-  const inicio = performance.now();
-  const paso = (ahora) => {
-    const avance = Math.min(1, (ahora - inicio) / CONTEO_MS);
-    escribir(Math.round(desde + (monedas - desde) * (1 - (1 - avance) ** 3)));
-    if (avance < 1) animacion = requestAnimationFrame(paso);
-  };
-  animacion = requestAnimationFrame(paso);
+  animarCifra(cifra, monedas, { animar, ms: CONTEO_MS, escribir });
 }
 
 /** Cerrada o abierta. El secreto solo se escribe en la página cuando está abierta. */

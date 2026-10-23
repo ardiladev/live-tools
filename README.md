@@ -463,6 +463,8 @@ live-tools/
 │       ├── nube.js                 Supabase: proyecto, leer/guardar configuración, Realtime
 │       ├── tema.js                 estilo de los widgets: presets, variables CSS, colores de la ruleta
 │       ├── reloj.js                reloj por rondas (hora de término): carrera, marcador, jefe y sus vistas (el subathon solo usa formatoReloj)
+│       ├── juego.js                piezas comunes de los juegos: modo prueba, guardado de la ronda, gracia del reloj,
+│       │                           cifras animadas y regalo → integrante (por ID o por nombre)
 │       ├── widgets/
 │       │   ├── ruleta.js           dibujo, giro, cola y sorteo de premios
 │       │   ├── meta.js
@@ -534,6 +536,8 @@ Ejemplo: un widget **“Último seguidor”**.
      ```
      `alEvento` recibe los eventos reales del LIVE **y** los de prueba del panel. `alConfig` debe poder
      llamarse muchas veces: aplica la configuración nueva sin perder el estado del widget.
+     Si es un juego que guarda su ronda o anima cifras, usa `js/juego.js` (`leerGuardado` / `escribirGuardado`,
+     `relojCuenta`, `animarCifra`, `buscarPorRegalo`) en vez de copiar esas funciones de otro widget.
 2. **La vista del panel**: `public/js/panel/vistas/ultimo.js`. Copia `vistas/alertas.js`:
    - al cargar el módulo, `sincronizar.registrar('ultimo', { config, validar })` (así los cambios en vivo
      funcionan aunque la vista no esté abierta);

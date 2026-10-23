@@ -24,6 +24,7 @@
 
 import { leerConfig, iniciarWidget, sonar } from '../comun.js';
 import { formatoReloj } from '../reloj.js';
+import { prueba, leerGuardado, escribirGuardado } from '../juego.js';
 
 
 // -----------------------------------------------------------------------------
@@ -33,9 +34,6 @@ import { formatoReloj } from '../reloj.js';
 const URGENTE_MS = 60000;      // por debajo de 1 minuto, el reloj se pone en color de alerta
 const MIN_SUMA_VISIBLE_MS = 1000; // sumas menores (unos pocos likes) no muestran "+0:01"
 const ESPERA_SONIDO_MS = 1000; // como mucho un sonido de suma por segundo
-
-// En la vista previa del panel (?prueba=1) lo sumado no se guarda.
-const prueba = new URLSearchParams(location.search).get('prueba') === '1';
 
 let titulo = '';
 let reloj = { e: 'listo', d: 3600 };
@@ -109,24 +107,14 @@ function fase() {
 const CLAVE_GUARDADO = 'live-tools:subathon:';
 
 function restaurar() {
-  if (prueba) return;
-  try {
-    const guardado = JSON.parse(localStorage.getItem(claveGuardado) || 'null');
-    if (guardado?.ro !== ronda) return;
-    extraMs = Number(guardado.x) || 0;
-    exVisto = Math.max(0, Number(guardado.ev) || 0);
-  } catch {
-    // Dato dañado o almacenamiento bloqueado: la ronda empieza sin tiempo sumado.
-  }
+  const guardado = leerGuardado(claveGuardado);
+  if (guardado?.ro !== ronda) return; // la ronda empieza sin tiempo sumado
+  extraMs = Number(guardado.x) || 0;
+  exVisto = Math.max(0, Number(guardado.ev) || 0);
 }
 
 function guardar() {
-  if (prueba) return;
-  try {
-    localStorage.setItem(claveGuardado, JSON.stringify({ ro: ronda, x: extraMs, ev: exVisto }));
-  } catch {
-    // Sin almacenamiento: el widget sigue, solo que una recarga perdería lo sumado.
-  }
+  escribirGuardado(claveGuardado, { ro: ronda, x: extraMs, ev: exVisto });
 }
 
 

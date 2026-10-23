@@ -19,6 +19,7 @@
 // =============================================================================
 
 import { leerConfig, iniciarWidget, sonar } from '../comun.js';
+import { leerGuardado, escribirGuardado, animarCifra } from '../juego.js';
 
 
 // -----------------------------------------------------------------------------
@@ -27,9 +28,6 @@ import { leerConfig, iniciarWidget, sonar } from '../comun.js';
 
 const MAX_CANCIONES = 10;
 const CONTEO_MS = 500; // duración de la animación de las cifras
-
-// En la vista previa del panel (?prueba=1) no se guarda nada.
-const prueba = new URLSearchParams(location.search).get('prueba') === '1';
 
 let titulo = '';
 let canciones = [];       // [{ id, nombre, meta }]
@@ -82,23 +80,13 @@ function aplicarConfig(cfg) {
 const CLAVE_GUARDADO = 'live-tools:repertorio:';
 
 function restaurar() {
-  if (prueba) return;
-  try {
-    const guardado = JSON.parse(localStorage.getItem(claveGuardado) || 'null');
-    if (guardado?.ro !== ronda) return;
-    for (const [id, valor] of Object.entries(guardado.p || {})) monedas.set(id, Math.max(0, Number(valor) || 0));
-  } catch {
-    // Dato dañado o almacenamiento bloqueado: la lista empieza en 0.
-  }
+  const guardado = leerGuardado(claveGuardado);
+  if (guardado?.ro !== ronda) return; // nada guardado de esta ronda: la lista empieza en 0
+  for (const [id, valor] of Object.entries(guardado.p || {})) monedas.set(id, Math.max(0, Number(valor) || 0));
 }
 
 function guardar() {
-  if (prueba) return;
-  try {
-    localStorage.setItem(claveGuardado, JSON.stringify({ ro: ronda, p: Object.fromEntries(monedas) }));
-  } catch {
-    // Sin almacenamiento: el widget sigue, solo que una recarga empezaría de cero.
-  }
+  escribirGuardado(claveGuardado, { ro: ronda, p: Object.fromEntries(monedas) });
 }
 
 
@@ -110,7 +98,7 @@ function guardar() {
 
 const $ = (id) => document.getElementById(id);
 const formato = new Intl.NumberFormat('es-CO');
-const tarjetas = new Map(); // id → { nodo, partes, mostradas, animacion }
+const tarjetas = new Map(); // id → { nodo, partes, mostrado, animacion }
 
 const desbloqueada = (c) => (monedas.get(c.id) || 0) >= c.meta;
 
@@ -134,7 +122,7 @@ function crearTarjeta() {
   return {
     nodo,
     partes: { numero: parte('numero'), nombre: parte('nombre'), estado: parte('estado'), relleno: parte('relleno'), cifras: parte('cifras') },
-    mostradas: 0,
+    mostrado: 0,
     animacion: 0,
   };
 }
@@ -179,21 +167,8 @@ function pintarCancion(c, animar = true) {
 }
 
 function contar(t, c, hasta, animar) {
-  cancelAnimationFrame(t.animacion);
-  const desde = t.mostradas;
-  t.mostradas = hasta;
   const escribir = (valor) => { t.partes.cifras.textContent = `${formato.format(valor)} / ${formato.format(c.meta)}`; };
-  if (!animar || desde === hasta) {
-    escribir(hasta);
-    return;
-  }
-  const inicio = performance.now();
-  const paso = (ahora) => {
-    const avance = Math.min(1, (ahora - inicio) / CONTEO_MS);
-    escribir(Math.round(desde + (hasta - desde) * (1 - (1 - avance) ** 3)));
-    if (avance < 1) t.animacion = requestAnimationFrame(paso);
-  };
-  t.animacion = requestAnimationFrame(paso);
+  animarCifra(t, hasta, { animar, ms: CONTEO_MS, escribir });
 }
 
 /** Destello al recibir un regalo; uno más largo al desbloquearse. */

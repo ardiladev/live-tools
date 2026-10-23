@@ -23,6 +23,7 @@
 // =============================================================================
 
 import { leerConfig, iniciarWidget, sonar } from '../comun.js';
+import { leerGuardado, escribirGuardado, animarCifra } from '../juego.js';
 
 
 // -----------------------------------------------------------------------------
@@ -32,9 +33,6 @@ import { leerConfig, iniciarWidget, sonar } from '../comun.js';
 const ESPERA_JUGADA_MS = 3000; // silencio tras el que una jugada (combo) se da por terminada
 const SALIDA_MS = 450;         // duración de la salida del rey anterior
 const CONTEO_MS = 600;         // duración de la animación de las monedas
-
-// En la vista previa del panel (?prueba=1) no se guarda nada.
-const prueba = new URLSearchParams(location.search).get('prueba') === '1';
 
 let titulo = 'Áurea VIP';
 let modo = 'combo';
@@ -89,25 +87,15 @@ function aplicarConfig(cfg) {
 const CLAVE_GUARDADO = 'live-tools:trono:';
 
 function restaurar() {
-  if (prueba) return;
-  try {
-    const guardado = JSON.parse(localStorage.getItem(claveGuardado) || 'null');
-    if (guardado?.ro !== ronda || guardado.m !== modo) return;
-    rey = guardado.rey?.usuario ? { usuario: String(guardado.rey.usuario), monedas: Number(guardado.rey.monedas) || 0 } : null;
-    anterior = String(guardado.ant || '');
-    totales = guardado.t && typeof guardado.t === 'object' ? guardado.t : {};
-  } catch {
-    // Dato dañado o almacenamiento bloqueado: el trono empieza libre.
-  }
+  const guardado = leerGuardado(claveGuardado);
+  if (guardado?.ro !== ronda || guardado.m !== modo) return; // el trono empieza libre
+  rey = guardado.rey?.usuario ? { usuario: String(guardado.rey.usuario), monedas: Number(guardado.rey.monedas) || 0 } : null;
+  anterior = String(guardado.ant || '');
+  totales = guardado.t && typeof guardado.t === 'object' ? guardado.t : {};
 }
 
 function guardar() {
-  if (prueba) return;
-  try {
-    localStorage.setItem(claveGuardado, JSON.stringify({ ro: ronda, m: modo, rey, ant: anterior, t: totales }));
-  } catch {
-    // Sin almacenamiento: el widget sigue, solo que una recarga dejaría el trono libre.
-  }
+  escribirGuardado(claveGuardado, { ro: ronda, m: modo, rey, ant: anterior, t: totales });
 }
 
 
@@ -117,8 +105,7 @@ function guardar() {
 
 const $ = (id) => document.getElementById(id);
 const formato = new Intl.NumberFormat('es-CO');
-let mostradas = 0;
-let animacion = 0;
+const cifra = { mostrado: 0, animacion: 0 };
 
 /** El rey actual (o el trono libre), sin transición. */
 function pintarRey() {
@@ -144,21 +131,7 @@ function pintarLinea() {
 
 /** Las monedas suben poco a poco hasta `hasta`. */
 function contar(hasta, animar = true) {
-  cancelAnimationFrame(animacion);
-  const desde = mostradas;
-  mostradas = hasta;
-  const escribir = (valor) => { $('monedas').textContent = formato.format(valor); };
-  if (!animar || desde === hasta) {
-    escribir(hasta);
-    return;
-  }
-  const inicio = performance.now();
-  const paso = (ahora) => {
-    const avance = Math.min(1, (ahora - inicio) / CONTEO_MS);
-    escribir(Math.round(desde + (hasta - desde) * (1 - (1 - avance) ** 3)));
-    if (avance < 1) animacion = requestAnimationFrame(paso);
-  };
-  animacion = requestAnimationFrame(paso);
+  animarCifra(cifra, hasta, { animar, ms: CONTEO_MS, escribir: (valor) => { $('monedas').textContent = formato.format(valor); } });
 }
 
 let transicion = 0; // salida del rey anterior en curso
@@ -191,7 +164,7 @@ function coronar(usuario, monedas) {
   transicion = setTimeout(() => {
     transicion = 0;
     caja.classList.remove('saliendo');
-    mostradas = 0;
+    cifra.mostrado = 0;
     pintarRey();
     if (rey) contar(rey.monedas);
     void caja.offsetWidth; // reinicia la animación

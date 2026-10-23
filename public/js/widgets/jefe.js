@@ -19,18 +19,15 @@
 
 import { leerConfig, iniciarWidget, sonar } from '../comun.js';
 import { leerReloj, formatoReloj } from '../reloj.js';
+import { prueba, leerGuardado, escribirGuardado, relojCuenta, animarCifra } from '../juego.js';
 
 
 // -----------------------------------------------------------------------------
 // 1. Configuración
 // -----------------------------------------------------------------------------
 
-const GRACIA_MS = 3000;     // un combo se cuenta ~2 s después de enviarse: los del último segundo valen
 const CONTEO_MS = 450;      // duración de la animación de la cifra
 const AVISO_FINAL_S = 5;    // segundos finales con "tic" de aviso
-
-// En la vista previa del panel (?prueba=1) los ataques de prueba cuentan siempre y no se guardan.
-const prueba = new URLSearchParams(location.search).get('prueba') === '1';
 
 let nombre = 'Jefe';
 let vidaTotal = 10000;
@@ -83,24 +80,14 @@ function aplicarConfig(cfg) {
 const CLAVE_DANO = 'live-tools:jefe:';
 
 function restaurarDano() {
-  if (prueba) return;
-  try {
-    const guardado = JSON.parse(localStorage.getItem(claveGuardado) || 'null');
-    if (guardado?.ro !== ronda) return;
-    dano = Math.max(0, Number(guardado.d) || 0);
-    restanteVictoria = guardado.rv ?? null;
-  } catch {
-    // Dato dañado o almacenamiento bloqueado: el jefe empieza con la vida llena.
-  }
+  const guardado = leerGuardado(claveGuardado);
+  if (guardado?.ro !== ronda) return; // el jefe empieza con la vida llena
+  dano = Math.max(0, Number(guardado.d) || 0);
+  restanteVictoria = guardado.rv ?? null;
 }
 
 function guardarDano() {
-  if (prueba) return;
-  try {
-    localStorage.setItem(claveGuardado, JSON.stringify({ ro: ronda, d: dano, rv: restanteVictoria }));
-  } catch {
-    // Sin almacenamiento: el widget sigue, solo que una recarga empezaría de cero.
-  }
+  escribirGuardado(claveGuardado, { ro: ronda, d: dano, rv: restanteVictoria });
 }
 
 
@@ -113,8 +100,7 @@ const formato = new Intl.NumberFormat('es-CO');
 const vida = () => Math.max(0, vidaTotal - dano);
 const vencido = () => vida() === 0;
 
-let vidaMostrada = null;
-let animacion = 0;
+const cifra = { mostrado: null, animacion: 0 }; // la primera vez se escribe sin animar
 
 /** Barra, rastro y cifra "7.450 / 10.000". Con `animar`, la cifra baja poco a poco. */
 function pintarVida(animar = true) {
@@ -123,21 +109,8 @@ function pintarVida(animar = true) {
   $('vida').style.width = `${porcentaje}%`;
   $('rastro').style.width = `${porcentaje}%`;
 
-  cancelAnimationFrame(animacion);
-  const desde = vidaMostrada ?? actual;
-  vidaMostrada = actual;
   const escribir = (valor) => { $('cifra').textContent = `${formato.format(valor)} / ${formato.format(vidaTotal)}`; };
-  if (!animar || desde === actual) {
-    escribir(actual);
-    return;
-  }
-  const inicio = performance.now();
-  const paso = (ahora) => {
-    const avance = Math.min(1, (ahora - inicio) / CONTEO_MS);
-    escribir(Math.round(desde + (actual - desde) * (1 - (1 - avance) ** 3)));
-    if (avance < 1) animacion = requestAnimationFrame(paso);
-  };
-  animacion = requestAnimationFrame(paso);
+  animarCifra(cifra, actual, { animar, ms: CONTEO_MS, escribir });
 }
 
 let estadoAnterior = null;
@@ -175,10 +148,7 @@ function pintarReloj() {
 /** ¿Hace daño un ataque que llega ahora? */
 function cuentaAhora() {
   if (vencido()) return false;
-  if (prueba || !soloConReloj) return true;
-  const { estado } = leerReloj(reloj);
-  if (estado === 'corre') return true;
-  return estado === 'fin' && Date.now() - (Number(reloj.fin) || 0) < GRACIA_MS;
+  return prueba || !soloConReloj || relojCuenta(reloj);
 }
 
 /** Daño de un evento: likes × dl, regalos (precio × cantidad) × dr. */

@@ -20,6 +20,7 @@
 
 import { leerConfig, iniciarWidget, sonar } from '../comun.js';
 import { leerReloj, formatoReloj } from '../reloj.js';
+import { prueba, leerGuardado, escribirGuardado, relojCuenta, animarCifra, normalizarTexto, buscarPorRegalo } from '../juego.js';
 
 
 // -----------------------------------------------------------------------------
@@ -27,13 +28,9 @@ import { leerReloj, formatoReloj } from '../reloj.js';
 // -----------------------------------------------------------------------------
 
 const MAX_INTEGRANTES = 6;
-const GRACIA_MS = 3000;          // un combo se cuenta ~2 s después de enviarse: los del último segundo valen
 const CONTEO_MS = 700;           // duración de la animación del número
 const AVISO_FINAL_S = 5;         // segundos finales con "tic" de aviso
 const ESTADOS = { listo: 'Lista', corre: 'En juego', pausa: 'En pausa', fin: 'Final' };
-
-// En la vista previa del panel (?prueba=1) los regalos de prueba cuentan siempre.
-const prueba = new URLSearchParams(location.search).get('prueba') === '1';
 
 let integrantes = []; // [{ id, nombre, color, giftId, regalo, valor, meta, imagen }]
 let reloj = { e: 'listo', d: 300 };
@@ -41,8 +38,6 @@ let ronda = null;
 let soloConReloj = true;
 let sonido = true;
 let claveGuardado = '';
-
-const normalizarTexto = (texto) => String(texto || '').trim().toLowerCase();
 
 function normalizarIntegrante(j, i) {
   return {
@@ -87,23 +82,13 @@ const CLAVE_PUNTOS = 'live-tools:carrera:';
 const puntos = new Map(); // id del integrante → monedas en esta ronda
 
 function restaurarPuntos() {
-  if (prueba) return;
-  try {
-    const guardado = JSON.parse(localStorage.getItem(claveGuardado) || 'null');
-    if (guardado?.ro !== ronda) return;
-    for (const [id, valor] of Object.entries(guardado.p || {})) puntos.set(id, Math.max(0, Number(valor) || 0));
-  } catch {
-    // Dato dañado o almacenamiento bloqueado: la ronda empieza en 0.
-  }
+  const guardado = leerGuardado(claveGuardado);
+  if (guardado?.ro !== ronda) return; // nada guardado de esta ronda: la ronda empieza en 0
+  for (const [id, valor] of Object.entries(guardado.p || {})) puntos.set(id, Math.max(0, Number(valor) || 0));
 }
 
 function guardarPuntos() {
-  if (prueba) return;
-  try {
-    localStorage.setItem(claveGuardado, JSON.stringify({ ro: ronda, p: Object.fromEntries(puntos) }));
-  } catch {
-    // Sin almacenamiento: el widget sigue contando, solo que una recarga empezaría de cero.
-  }
+  escribirGuardado(claveGuardado, { ro: ronda, p: Object.fromEntries(puntos) });
 }
 
 
@@ -176,22 +161,8 @@ function pintarProgreso(j, animar = true) {
 }
 
 /** Anima el número de `t` hasta `hasta` (requestAnimationFrame; en OBS siempre corre). */
-function contar(t, hasta, animar) {
-  cancelAnimationFrame(t.animacion);
-  const desde = t.mostrado;
-  t.mostrado = hasta;
-  if (!animar || desde === hasta) {
-    t.partes.puntos.textContent = formato.format(hasta);
-    return;
-  }
-  const inicio = performance.now();
-  const paso = (ahora) => {
-    const avance = Math.min(1, (ahora - inicio) / CONTEO_MS);
-    const suave = 1 - (1 - avance) ** 3;
-    t.partes.puntos.textContent = formato.format(Math.round(desde + (hasta - desde) * suave));
-    if (avance < 1) t.animacion = requestAnimationFrame(paso);
-  };
-  t.animacion = requestAnimationFrame(paso);
+function contar(t, hasta, animar = true) {
+  animarCifra(t, hasta, { animar, ms: CONTEO_MS, escribir: (valor) => { t.partes.puntos.textContent = formato.format(valor); } });
 }
 
 /** Corona para quien va primero (si hay empate, para todos los que empatan). */
@@ -267,19 +238,11 @@ function pintarGanador(terminado) {
 
 /** ¿Cuenta un regalo que llega ahora? Con el reloj detenido no (salvo que se desactive la opción). */
 function cuentaAhora() {
-  if (prueba || !soloConReloj) return true;
-  const { estado } = leerReloj(reloj);
-  if (estado === 'corre') return true;
-  return estado === 'fin' && Date.now() - (Number(reloj.fin) || 0) < GRACIA_MS;
+  return prueba || !soloConReloj || relojCuenta(reloj);
 }
 
 /** El integrante de un regalo: primero por ID; si ninguno coincide, por nombre del regalo. */
-function integranteDe(evento) {
-  const id = String(evento.giftId ?? '');
-  const nombre = normalizarTexto(evento.nombre);
-  return integrantes.find((j) => j.giftId && j.giftId === id)
-    || (nombre ? integrantes.find((j) => j.regalo && j.regalo === nombre) : undefined);
-}
+const integranteDe = (evento) => buscarPorRegalo(integrantes, evento);
 
 function alRegalo(evento) {
   const j = integranteDe(evento);
