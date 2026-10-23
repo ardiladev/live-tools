@@ -4,6 +4,7 @@
 // Configuración (la genera el panel; llega en #c=… o, con cambios en vivo, desde Supabase):
 //   u, k = usuario y clave · g = id del regalo · r = texto en pantalla
 //   gpr = giros por regalo · max = tope por combo · p = premios [[texto, peso, cola?], …]
+//   uc = un solo giro por combo (1/0): 5 rosas = 1 giro y el premio sale «×5» (en pantalla y en la cola)
 //   rc = id de la Cola de retos a la que van los premios (vacío = no se mandan) · rcn = origen ("Ruleta")
 //        (un premio con tercer valor 0, p. ej. "Nada", no va a la cola)
 //   oc = ocultar cuando no hay giros (1/0) · so = sonido de clic (1/0)
@@ -63,6 +64,7 @@ const ajustes = {
   textoRegalo: 'una rosa 🌹',
   imagen: '',              // miniatura del regalo que se muestra en el aviso
   girosPorRegalo: 1,
+  unGiroPorCombo: false,   // uc: un combo = un giro, con el premio ×N
   maxGiros: 20,
   ocultar: params.get('ocultar') === '1',
   sonido: params.get('sonido') !== '0',
@@ -413,16 +415,17 @@ async function procesar() {
     const giro = pendientes.shift();
     actualizarCola();
     aviso.classList.remove('indicando');
-    mostrarAviso(`${giro.usuario} envió ${giro.regalo || 'una rosa 🌹'}`, giro.imagen);
+    const veces = giro.cantidad > 1 ? ` ×${giro.cantidad}` : '';
+    mostrarAviso(`${giro.usuario} envió ${giro.regalo || 'una rosa 🌹'}${veces}`, giro.imagen);
     resultado.classList.remove('visible');
 
     await girarHacia(giro.indice);
 
-    resultado.textContent = premios[giro.indice]?.texto ?? giro.premio;
+    resultado.textContent = `${premios[giro.indice]?.texto ?? giro.premio}${veces}`;
     resultado.classList.add('visible');
     // Ya anunciado en pantalla, el premio pasa a la Cola de retos (si está activada).
     if (ajustes.cola && giro.aCola) {
-      mandarReto(ajustes.cola, { texto: giro.premio, usuario: giro.usuario, origen: ajustes.origen, imagen: giro.imagen });
+      mandarReto(ajustes.cola, { texto: giro.premio, usuario: giro.usuario, origen: ajustes.origen, imagen: giro.imagen, cantidad: giro.cantidad });
     }
     await esperar(PAUSA_RESULTADO_MS);
   }
@@ -477,6 +480,7 @@ function aplicarConfig(cfg) {
     textoRegalo: String(cfg.r || 'una rosa 🌹'),
     imagen: String(cfg.img || ''),
     girosPorRegalo: Math.max(1, Number(cfg.gpr) || 1),
+    unGiroPorCombo: cfg.uc === 1,
     maxGiros: Math.max(1, Number(cfg.max) || 20),
     cola: String(cfg.rc || ''),
     origen: String(cfg.rcn || 'Ruleta').slice(0, 40),
@@ -502,10 +506,12 @@ function alEvento(evento) {
   // Si el panel no tenía la miniatura del regalo y TikTok la manda, se usa desde ya.
   if (evento.imagen && !ajustes.imagen) imagenAprendida = { giftId: ajustes.giftId, imagen: evento.imagen };
   const imagen = imagenRegalo();
-  for (let i = 0; i < giros; i++) {
+  // Con "un solo giro por combo", todo el combo es un giro y el premio sale ×N.
+  const [vueltas, cantidad] = ajustes.unGiroPorCombo ? [1, giros] : [giros, 1];
+  for (let i = 0; i < vueltas; i++) {
     const indice = elegirPremio();
     const { texto, aCola } = premios[indice];
-    encolar({ usuario: evento.usuario, indice, premio: texto, aCola, regalo: ajustes.textoRegalo, imagen });
+    encolar({ usuario: evento.usuario, indice, premio: texto, aCola, cantidad, regalo: ajustes.textoRegalo, imagen });
   }
 }
 

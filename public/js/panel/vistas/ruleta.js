@@ -42,6 +42,7 @@ const TIPOS = {
       indicar: true,           // letrero en pantalla: "Envía una rosa para girar"
       sonido: true,
       aCola: false,            // mandar los premios a la Cola de retos
+      unGiro: false,           // un solo giro por combo: el premio sale ×N
       premios: [
         { texto: 'Baile sencillo', peso: 2 },
         { texto: 'Saludo especial', peso: 3 },
@@ -63,6 +64,7 @@ const TIPOS = {
       indicar: true,
       sonido: true,
       aCola: false,
+      unGiro: false,
       premios: [
         { texto: 'Reto que elijas', peso: 2 },
         { texto: 'Mención en el próximo video', peso: 1 },
@@ -105,6 +107,7 @@ function crearVista(tipo) {
         in: cfg.indicar ? 1 : 0,
         img: almacen.regalos()[String(cfg.giftId).trim()]?.imagen || '', // la imagen sale del Buscador de regalos
         rc: cfg.aCola ? idCola() : '',
+        uc: cfg.unGiro ? 1 : 0,
         rcn: titulo,
       };
     },
@@ -148,6 +151,7 @@ function crearVista(tipo) {
               if (v) asegurarCola();
             },
           }),
+          casilla('Un solo giro por combo (5 rosas = 1 giro y el premio sale «×5»)', { marcada: cfg.unGiro, alCambiar: (v) => { cfg.unGiro = v; cambio(); } }),
           casilla('Mostrar a los espectadores con qué regalo se gira', { marcada: cfg.indicar, alCambiar: (v) => { cfg.indicar = v; cambio(); } }),
           casilla('Ocultar la ruleta cuando no hay giros', { marcada: cfg.ocultar, alCambiar: (v) => { cfg.ocultar = v; cambio(); } }),
           casilla('Sonido de clic', { marcada: cfg.sonido, alCambiar: (v) => { cfg.sonido = v; cambio(); } }),
