@@ -38,9 +38,7 @@ const POR_DEFECTO = {
   usuario: true,          // mostrar quién lo pidió
   ocultar: false,         // ocultar el widget cuando no hay retos
   sonido: true,
-  porRegalo: [            // retos por regalo: { giftId, texto }
-    { giftId: '5655', texto: '10 sentadillas' },
-  ],
+  porRegalo: [],          // retos por regalo: { giftId, texto } (vacío: cada uno decide sus regalos)
 };
 
 
