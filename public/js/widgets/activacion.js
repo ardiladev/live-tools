@@ -1,28 +1,30 @@
 // =============================================================================
-// activacion.js — Lógica del widget "Barras de activación" (activacion.html)
+// activacion.js — Lógica del widget "Barra de activación" (activacion.html)
 //
-// De 2 a 4 barras, cada una con su regalo activador. Las reglas:
-//   - Quien envía el activador de una barra queda unido a ella (ese regalo ya le suma).
-//   - Desde ahí, CUALQUIER regalo de esa persona suma sus monedas a su barra.
-//   - Si envía el activador de otra barra, se cambia: lo que ya sumó se queda donde estaba.
-//   - Los regalos de quien no se ha unido a ninguna barra no suman.
-// Las monedas solo suman con el reloj en marcha (y unos segundos de gracia al final, por los
-// combos que se cuentan tarde); unirse sí se puede antes de iniciar. Al terminar, gana la barra
-// con más monedas. La barra que va primera se ve llena y las demás en proporción a ella.
+// Una sola barra repartida en 2 a 4 cuadrantes, uno por equipo. Cada equipo tiene su regalo
+// activador. Las reglas:
+//   - Quien envía el activador de un equipo queda unido a él (ese regalo ya le suma).
+//   - Desde ahí, CUALQUIER regalo de esa persona suma sus monedas a su equipo.
+//   - Si envía el activador de otro equipo, se cambia: lo que ya sumó se queda donde estaba.
+//   - Los regalos de quien no se ha unido a ningún equipo no suman.
+// Cada cuadrante ocupa de la barra la parte del total de monedas que lleva su equipo (sin
+// monedas, todos miden lo mismo). Las monedas solo suman con el reloj en marcha (y unos segundos
+// de gracia al final, por los combos que se cuentan tarde); unirse sí se puede antes de iniciar.
+// Al terminar, gana el equipo con más monedas.
 //
 // A cada persona se la reconoce por el id de su cuenta (`uid`, ver comun.js); los regalos de
 // prueba del panel no lo traen y se reconocen por el nombre.
 //
 // Configuración (la genera el panel; llega en #c=… o, con cambios en vivo, desde Supabase):
 //   u, k = usuario y clave
-//   eq = barras [{ n: nombre, g: id del regalo activador, v: monedas del activador (si TikTok no
+//   eq = equipos [{ n: nombre, g: id del regalo activador, v: monedas del activador (si TikTok no
 //        manda el precio), c: color, img: imagen del regalo }] (de 2 a 4)
 //   pr = precios del Buscador de regalos { giftId: monedas }, para los regalos que llegan sin
 //        precio (si tampoco está ahí, el regalo suma 1)
 //   ro = ronda (al cambiar, las monedas y los equipos vuelven a 0) · s = sonido (1/0)
 //   t = reloj { e, d, fin, r } (ver js/reloj.js) · est = estilo visual (js/tema.js)
 //
-// La ronda (monedas, quién está en cada barra y quién aportó más) se guarda en este navegador:
+// La ronda (monedas, quién está en cada equipo y quién aportó más) se guarda en este navegador:
 // si OBS recarga la fuente, se conserva.
 // Secciones: 1. Configuración · 2. Ronda guardada · 3. Pintado · 4. Reloj · 5. Regalos · 6. Arranque
 // =============================================================================
@@ -36,46 +38,47 @@ import { prueba, leerGuardado, escribirGuardado, enGracia, relojCuenta, animarCi
 // 1. Configuración
 // -----------------------------------------------------------------------------
 
-const MIN_BARRAS = 2;
-const MAX_BARRAS = 4;
-const RELLENO_MIN = 1.5;    // % mínimo de una barra con monedas (para que se note que tiene algo)
-const CONTEO_MS = 500;      // duración de la animación del número
+const MIN_EQUIPOS = 2;
+const MAX_EQUIPOS = 4;
+const CUADRANTE_MIN = 3;     // % mínimo de un cuadrante con monedas (para que siempre se vea)
+const ANCHO_ETIQUETA = 8;    // % mínimo de un cuadrante para mostrar su imagen y porcentaje
+const CONTEO_MS = 500;       // duración de la animación del número
 const AVISO_UNION_MS = 3500; // cuánto se ve "Fulano se unió a…"
-const AVISO_FINAL_S = 5;    // segundos finales con "tic" de aviso
-const MAX_PERSONAS = 5000;  // personas que se recuerdan por ronda (el guardado no crece sin fin)
+const AVISO_FINAL_S = 5;     // segundos finales con "tic" de aviso
+const MAX_PERSONAS = 5000;   // personas que se recuerdan por ronda (el guardado no crece sin fin)
 const COLORES = ['#D4AF37', '#C9CDD4', '#B87333', '#8FB9A8'];
 const ESTADOS = { listo: 'Lista', corre: 'En juego', pausa: 'En pausa', fin: 'Final' };
 
-let barras = [];
+let equipos = [];
 let precios = {};
 let sonido = true;
 let ronda = null;
 let reloj = { e: 'listo', d: 180 };
 let claveGuardado = '';
 
-// La ronda: monedas por barra y, por persona, su barra y lo que aportó a cada una. Se llevan
-// siempre las 4 barras, aunque haya menos en juego: así no se pierde nada si el panel quita
-// una barra a mitad de ronda y luego la vuelve a poner.
+// La ronda: monedas por equipo y, por persona, su equipo y lo que aportó a cada uno. Se llevan
+// siempre los 4 equipos, aunque haya menos en juego: así no se pierde nada si el panel quita
+// uno a mitad de ronda y luego lo vuelve a poner.
 let puntos = [];
-let personas = new Map(); // clave de la persona → { nombre, barra, aportes: [monedas por barra] }
+let personas = new Map(); // clave de la persona → { nombre, equipo, aportes: [monedas por equipo] }
 
 const urlSegura = (texto) => (/^https?:\/\//i.test(String(texto || '')) ? String(texto) : '');
 
-function normalizarBarra(b, i) {
+function normalizarEquipo(e, i) {
   return {
-    nombre: String(b?.n || `Barra ${i + 1}`).slice(0, 24),
-    giftId: String(b?.g ?? '').trim(),
-    valor: Math.max(0, Number(b?.v) || 0),
-    color: /^#[0-9a-f]{6}$/i.test(b?.c) ? b.c : COLORES[i],
-    imagen: urlSegura(b?.img),
+    nombre: String(e?.n || `Equipo ${i + 1}`).slice(0, 24),
+    giftId: String(e?.g ?? '').trim(),
+    valor: Math.max(0, Number(e?.v) || 0),
+    color: /^#[0-9a-f]{6}$/i.test(e?.c) ? e.c : COLORES[i],
+    imagen: urlSegura(e?.img),
   };
 }
 
 /** Aplica una configuración. Puede llegar en cualquier momento (cambios en vivo, reinicio, reloj). */
 function aplicarConfig(cfg) {
-  const lista = Array.isArray(cfg.eq) ? cfg.eq.slice(0, MAX_BARRAS) : [];
-  while (lista.length < MIN_BARRAS) lista.push({});
-  barras = lista.map(normalizarBarra);
+  const lista = Array.isArray(cfg.eq) ? cfg.eq.slice(0, MAX_EQUIPOS) : [];
+  while (lista.length < MIN_EQUIPOS) lista.push({});
+  equipos = lista.map(normalizarEquipo);
   precios = cfg.pr && typeof cfg.pr === 'object' ? cfg.pr : {};
   sonido = cfg.s !== 0;
   reloj = cfg.t && typeof cfg.t === 'object' ? cfg.t : { e: 'listo', d: 180 };
@@ -91,24 +94,24 @@ function aplicarConfig(cfg) {
   }
   ajustarCantidad();
 
-  armarBarras();
+  armarEquipos();
   pintarReloj();
   pintar(false);
 }
 
-/** Monedas de las 4 barras, y lo que aportó cada persona a cada una (lo que falte, en 0). */
-const cuatro = (lista) => Array.from({ length: MAX_BARRAS }, (_, i) => Math.max(0, Number(lista?.[i]) || 0));
+/** Monedas de los 4 equipos, y lo que aportó cada persona a cada uno (lo que falte, en 0). */
+const cuatro = (lista) => Array.from({ length: MAX_EQUIPOS }, (_, i) => Math.max(0, Number(lista?.[i]) || 0));
 
 function ajustarCantidad() {
   puntos = cuatro(puntos);
   for (const persona of personas.values()) persona.aportes = cuatro(persona.aportes);
 }
 
-/** Las monedas de las barras en juego. */
-const enJuego = () => puntos.slice(0, barras.length);
+/** Las monedas de los equipos en juego. */
+const enJuego = () => puntos.slice(0, equipos.length);
 
-/** Barra de una persona, o -1 si no tiene (o si su barra no está en juego: tiene que volver a unirse). */
-const barraDe = (persona) => (persona && persona.barra >= 0 && persona.barra < barras.length ? persona.barra : -1);
+/** Equipo de una persona, o -1 si no tiene (o si su equipo no está en juego: tiene que volver a unirse). */
+const equipoDe = (persona) => (persona && persona.equipo >= 0 && persona.equipo < equipos.length ? persona.equipo : -1);
 
 
 // -----------------------------------------------------------------------------
@@ -122,15 +125,15 @@ function restaurarRonda() {
   if (guardado?.ro !== ronda) return; // la ronda empieza en 0
   if (Array.isArray(guardado.p)) puntos = cuatro(guardado.p);
   if (Array.isArray(guardado.per)) {
-    for (const [clave, nombre, barra, aportes] of guardado.per) {
+    for (const [clave, nombre, equipo, aportes] of guardado.per) {
       if (!clave || !Array.isArray(aportes)) continue;
-      personas.set(String(clave), { nombre: String(nombre || ''), barra: Number.isInteger(barra) ? barra : -1, aportes: cuatro(aportes) });
+      personas.set(String(clave), { nombre: String(nombre || ''), equipo: Number.isInteger(equipo) ? equipo : -1, aportes: cuatro(aportes) });
     }
   }
 }
 
 function guardarRonda() {
-  const per = [...personas].map(([clave, p]) => [clave, p.nombre, p.barra, p.aportes]);
+  const per = [...personas].map(([clave, p]) => [clave, p.nombre, p.equipo, p.aportes]);
   escribirGuardado(claveGuardado, { ro: ronda, p: puntos, per });
 }
 
@@ -141,7 +144,8 @@ function guardarRonda() {
 
 const $ = (id) => document.getElementById(id);
 const formato = new Intl.NumberFormat('es-CO');
-let filas = []; // nodos de cada barra, en el mismo orden que `barras`
+let cuadrantes = []; // nodos de cada cuadrante de la barra, en el mismo orden que `equipos`
+let fichas = [];     // nodos de cada equipo en la leyenda de abajo
 
 function ponerImagen(img, url) {
   if (img.getAttribute('src') !== url) {
@@ -151,44 +155,52 @@ function ponerImagen(img, url) {
   img.hidden = !url;
 }
 
-/** Una fila por barra (solo se rehacen si cambia cuántas hay) con su nombre, color e imagen. */
-function armarBarras() {
-  const contenedor = $('barras');
-  if (filas.length !== barras.length) {
-    const plantilla = $('plantilla-barra').content.firstElementChild;
-    filas = barras.map(() => {
-      const nodo = plantilla.cloneNode(true);
-      return {
-        nodo,
-        regalo: nodo.querySelector('.regalo'),
-        inicial: nodo.querySelector('.inicial'),
-        nombre: nodo.querySelector('.nombre'),
-        miembros: nodo.querySelector('.miembros'),
-        mejor: nodo.querySelector('.mejor'),
-        relleno: nodo.querySelector('.relleno'),
-        monedas: nodo.querySelector('.monedas'),
-        mostrado: null,
-        animacion: 0,
-      };
-    });
-    contenedor.replaceChildren(...filas.map((f) => f.nodo));
+/** Copias de una plantilla del HTML, una por equipo. */
+const copias = (id) => equipos.map(() => $(id).content.firstElementChild.cloneNode(true));
+
+/**
+ * Un cuadrante en la barra y una ficha en la leyenda por equipo (solo se rehacen si cambia
+ * cuántos hay), con su nombre, color e imagen.
+ */
+function armarEquipos() {
+  if (cuadrantes.length !== equipos.length) {
+    cuadrantes = copias('plantilla-cuadrante').map((nodo) => ({
+      nodo,
+      regalo: nodo.querySelector('.regalo'),
+      porcentaje: nodo.querySelector('.porcentaje'),
+    }));
+    fichas = copias('plantilla-ficha').map((nodo) => ({
+      nodo,
+      regalo: nodo.querySelector('.regalo'),
+      inicial: nodo.querySelector('.inicial'),
+      nombre: nodo.querySelector('.nombre'),
+      monedas: nodo.querySelector('.monedas'),
+      miembros: nodo.querySelector('.miembros'),
+      mejor: nodo.querySelector('.mejor'),
+      mostrado: null,
+      animacion: 0,
+    }));
+    $('barra').replaceChildren(...cuadrantes.map((c) => c.nodo));
+    $('leyenda').replaceChildren(...fichas.map((f) => f.nodo));
   }
-  contenedor.dataset.cantidad = barras.length;
-  barras.forEach((b, i) => {
-    const fila = filas[i];
-    fila.nodo.style.setProperty('--color', b.color);
-    fila.nombre.textContent = b.nombre;
-    ponerImagen(fila.regalo, b.imagen);
-    fila.inicial.textContent = b.imagen ? '' : b.nombre.charAt(0).toUpperCase();
+  $('leyenda').dataset.cantidad = equipos.length;
+  equipos.forEach((e, i) => {
+    cuadrantes[i].nodo.style.setProperty('--color', e.color);
+    ponerImagen(cuadrantes[i].regalo, e.imagen);
+    const ficha = fichas[i];
+    ficha.nodo.style.setProperty('--color', e.color);
+    ficha.nombre.textContent = e.nombre;
+    ponerImagen(ficha.regalo, e.imagen);
+    ficha.inicial.textContent = e.imagen ? '' : e.nombre.charAt(0).toUpperCase();
   });
 }
 
-/** Cuántas personas hay en cada barra y quién aportó más a cada una. */
+/** Cuántas personas hay en cada equipo y quién aportó más a cada uno. */
 function resumenEquipos() {
-  const miembros = barras.map(() => 0);
-  const mejores = barras.map(() => null);
+  const miembros = equipos.map(() => 0);
+  const mejores = equipos.map(() => null);
   for (const persona of personas.values()) {
-    if (barraDe(persona) >= 0) miembros[persona.barra] += 1;
+    if (equipoDe(persona) >= 0) miembros[persona.equipo] += 1;
     mejores.forEach((mejor, i) => {
       const monedas = persona.aportes[i];
       if (monedas > 0 && (!mejor || monedas > mejor.monedas)) mejores[i] = { nombre: persona.nombre, monedas };
@@ -197,7 +209,7 @@ function resumenEquipos() {
   return { miembros, mejores };
 }
 
-/** Índice de la barra que va ganando, o `null` si no hay monedas o hay empate arriba. */
+/** Índice del equipo que va ganando, o `null` si no hay monedas o hay empate arriba. */
 function quienGana() {
   const lista = enJuego();
   const maximo = Math.max(0, ...lista);
@@ -206,20 +218,43 @@ function quienGana() {
   return primeras === 1 ? lista.indexOf(maximo) : null;
 }
 
+/**
+ * Qué parte de la barra ocupa cada cuadrante (en %, suman 100): la parte del total de monedas
+ * de su equipo. Un equipo con monedas nunca baja de CUADRANTE_MIN; sin monedas en total,
+ * todos miden lo mismo.
+ */
+function anchos() {
+  const lista = enJuego();
+  const total = lista.reduce((a, b) => a + b, 0);
+  if (!total) return lista.map(() => 100 / lista.length);
+  const crudos = lista.map((p) => (p ? Math.max(CUADRANTE_MIN, (p / total) * 100) : 0));
+  const suma = crudos.reduce((a, b) => a + b, 0);
+  return crudos.map((a) => (a / suma) * 100);
+}
+
 let avisoUnion = null; // { texto, hasta } mientras se muestra "Fulano se unió a…"
 
-/** Rellenos, monedas, equipos y el aviso de abajo. Con `animar`, los números suben poco a poco. */
+/** Cuadrantes, porcentajes, leyenda y el aviso de abajo. Con `animar`, los números suben poco a poco. */
 function pintar(animar = true) {
-  const maximo = Math.max(0, ...enJuego());
+  const lista = enJuego();
+  const total = lista.reduce((a, b) => a + b, 0);
+  const medidas = anchos();
   const { miembros, mejores } = resumenEquipos();
   const lider = quienGana();
-  filas.forEach((fila, i) => {
-    const parte = maximo ? (puntos[i] / maximo) * 100 : 0;
-    fila.relleno.style.width = `${puntos[i] ? Math.max(RELLENO_MIN, parte) : 0}%`;
-    fila.miembros.textContent = `👥 ${miembros[i]}`;
-    fila.mejor.textContent = mejores[i] ? `⭐ ${mejores[i].nombre}` : '';
-    fila.nodo.classList.toggle('gana', lider === i);
-    animarCifra(fila, puntos[i], { animar, ms: CONTEO_MS, escribir: (valor) => { fila.monedas.textContent = formato.format(valor); } });
+  cuadrantes.forEach((c, i) => {
+    const parte = total ? (lista[i] / total) * 100 : 0;
+    c.nodo.style.width = `${medidas[i]}%`;
+    // Sin monedas todavía, no hay porcentaje que mostrar. Un equipo con monedas nunca muestra "0%";
+    // en un cuadrante muy angosto la etiqueta se oculta.
+    c.porcentaje.textContent = !total ? '' : lista[i] && parte < 0.5 ? '<1%' : `${Math.round(parte)}%`;
+    c.nodo.classList.toggle('angosto', medidas[i] < ANCHO_ETIQUETA);
+    c.nodo.classList.toggle('gana', lider === i);
+  });
+  fichas.forEach((ficha, i) => {
+    ficha.miembros.textContent = `👥 ${miembros[i]}`;
+    ficha.mejor.textContent = mejores[i] ? `⭐ ${mejores[i].nombre}` : '';
+    ficha.nodo.classList.toggle('gana', lider === i);
+    animarCifra(ficha, lista[i], { animar, ms: CONTEO_MS, escribir: (valor) => { ficha.monedas.textContent = formato.format(valor); } });
   });
   pintarAviso(lider);
 }
@@ -227,29 +262,30 @@ function pintar(animar = true) {
 function pintarAviso(lider = quienGana()) {
   const aviso = $('aviso');
   const { estado } = leerReloj(reloj);
+  const hayMonedas = Math.max(0, ...enJuego()) > 0;
   let texto;
   if (avisoUnion && Date.now() < avisoUnion.hasta) texto = avisoUnion.texto;
   else if (estado === 'fin') {
     texto = lider === null
-      ? (Math.max(0, ...enJuego()) ? 'Terminó en empate' : 'Terminó la ronda')
-      : `¡Ganó ${barras[lider].nombre} con ${formato.format(puntos[lider])} monedas!`;
-  } else if (lider !== null) texto = `Va ganando ${barras[lider].nombre}`;
-  else texto = Math.max(0, ...enJuego()) ? 'Empate' : 'Envía un regalo activador para unirte a una barra';
+      ? (hayMonedas ? 'Terminó en empate' : 'Terminó la ronda')
+      : `¡Ganó ${equipos[lider].nombre} con ${formato.format(puntos[lider])} monedas!`;
+  } else if (lider !== null) texto = `Va ganando ${equipos[lider].nombre}`;
+  else texto = hayMonedas ? 'Empate' : 'Envía un regalo activador para unirte a un equipo';
   aviso.textContent = texto;
-  aviso.style.setProperty('--color', lider === null ? 'transparent' : barras[lider].color);
+  aviso.style.setProperty('--color', lider === null ? 'transparent' : equipos[lider].color);
 }
 
-/** "+25" que sube desde la barra, y un golpe en su ícono. */
+/** "+25" que sube desde la ficha del equipo, y un golpe en su ícono. */
 function mostrarSuma(i, suma) {
-  const fila = filas[i];
+  const ficha = fichas[i];
   const flotante = document.createElement('span');
   flotante.className = 'suma';
   flotante.textContent = `+${formato.format(suma)}`;
   flotante.addEventListener('animationend', () => flotante.remove());
-  fila.nodo.append(flotante);
-  fila.nodo.classList.remove('golpe');
-  void fila.nodo.offsetWidth; // reinicia la animación
-  fila.nodo.classList.add('golpe');
+  ficha.nodo.append(flotante);
+  ficha.nodo.classList.remove('golpe');
+  void ficha.nodo.offsetWidth; // reinicia la animación
+  ficha.nodo.classList.add('golpe');
 }
 
 
@@ -297,9 +333,9 @@ const cuentaAhora = () => prueba || relojCuenta(reloj);
 const rondaCerrada = () => !prueba && leerReloj(reloj).estado === 'fin' && !enGracia(reloj);
 
 /** Monedas de un regalo: el precio que manda TikTok, el del activador, el del Buscador o 1. */
-function monedasDe(evento, activada) {
+function monedasDe(evento, activado) {
   const precio = Number(evento.diamantes)
-    || (activada >= 0 ? barras[activada].valor : 0)
+    || (activado >= 0 ? equipos[activado].valor : 0)
     || Number(precios[String(evento.giftId ?? '')])
     || 1;
   return precio * Math.max(1, Number(evento.cantidad) || 1);
@@ -310,36 +346,36 @@ function alRegalo(evento) {
   const clave = String(evento.uid || evento.usuario || '');
   if (!clave) return;
   const giftId = String(evento.giftId ?? '');
-  const activada = barras.findIndex((b) => b.giftId && b.giftId === giftId);
+  const activado = equipos.findIndex((e) => e.giftId && e.giftId === giftId);
 
   // Si el panel no tenía la imagen del activador y TikTok la manda, se usa desde ya.
-  if (activada >= 0 && evento.imagen && !barras[activada].imagen) {
-    barras[activada].imagen = urlSegura(evento.imagen);
-    armarBarras();
+  if (activado >= 0 && evento.imagen && !equipos[activado].imagen) {
+    equipos[activado].imagen = urlSegura(evento.imagen);
+    armarEquipos();
   }
 
   let persona = personas.get(clave);
-  if (activada >= 0 && barraDe(persona) !== activada) {
-    // Se une (o se cambia) a la barra de este activador.
+  if (activado >= 0 && equipoDe(persona) !== activado) {
+    // Se une (o se cambia) al equipo de este activador.
     if (!persona) {
       if (personas.size >= MAX_PERSONAS) return;
-      persona = { nombre: '', barra: -1, aportes: cuatro() };
+      persona = { nombre: '', equipo: -1, aportes: cuatro() };
       personas.set(clave, persona);
     }
-    const cambio = barraDe(persona) >= 0;
-    persona.barra = activada;
+    const cambio = equipoDe(persona) >= 0;
+    persona.equipo = activado;
     avisoUnion = {
-      texto: `${evento.usuario || 'Alguien'} ${cambio ? 'se cambió a' : 'se unió a'} ${barras[activada].nombre}`,
+      texto: `${evento.usuario || 'Alguien'} ${cambio ? 'se cambió a' : 'se unió a'} ${equipos[activado].nombre}`,
       hasta: Date.now() + AVISO_UNION_MS,
     };
     if (sonido) sonar({ frecuencia: 587, duracion: 0.2, subida: 1.3 });
   }
-  if (barraDe(persona) < 0) return; // no se ha unido a ninguna barra en juego: no suma
+  if (equipoDe(persona) < 0) return; // no se ha unido a ningún equipo en juego: no suma
   persona.nombre = String(evento.usuario || persona.nombre || 'Alguien').slice(0, 24);
 
   if (cuentaAhora()) {
-    const i = persona.barra;
-    const suma = monedasDe(evento, activada);
+    const i = persona.equipo;
+    const suma = monedasDe(evento, activado);
     const liderAntes = quienGana();
     puntos[i] += suma;
     persona.aportes[i] += suma;

@@ -1,15 +1,16 @@
 // =============================================================================
-// vistas/activacion.js — Juegos → Competencias → Barras de activación
+// vistas/activacion.js — Juegos → Competencias → Barra de activación
 //
-// Configura el widget activacion.html: de 2 a 4 barras, cada una con su nombre, regalo
-// activador, monedas del activador (si TikTok no manda el precio) y color. Quien envía el
-// activador de una barra se une a ella y desde ahí todos sus regalos la llenan; si envía el
-// de otra, se cambia. Los regalos solo suman con el reloj en marcha y al final gana la barra
-// con más monedas. Iniciar/Pausar/Reiniciar cambian el reloj (`t`) o la ronda (`ro`) y se
+// Configura el widget activacion.html: una sola barra repartida en 2 a 4 cuadrantes, uno por
+// equipo. Cada equipo tiene nombre, regalo activador, monedas del activador (si TikTok no manda
+// el precio) y color. Quien envía el activador de un equipo se une a él y desde ahí todos sus
+// regalos le suman; si envía el de otro, se cambia. Cada cuadrante ocupa la parte de las monedas
+// de su equipo. Los regalos solo suman con el reloj en marcha y al final gana el equipo con más
+// monedas. Iniciar/Pausar/Reiniciar cambian el reloj (`t`) o la ronda (`ro`) y se
 // suben a Supabase al instante. Ver js/widgets/activacion.js para las claves.
-// Se guardan siempre las 4 barras; al widget van solo las que están en juego.
+// Se guardan siempre los 4 equipos; al widget van solo los que están en juego.
 // Secciones: 1. Valores por defecto · 2. Configuración del widget · 3. Vista
-//            (tarjeta · reloj · barras · estructura)
+//            (tarjeta · reloj · equipos · estructura)
 // =============================================================================
 
 import * as almacen from '../almacen.js';
@@ -31,11 +32,11 @@ const DURACION_MAX_S = 24 * 3600;
 
 const POR_DEFECTO = {
   sonido: true,
-  cantidad: 4,             // barras en juego (2, 3 o 4)
+  cantidad: 4,             // equipos (cuadrantes) en juego: 2, 3 o 4
   ronda: 0,                // cambia al reiniciar: el widget pone monedas y equipos en 0
   duracion: 180,           // segundos
   reloj: { e: 'listo', fin: 0, r: 0 },
-  barras: [
+  barras: [               // los 4 equipos (la clave se llama así desde la primera versión)
     { nombre: 'Rosas', giftId: '5655', regalo: 'Rose', valor: 1, color: '#D4AF37' },
     { nombre: 'Corazones', giftId: '5487', regalo: 'Finger Heart', valor: 5, color: '#C9CDD4' },
     { nombre: 'Ramos', giftId: '5780', regalo: 'Bouquet Flower', valor: 30, color: '#B87333' },
@@ -69,7 +70,7 @@ sincronizar.registrar(ID, {
     const cfg = ajustes();
     const catalogo = almacen.regalos();
     const eq = enJuego().map((b, i) => ({
-      n: textoLimpio(b.nombre).slice(0, MAX_NOMBRE) || `Barra ${i + 1}`,
+      n: textoLimpio(b.nombre).slice(0, MAX_NOMBRE) || `Equipo ${i + 1}`,
       g: textoLimpio(b.giftId),
       v: Math.max(0, Number(b.valor) || 0),
       c: b.color,
@@ -86,8 +87,8 @@ function problemas() {
   const vistos = new Map();
   enJuego().forEach((b, i) => {
     const id = textoLimpio(b.giftId);
-    if (!id) lista.push(`La barra ${i + 1} no tiene regalo activador: nadie podrá unirse a ella.`);
-    else if (vistos.has(id)) lista.push(`Las barras ${vistos.get(id) + 1} y ${i + 1} tienen el mismo activador (${id}): solo funcionará la ${vistos.get(id) + 1}.`);
+    if (!id) lista.push(`El equipo ${i + 1} no tiene regalo activador: nadie podrá unirse a él.`);
+    else if (vistos.has(id)) lista.push(`Los equipos ${vistos.get(id) + 1} y ${i + 1} tienen el mismo activador (${id}): solo funcionará el ${vistos.get(id) + 1}.`);
     else vistos.set(id, i);
   });
   return lista;
@@ -100,8 +101,8 @@ function problemas() {
 
 export default {
   id: ID,
-  titulo: 'Barras de activación',
-  descripcion: 'De 2 a 4 barras, cada una con su regalo activador: quien lo envía se une a esa barra y desde ahí todos sus regalos la llenan. Gana la barra con más monedas cuando se acaba el tiempo.',
+  titulo: 'Barra de activación',
+  descripcion: 'Una sola barra repartida entre 2 a 4 equipos, cada uno con su regalo activador: quien lo envía se une a ese equipo y desde ahí todos sus regalos le suman. Cada cuadrante crece con el porcentaje de monedas de su equipo; gana el que tenga más cuando se acaba el tiempo.',
 
   render({ senal }) {
     const cfg = ajustes();
@@ -116,7 +117,7 @@ export default {
     };
 
     // ---------- Tarjeta del widget ----------
-    // Pruebas: unirse a una barra (con su activador) y regalos de quien ya se unió.
+    // Pruebas: unirse a un equipo (con su activador) y regalos de quien ya se unió.
     let siguiente = 0;
     const activador = (b, nombre, cant = 1) => ({
       tipo: 'regalo', usuario: nombre, giftId: textoLimpio(b.giftId), nombre: textoLimpio(b.regalo),
@@ -129,9 +130,9 @@ export default {
 
     const widget = tarjetaWidget({
       id: ID,
-      titulo: 'Barras de activación',
+      titulo: 'Barra de activación',
       archivo: 'activacion.html',
-      forma: 'cuadrado',
+      forma: 'horizontal',
       // El reinicio y el reloj llegan a la vista previa sin recargarla.
       sinRecargar: ['ro', 't'],
       senal,
@@ -141,7 +142,7 @@ export default {
       ],
       pruebas: [
         {
-          texto: 'Unirme a la siguiente barra',
+          texto: 'Unirme al siguiente equipo',
           evento: (nombre) => activador(enJuego()[siguiente++ % cantidad()], nombre),
         },
         { texto: 'Mi regalo de 25', evento: otroRegalo(1, 25) },
@@ -149,8 +150,8 @@ export default {
         {
           texto: 'Otra persona se une',
           evento: () => {
-            const barras = enJuego();
-            return activador(barras[Math.floor(Math.random() * barras.length)], NOMBRES[Math.floor(Math.random() * NOMBRES.length)], 5);
+            const equipos = enJuego();
+            return activador(equipos[Math.floor(Math.random() * equipos.length)], NOMBRES[Math.floor(Math.random() * NOMBRES.length)], 5);
           },
         },
       ],
@@ -183,7 +184,7 @@ export default {
     /** Monedas y equipos en 0 y reloj detenido con la duración completa. */
     function reiniciar() {
       aplicarReloj(reiniciarReloj(relojActual()), { nuevaRonda: true });
-      avisarReinicio('Ronda reiniciada: las barras se vacían y todos tienen que volver a unirse.');
+      avisarReinicio('Ronda reiniciada: los equipos vuelven a 0 monedas y todos tienen que volver a unirse.');
     }
 
     const TEXTOS = {
@@ -213,8 +214,8 @@ export default {
     const pintarMinutos = () => { minutos.textContent = `= ${formatoReloj(duracion() * 1000)}`; };
     pintarMinutos();
 
-    // ---------- Barras ----------
-    function tarjetaBarra(b, i) {
+    // ---------- Equipos ----------
+    function tarjetaEquipo(b, i) {
       const valor = campo('Monedas del activador:', {
         tipo: 'number', valor: b.valor, min: 0, step: 1,
         alCambiar: (v) => { b.valor = v; cambio(); },
@@ -234,7 +235,7 @@ export default {
       giftId.querySelector('input').setAttribute('list', 'regalos-activacion'); // `list` es de solo lectura como propiedad
       const nombreRegalo = el('p', { class: 'nota sin-margen' }, b.regalo ? `Activador: ${b.regalo}` : '');
 
-      return tarjeta(`Barra ${i + 1}`, {},
+      return tarjeta(`Equipo ${i + 1}`, {},
         el('div', { class: 'campos' },
           campo('Nombre:', { valor: b.nombre, maxLength: MAX_NOMBRE, alCambiar: (v) => { b.nombre = v; cambio(); } }),
           giftId,
@@ -242,13 +243,13 @@ export default {
           campo('Color:', { tipo: 'color', valor: b.color, alCambiar: (v) => { b.color = v; cambio(); } })),
         nombreRegalo);
     }
-    const tarjetasBarras = cfg.barras.map(tarjetaBarra);
-    const mostrarBarras = () => tarjetasBarras.forEach((t, i) => { t.hidden = i >= cantidad(); });
-    mostrarBarras();
+    const tarjetasEquipos = cfg.barras.map(tarjetaEquipo);
+    const mostrarEquipos = () => tarjetasEquipos.forEach((t, i) => { t.hidden = i >= cantidad(); });
+    mostrarEquipos();
 
-    const elegirCantidad = segmentado('Barras en juego:', CANTIDADES.map((n) => [n, String(n)]), {
+    const elegirCantidad = segmentado('Equipos (cuadrantes de la barra):', CANTIDADES.map((n) => [n, String(n)]), {
       valor: cantidad(),
-      alCambiar: (n) => { cfg.cantidad = n; cambio(); mostrarBarras(); },
+      alCambiar: (n) => { cfg.cantidad = n; cambio(); mostrarEquipos(); },
     });
 
     const regalos = Object.values(almacen.regalos()).sort((a, b) => (b.veces || 0) - (a.veces || 0));
@@ -268,24 +269,26 @@ export default {
         el('div', { class: 'fila-acciones separado-arriba' },
           botonIniciar,
           botonPausar,
-          el('button', { onclick: reiniciar, title: 'Detiene el reloj, vacía las barras y saca a todos de sus barras' }, 'Reiniciar ronda')),
+          el('button', { onclick: reiniciar, title: 'Detiene el reloj, pone los equipos en 0 y saca a todos de sus equipos' }, 'Reiniciar ronda')),
         el('div', { class: 'campos duracion separado-arriba' }, campoDuracion),
         minutos,
         el('div', { class: 'separado-arriba' }, elegirCantidad),
         avisoReinicio,
         aviso,
-        nota('Cómo se juega: cada barra tiene su regalo activador. Quien lo envía se une a esa barra (ese regalo ya le suma) y, desde ahí, ',
-          'CUALQUIER regalo suyo llena esa barra. Si envía el activador de otra barra, se cambia: lo que ya sumó se queda donde estaba. ',
-          'Los regalos de quien no se ha unido no suman. Unirse se puede antes de iniciar, pero las monedas solo suman con el reloj en marcha. ',
-          'Al llegar a 0, gana la barra con más monedas. «Nueva ronda» y «Reiniciar ronda» vacían las barras y todos vuelven a unirse.')),
+        nota('Cómo se juega: hay una sola barra, repartida en un cuadrante por equipo. Cada equipo tiene su regalo activador: quien lo envía ',
+          'se une a ese equipo (ese regalo ya le suma) y, desde ahí, CUALQUIER regalo suyo le suma. Si envía el activador de otro equipo, ',
+          'se cambia: lo que ya sumó se queda donde estaba. Los regalos de quien no se ha unido no suman. Cada cuadrante ocupa de la barra ',
+          'el porcentaje de monedas de su equipo (al empezar, todos miden lo mismo). Unirse se puede antes de iniciar, pero las monedas ',
+          'solo suman con el reloj en marcha. Al llegar a 0, gana el equipo con más monedas. «Nueva ronda» y «Reiniciar ronda» ponen todo ',
+          'en 0 y todos vuelven a unirse.')),
 
-      ...tarjetasBarras,
+      ...tarjetasEquipos,
       datalist,
 
       nota('TikTok no siempre manda el precio de los regalos: entonces el activador vale lo que pongas en «Monedas del activador» ',
         '(en 0, el precio del Buscador) y los demás regalos valen su precio del ',
         el('a', { href: '#/regalos' }, 'Buscador de regalos'),
-        ' (si no está ahí, suman 1). Tamaño recomendado de la fuente en OBS: 1200 × 600 (con 2 barras alcanza 1200 × 400).'),
+        ' (si no está ahí, suman 1). Tamaño recomendado de la fuente en OBS: 1600 × 400, arriba de la escena.'),
     ];
   },
 };

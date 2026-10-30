@@ -1,26 +1,37 @@
 /* ==========================================================================
-   activacion.css — Widget "Barras de activación" (activacion.html)
-   Arriba el reloj de la ronda; debajo, una placa de cristal por barra (de 2 a 4):
-   la imagen del regalo activador, el nombre, cuántas personas hay en la barra,
-   quién aportó más y un tubo que se llena con el color de la barra. La que va
-   primera se ve llena y brilla; las demás, en proporción a ella. Abajo, el aviso
-   (quién va ganando, quién se unió, quién ganó). El color de cada barra llega en
-   --color (js/widgets/activacion.js).
-   Las medidas van en --u (el menor entre 1 % del ancho y 1,9 % del alto): las
-   4 barras caben enteras en cualquier tamaño de fuente de OBS, ancha o alta.
+   activacion.css — Widget "Barra de activación" (activacion.html)
+   Arriba el reloj de la ronda; debajo, una placa de cristal con UNA barra
+   repartida en 2 a 4 cuadrantes (uno por equipo, con su color, la imagen del
+   regalo activador y su porcentaje). El ancho de cada cuadrante lo pone
+   js/widgets/activacion.js según la parte de las monedas que lleva su equipo;
+   entre cuadrantes va un filo de oro. Debajo de la barra, la leyenda: una ficha
+   por equipo con nombre, monedas, personas unidas y quién aportó más. Abajo, el
+   aviso (quién va ganando, quién se unió, quién ganó). El color de cada equipo
+   llega en --color.
+   Las medidas van en --u (el menor entre 1 % del ancho y 3,4 % del alto): todo
+   cabe en cualquier tamaño de fuente de OBS, ancha o baja.
 
-   Secciones: 1. Escena · 2. Reloj · 3. Barras · 4. Tubo · 5. Aviso · 6. Animaciones
+   Secciones: 1. Escena · 2. Reloj · 3. Barra y cuadrantes · 4. Leyenda
+              5. Aviso · 6. Animaciones
    ========================================================================== */
 
 
 /* ---------- 1. Escena ---------- */
-:root { --u: min(1vw, 1.9vh); }
+:root { --u: min(1vw, 3.4vh); }
 .escena {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * 1.6) calc(var(--u) * 2);
+  box-sizing: border-box;
+}
+.placa {
+  display: flex;
+  flex-direction: column;
   gap: calc(var(--u) * 1.4);
-  padding: calc(var(--u) * 2);
+  width: 100%;
+  padding: calc(var(--u) * 1.4) calc(var(--u) * 1.8);
   box-sizing: border-box;
 }
 
@@ -30,12 +41,12 @@
   display: flex;
   align-items: baseline;
   gap: calc(var(--u) * .8);
-  padding: calc(var(--u) * .7) calc(var(--u) * 2);
+  padding: calc(var(--u) * .6) calc(var(--u) * 1.8);
 }
 .tiempo {
   color: var(--texto-sec);
   font-weight: 800;
-  font-size: calc(var(--u) * 3.2);
+  font-size: calc(var(--u) * 2.6);
   line-height: 1;
   font-variant-numeric: tabular-nums;
   letter-spacing: .02em;
@@ -43,7 +54,7 @@
 .estado-reloj {
   color: var(--texto-sec);
   font-weight: 600;
-  font-size: calc(var(--u) * 1.15);
+  font-size: calc(var(--u) * 1);
   letter-spacing: var(--espaciado-widget);
   text-transform: var(--mayus);
   opacity: .8;
@@ -54,39 +65,90 @@
 .reloj.urgente .tiempo { color: var(--mal); animation: latido 1s ease-in-out infinite; }
 
 
-/* ---------- 3. Barras ---------- */
-.barras {
-  display: flex;
-  flex-direction: column;
-  gap: calc(var(--u) * 1.2);
-  width: 100%;
-}
+/* ---------- 3. Barra y cuadrantes ---------- */
 .barra {
+  display: flex;
+  height: calc(var(--u) * 4.4);
+  overflow: hidden;
+  border-radius: var(--radio);
+  background: rgba(0, 0, 0, .35);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+}
+.cuadrante {
+  --color: var(--acento, #D4AF37);
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * .6);
+  min-width: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--color) 92%, #fff),
+    color-mix(in srgb, var(--color) 70%, #000));
+  transition: width .45s ease;
+}
+/* Filo de oro entre un cuadrante y el siguiente. */
+.cuadrante + .cuadrante { box-shadow: inset calc(var(--u) * .25) 0 0 var(--borde-color, #D4AF37); }
+.cuadrante .regalo {
+  width: calc(var(--u) * 3);
+  height: calc(var(--u) * 3);
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6));
+}
+.porcentaje {
+  color: #fff;
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.6);
+  font-variant-numeric: tabular-nums;
+  text-shadow: var(--sombra-texto);
+}
+.porcentaje:empty { display: none; }
+/* Cuadrante muy angosto: solo el color (la etiqueta no cabe). */
+.cuadrante.angosto .regalo,
+.cuadrante.angosto .porcentaje { display: none; }
+/* Brillo que recorre el cuadrante del equipo que va ganando. */
+.cuadrante.gana::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .3) 50%, transparent 70%);
+  background-size: 250% 100%;
+  animation: brillo 2.4s linear infinite;
+}
+
+
+/* ---------- 4. Leyenda ---------- */
+.leyenda {
+  display: grid;
+  grid-template-columns: repeat(var(--columnas, 4), minmax(0, 1fr));
+  gap: calc(var(--u) * 1.6);
+}
+.leyenda[data-cantidad="2"] { --columnas: 2; }
+.leyenda[data-cantidad="3"] { --columnas: 3; }
+.ficha {
   --color: var(--acento, #D4AF37);
   position: relative;
   display: flex;
   align-items: center;
-  gap: calc(var(--u) * 1.6);
-  padding: calc(var(--u) * 1.1) calc(var(--u) * 1.8);
-  box-sizing: border-box;
-  transition: box-shadow .3s ease;
+  gap: calc(var(--u) * 1);
+  min-width: 0;
+  padding-left: calc(var(--u) * .8);
+  border-left: calc(var(--u) * .3) solid var(--color);
 }
-/* La que va ganando: borde y brillo de su color. */
-.barra.gana {
-  box-shadow: 0 0 calc(var(--u) * 3) color-mix(in srgb, var(--color) 60%, transparent);
-}
-.barra.gana::before { background: var(--color); }
 .icono {
   display: grid;
   flex: none;
   place-items: center;
-  width: calc(var(--u) * 5.4);
+  width: calc(var(--u) * 4);
   aspect-ratio: 1;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--color) 35%, transparent), transparent 70%), var(--cristal-claro);
-  box-shadow: 0 0 0 2px var(--color), 0 0 14px color-mix(in srgb, var(--color) 50%, transparent);
+  box-shadow: 0 0 0 2px var(--color);
+  transition: box-shadow .3s ease;
 }
-.regalo {
+.icono .regalo {
   width: 78%;
   height: 78%;
   object-fit: contain;
@@ -94,90 +156,43 @@
 .inicial {
   color: var(--color);
   font-weight: 800;
-  font-size: calc(var(--u) * 2.4);
+  font-size: calc(var(--u) * 1.8);
 }
 .inicial:empty { display: none; }
-.cuerpo {
+.datos {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: calc(var(--u) * .6);
   min-width: 0;
 }
-.titulo {
-  display: flex;
-  align-items: baseline;
-  gap: calc(var(--u) * 1.4);
-  min-width: 0;
+.nombre,
+.detalle {
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 .nombre {
-  overflow: hidden;
   color: var(--oro-texto);
   font-weight: 700;
-  font-size: calc(var(--u) * 1.6);
+  font-size: calc(var(--u) * 1.2);
   letter-spacing: .06em;
-  text-overflow: ellipsis;
   text-transform: var(--mayus);
 }
-.miembros,
-.mejor {
-  flex: none;
-  color: var(--texto-sec);
-  font-weight: 600;
-  font-size: calc(var(--u) * 1.2);
-  opacity: .85;
-}
-/* Quien aportó más va al final de la línea; si no cabe, se corta con "…". */
-.mejor {
-  flex: 0 1 auto;
-  min-width: 0;
-  margin-left: auto;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-
-/* ---------- 4. Tubo (la barra que se llena) ---------- */
-.tubo {
-  position: relative;
-  height: calc(var(--u) * 3.2);
-  overflow: hidden;
-  border-radius: var(--radio);
-  background: color-mix(in srgb, var(--color) 14%, rgba(0, 0, 0, .35));
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
-}
-.relleno {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 0;
-  background: linear-gradient(90deg,
-    color-mix(in srgb, var(--color) 55%, transparent),
-    color-mix(in srgb, var(--color) 90%, transparent));
-  box-shadow: 0 0 calc(var(--u) * 1.4) color-mix(in srgb, var(--color) 50%, transparent);
-  transition: width .45s ease;
-}
-/* Brillo que recorre el relleno (solo en la que va ganando). */
-.gana .relleno::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .28) 50%, transparent 70%);
-  background-size: 250% 100%;
-  animation: brillo 2.4s linear infinite;
-}
 .monedas {
-  position: absolute;
-  top: 50%;
-  right: calc(var(--u) * 1.2);
-  z-index: 2;
   color: var(--texto-sec);
   font-weight: 800;
-  font-size: calc(var(--u) * 1.8);
+  font-size: calc(var(--u) * 2.1);
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
-  text-shadow: var(--sombra-texto);
-  transform: translateY(-50%);
 }
+.detalle {
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: calc(var(--u) * .95);
+  opacity: .85;
+}
+.mejor:not(:empty)::before { content: "·"; margin: 0 .5em; }
+/* El equipo que va ganando: ícono con brillo de su color. */
+.ficha.gana .icono { box-shadow: 0 0 0 2px var(--color), 0 0 calc(var(--u) * 2) color-mix(in srgb, var(--color) 80%, transparent); }
 
 
 /* ---------- 5. Aviso ---------- */
@@ -185,7 +200,7 @@
   --color: transparent;
   max-width: 100%;
   overflow: hidden;
-  padding: calc(var(--u) * .5) calc(var(--u) * 2);
+  padding: calc(var(--u) * .45) calc(var(--u) * 1.8);
   border-radius: var(--radio);
   box-sizing: border-box;
   background: var(--cristal-oscuro);
@@ -194,7 +209,7 @@
   box-shadow: inset 3px 0 0 var(--color);
   color: var(--oro-texto);
   font-weight: 600;
-  font-size: calc(var(--u) * 1.3);
+  font-size: calc(var(--u) * 1.1);
   letter-spacing: var(--espaciado-widget);
   text-overflow: ellipsis;
   text-transform: var(--mayus);
@@ -204,29 +219,29 @@
 
 
 /* ---------- 6. Animaciones ---------- */
-/* "+25" que sube al llegar un regalo, sobre las monedas de la barra. */
+/* "+25" que sube desde la ficha del equipo al llegar un regalo. */
 .suma {
   position: absolute;
-  top: calc(var(--u) * 1.6);
-  right: calc(var(--u) * 3);
+  top: calc(var(--u) * -1.2);
+  left: calc(var(--u) * 3.4);
   z-index: 4;
   color: var(--color);
   font-weight: 800;
-  font-size: calc(var(--u) * 1.8);
+  font-size: calc(var(--u) * 1.6);
   text-shadow: var(--sombra-texto);
   pointer-events: none;
   animation: subir 1.1s ease-out forwards;
 }
 .golpe .icono { animation: golpe .35s ease-out; }
 
-@keyframes subir { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(calc(var(--u) * -3)); } }
+@keyframes subir { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(calc(var(--u) * -2.6)); } }
 @keyframes golpe { 40% { transform: scale(1.12); } }
 @keyframes brillo { from { background-position: 150% 0; } to { background-position: -100% 0; } }
 @keyframes parpadeo { 50% { opacity: .35; } }
 @keyframes latido { 50% { transform: scale(1.1); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .relleno, .barra { transition: none; }
-  .suma, .golpe .icono, .gana .relleno::after,
+  .cuadrante, .icono { transition: none; }
+  .suma, .golpe .icono, .cuadrante.gana::after,
   .reloj[data-estado="pausa"] .tiempo, .reloj.urgente .tiempo { animation: none; }
 }

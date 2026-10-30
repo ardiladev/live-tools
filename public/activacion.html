@@ -1,10 +1,11 @@
 <!doctype html>
 <!--
-  activacion.html — Widget "Barras de activación" para OBS / TikTok LIVE Studio
-  (recomendado 1200 × 600). De 2 a 4 barras, cada una con su regalo activador: quien envía
-  el activador de una barra se une a ella, y desde ahí TODOS sus regalos llenan esa barra.
-  Si después envía el activador de otra, se cambia. Arriba va el reloj de la ronda: los
-  regalos solo suman mientras corre y, al terminar, gana la barra con más monedas.
+  activacion.html — Widget "Barra de activación" para OBS / TikTok LIVE Studio
+  (recomendado 1600 × 400). Una sola barra repartida en 2 a 4 cuadrantes, uno por equipo; cada
+  equipo tiene su regalo activador. Quien envía el activador de un equipo se une a él, y desde
+  ahí TODOS sus regalos le suman; si después envía el de otro, se cambia. Cada cuadrante ocupa
+  la parte del total de monedas que lleva su equipo. Arriba va el reloj de la ronda: los regalos
+  solo suman mientras corre y, al terminar, gana el equipo con más monedas.
   Estilos: css/aurea.css + css/widget.css + css/widgets/activacion.css · Lógica: js/widgets/activacion.js
   La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
   y la configuración llega en vivo desde Supabase.
@@ -13,7 +14,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Barras de activación — overlay</title>
+  <title>Barra de activación — overlay</title>
 
   <!-- Estilos -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -33,31 +34,39 @@
       <span class="estado-reloj" id="estado-reloj"></span>
     </div>
 
-    <!-- Una fila por barra (el widget las arma con la plantilla de abajo) -->
-    <div class="barras" id="barras"></div>
+    <div class="placa cristal">
+      <!-- La barra: un cuadrante por equipo (el widget los arma con la plantilla de abajo) -->
+      <div class="barra" id="barra"></div>
+      <!-- Debajo, cada equipo: nombre, monedas, personas unidas y quien aportó más -->
+      <div class="leyenda" id="leyenda"></div>
+    </div>
 
     <!-- Quién va ganando, quién se unió, quién ganó -->
     <div class="aviso-juego" id="aviso" role="status" aria-live="polite"></div>
   </main>
 
-  <template id="plantilla-barra">
-    <article class="barra cristal">
+  <template id="plantilla-cuadrante">
+    <div class="cuadrante">
+      <img class="regalo" alt="" hidden>
+      <span class="porcentaje">0%</span>
+    </div>
+  </template>
+
+  <template id="plantilla-ficha">
+    <div class="ficha">
       <div class="icono">
         <img class="regalo" alt="" hidden>
         <span class="inicial" aria-hidden="true"></span>
       </div>
-      <div class="cuerpo">
-        <div class="titulo">
-          <span class="nombre"></span>
+      <div class="datos">
+        <div class="nombre"></div>
+        <div class="monedas">0</div>
+        <div class="detalle">
           <span class="miembros"></span>
           <span class="mejor"></span>
         </div>
-        <div class="tubo">
-          <div class="relleno"></div>
-          <span class="monedas">0</span>
-        </div>
       </div>
-    </article>
+    </div>
   </template>
 </body>
 </html>

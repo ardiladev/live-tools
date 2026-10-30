@@ -3,7 +3,7 @@
 Herramientas para transmisiones de TikTok LIVE, al estilo de TikFinity, organizadas en el panel así:
 
 - **Juegos** — *Sorteos*: ruleta de regalos (normal y premium) y tragamonedas · *Competencias*: carrera de
-  regalos, marcador, batalla de regalos y barras de activación · *Retos del público*: jefe del LIVE, bóveda dorada, subathon y repertorio.
+  regalos, marcador, batalla de regalos y barra de activación · *Retos del público*: jefe del LIVE, bóveda dorada, subathon y repertorio.
 - **Superposiciones** — *Metas* con barra de progreso · *Alertas* animadas · *Reconocimiento*: mensaje VIP
   destacado y trono (el rey del LIVE).
 - **Actividad** — eventos del LIVE en vivo y un **catálogo con el ID de cada regalo**.
@@ -71,7 +71,7 @@ con **Supabase** para los cambios en vivo: no hay servidor propio, ni Node.js, n
    premios y regalo y prueba con el botón **Test**.
 4. Pulsa **Copy URL** y, en OBS, agrega una **Fuente de navegador** con esa URL
    (en TikTok LIVE Studio: fuente **Enlace**). Tamaños recomendados:
-   ruleta 1080 × 1920 · meta 1200 × 400 · alertas 1280 × 720 · carrera 1920 × 400 · batalla 1600 × 300 · barras de activación 1200 × 600 · jefe 1920 × 300 (arriba de la escena) · subathon 900 × 300 · bóveda 1200 × 400 · trono 700 × 320 · marcador 1920 × 400 ·
+   ruleta 1080 × 1920 · meta 1200 × 400 · alertas 1280 × 720 · carrera 1920 × 400 · batalla 1600 × 300 · barra de activación 1600 × 400 · jefe 1920 × 300 (arriba de la escena) · subathon 900 × 300 · bóveda 1200 × 400 · trono 700 × 320 · marcador 1920 × 400 ·
    repertorio 600 × 900 · mensaje VIP 900 × 300 · tragamonedas 1200 × 500.
 5. Listo. Cuando la cuenta esté en vivo, el widget se conecta solo. Si el LIVE todavía no empieza
    o se corta, reintenta cada minuto.
@@ -99,7 +99,7 @@ las URLs de OBS y lo guardado siguen igual.
 |  | Competencias | Carrera de regalos | Franja horizontal con 1 a 6 integrantes: cada uno tiene su regalo, color y meta; cada regalo suma monedas (precio × cantidad) a su barra. Reloj por rondas en el centro que se **inicia, pausa y reinicia desde el panel** y llega a OBS al instante. Al terminar, muestra quién ganó. |
 |  |  | Marcador | Versión sencilla de la carrera: de 1 a 6 integrantes con su regalo, y cada regalo suma a su **puntaje** (sin barras ni metas). Arriba, aparte, el reloj en una píldora pequeña (**Iniciar / Pausar / Reiniciar** en vivo). Color propio opcional por integrante. Por defecto los regalos suman siempre, hasta reiniciar. |
 |  |  | Batalla de regalos | Tira y afloja entre dos equipos: cada uno tiene su regalo, monedas por regalo, color y foto opcional. La barra central empieza en 50 % y se corre hacia el equipo que lleva más monedas. Botón **Reiniciar batalla** que pone los puntos en 0 en OBS al instante. **Con cronómetro** (opción en *Personalizar*, encendida por defecto): los regalos solo suman con el reloj en marcha (Iniciar / Pausar / Nueva ronda, duración en segundos) y, al llegar a 0, el equipo con más monedas gana la ronda; arriba se ven las victorias de cada equipo y la racha («🔥 2 seguidas») cuando uno gana 2 o más rondas seguidas. Botón **Reiniciar victorias**. |
-|  |  | Barras de activación | De 2 a 4 barras (selector *Barras en juego*), cada una con nombre, regalo activador, monedas del activador y color. Quien envía el activador de una barra **se une** a ella y desde ahí **cualquier** regalo suyo la llena; si envía el activador de otra, se cambia (lo sumado se queda donde estaba). Los regalos de quien no se ha unido no suman. Reloj de la ronda (Iniciar / Pausar / Nueva ronda / **Reiniciar ronda**): unirse se puede antes de iniciar, pero las monedas solo suman con el reloj en marcha; al llegar a 0 gana la barra con más monedas. Cada barra muestra cuántas personas tiene (👥) y quién aportó más (⭐). |
+|  |  | Barra de activación | Una sola barra repartida en 2, 3 o 4 cuadrantes (selector *Equipos*), uno por equipo; cada equipo tiene nombre, regalo activador, monedas del activador y color. Quien envía el activador de un equipo **se une** a él y desde ahí **cualquier** regalo suyo le suma; si envía el activador de otro, se cambia (lo sumado se queda donde estaba). Los regalos de quien no se ha unido no suman. Cada cuadrante ocupa de la barra el **porcentaje de monedas** de su equipo (al empezar, todos miden lo mismo). Reloj de la ronda (Iniciar / Pausar / Nueva ronda / **Reiniciar ronda**): unirse se puede antes de iniciar, pero las monedas solo suman con el reloj en marcha; al llegar a 0 gana el equipo con más monedas. Debajo de la barra, cada equipo muestra sus monedas, cuántas personas tiene (👥) y quién aportó más (⭐). |
 |  | Retos del público | Cola de retos | Fila de retos pendientes para hacerlos con calma cuando llegan muchos regalos seguidos. En OBS se ve el reto de **Ahora** y los siguientes («+N más en espera»). Los retos llegan de la **ruleta** y el **tragamonedas** (casilla *Mandar a la Cola de retos* en su *Personalizar*; en la ruleta se elige qué premios van), de los **retos por regalo** (regalo → reto fijo; un combo es un solo reto «×5») y **a mano**. El panel muestra la cola real: **Hecho**, **Deshacer**, **Vaciar la cola** (pide un segundo clic). Necesita Supabase. |
 |  |  | Jefe del LIVE | Reto cooperativo (boss raid): el chat le quita vida a un jefe con likes y regalos antes de que se acabe el tiempo. Nombre, vida total, tiempo límite, texto de victoria y daño por like y por moneda. Raid con **Iniciar / Pausar / Reiniciar** que llegan a OBS al instante. En 0 muestra «Reto desbloqueado» con brillo dorado; si se acaba el tiempo, «Tiempo agotado». |
 |  |  | Bóveda dorada | Caja sorpresa: los regalos llenan una barra hacia una meta de monedas; el premio queda oculto hasta llegar. Entonces el candado se abre y aparece el **texto secreto** en letras de oro. Meta, texto secreto, título y pista. **Cerrar y reiniciar** y **Abrir ahora** llegan a OBS al instante. |
@@ -204,7 +204,7 @@ La configuración de cada widget (en Supabase o en la URL completa) usa estas cl
 | `meta.html` | `t` tipo (`likes`/`follows`/`shares`/`monedas`) · `o` objetivo · `ti` título · `col` color · `al` al alcanzar (`duplicar`/`reiniciar`/`nada`) · `s` sonido |
 | `alertas.html` | `ev` eventos `{regalo, follow, share}` · `min` monedas mínimas · `d` segundos · `s` sonido |
 | `batalla.html` | `a`, `b` equipos `{n nombre, g id del regalo, v monedas por regalo, c color, av foto (URL https), img imagen del regalo}` · `ro` ronda (al cambiar, puntos a 0) · `s` sonido · `cr` con cronómetro (1/0) · `t` reloj `{e, d, fin, r}` · `rv` ronda de victorias (al cambiar, victorias a 0) |
-| `activacion.html` | `eq` barras (2 a 4) `[{n nombre, g id del regalo activador, v monedas del activador, c color, img imagen del regalo}]` · `pr` precios del Buscador `{giftId: monedas}` · `ro` ronda (al cambiar, monedas y equipos a 0) · `s` sonido · `t` reloj `{e, d, fin, r}` |
+| `activacion.html` | `eq` equipos (2 a 4) `[{n nombre, g id del regalo activador, v monedas del activador, c color, img imagen del regalo}]` · `pr` precios del Buscador `{giftId: monedas}` · `ro` ronda (al cambiar, monedas y equipos a 0) · `s` sonido · `t` reloj `{e, d, fin, r}` |
 | `jefe.html` | `ti` nombre del jefe · `hp` vida total · `t` reloj (como en la carrera) · `ro` ronda (al cambiar, vida llena) · `dl` vida por like · `dr` vida por moneda de regalo · `v` monedas de un regalo sin precio · `tv` texto de victoria · `sr` solo con el reloj en marcha · `s` sonido |
 | `subathon.html` | `ti` título · `t` reloj base (como en la carrera) · `ro` ronda (al cambiar, se borra lo sumado) · `ex` ms agregados con «+5 min» · `cap` tope en segundos · `sl` segundos por 100 likes · `sd` segundos por moneda · `v` monedas de un regalo sin precio · `s` sonido |
 | `boveda.html` | `ti` título · `pi` pista (se ve con la bóveda cerrada) · `sec` texto secreto · `o` meta en monedas · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, se cierra y vuelve a 0) · `ab` 1 = abrir ahora · `s` sonido |
@@ -276,14 +276,14 @@ si la URL tiene `w`, cada vez que llega una configuración nueva. Cada widget la
   las victorias: solo las pone en 0 cambiando `rv` (si la ronda ya terminó, también empieza otra, para que el widget no
   vuelva a contarla). Sin `cr` (URLs viejas) la batalla funciona como antes.
   Un regalo cuenta para el equipo cuyo ID coincide; si TikTok no manda el precio, vale «Monedas por regalo».
-- **Barras de activación:** a cada persona se la reconoce por el id de su cuenta (`uid` del evento de regalo; las
-  pruebas del panel no lo traen y se usa el nombre). La ronda se guarda en `live-tools:activacion:<w>`: monedas de las
-  4 barras y, por persona, `[clave, nombre, barra, aportes por barra]` (máx. 5.000 personas). Se llevan siempre las 4
-  barras: si el panel quita una a mitad de ronda, sus monedas y su gente vuelven al ponerla otra vez (mientras tanto,
-  quien estaba en ella no suma hasta unirse a otra). Precio de un regalo: el que manda TikTok, si no las «Monedas del
+- **Barra de activación:** a cada persona se la reconoce por el id de su cuenta (`uid` del evento de regalo; las
+  pruebas del panel no lo traen y se usa el nombre). La ronda se guarda en `live-tools:activacion:<w>`: monedas de los
+  4 equipos y, por persona, `[clave, nombre, equipo, aportes por equipo]` (máx. 5.000 personas). Se llevan siempre los 4
+  equipos: si el panel quita uno a mitad de ronda, sus monedas y su gente vuelven al ponerlo otra vez (mientras tanto,
+  quien estaba en él no suma hasta unirse a otro). Precio de un regalo: el que manda TikTok, si no las «Monedas del
   activador» (solo para el activador), si no el del Buscador de regalos (`pr`), si no 1. Las monedas cuentan con el
-  reloj en marcha y 3 s de gracia; pasada la gracia nadie se une ni suma hasta la ronda siguiente. La barra que va
-  primera se dibuja llena y las demás en proporción a ella.
+  reloj en marcha y 3 s de gracia; pasada la gracia nadie se une ni suma hasta la ronda siguiente. Ancho de cada
+  cuadrante = monedas del equipo / total (mínimo 3 % si tiene monedas; sin monedas en total, todos iguales).
 - **Jefe del LIVE:** usa el mismo reloj que la carrera (`js/reloj.js`) y el mismo reinicio por `ro`. Cada like
   quita `dl` de vida y cada regalo `(precio × cantidad) × dr` (sin precio, el precio es `v`). La vida no baja de 0:
   al llegar a 0 el jefe queda vencido, el reloj del widget se congela en lo que sobró y los ataques siguientes no
@@ -450,7 +450,7 @@ live-tools/
 │   ├── alertas.html                widget alertas    │
 │   ├── carrera.html                widget carrera    │
 │   ├── batalla.html                widget batalla    │
-│   ├── activacion.html             widget barras act.│
+│   ├── activacion.html             widget barra act. │
 │   ├── jefe.html                   widget jefe       │
 │   ├── subathon.html               widget subathon   │
 │   ├── boveda.html                 widget bóveda     │
@@ -494,7 +494,7 @@ live-tools/
 │       │   ├── alertas.js
 │       │   ├── carrera.js          tarjetas, puntos por regalo, reloj y ganador
 │       │   ├── batalla.js          tira y afloja: puntos por equipo, barra y ventaja
-│       │   ├── activacion.js       barras de activación: unirse por activador, monedas por persona y barra
+│       │   ├── activacion.js       barra de activación: unirse por activador, cuadrantes por % de monedas
 │       │   ├── jefe.js             boss raid: vida, daño por likes y regalos, victoria
 │       │   ├── subathon.js         reloj al que el público suma tiempo, con tope
 │       │   ├── boveda.js           caja sorpresa: progreso, candado y texto secreto
@@ -518,7 +518,7 @@ live-tools/
 │               ├── alertas.js
 │               ├── carrera.js      integrantes, reloj (iniciar/pausar/reiniciar)
 │               ├── batalla.js      dos equipos y "Reiniciar batalla"
-│               ├── activacion.js   2 a 4 barras con su activador y reloj de la ronda
+│               ├── activacion.js   2 a 4 equipos con su activador y reloj de la ronda
 │               ├── jefe.js         jefe, daño y raid (iniciar/pausar/reiniciar)
 │               ├── subathon.js     tiempos, tasas y reloj (iniciar/pausar/+5 min/reiniciar)
 │               ├── boveda.js       meta, secreto y órdenes (cerrar y reiniciar / abrir ahora)
