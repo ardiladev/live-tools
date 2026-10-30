@@ -1,0 +1,63 @@
+<!doctype html>
+<!--
+  activacion.html — Widget "Barras de activación" para OBS / TikTok LIVE Studio
+  (recomendado 1200 × 600). De 2 a 4 barras, cada una con su regalo activador: quien envía
+  el activador de una barra se une a ella, y desde ahí TODOS sus regalos llenan esa barra.
+  Si después envía el activador de otra, se cambia. Arriba va el reloj de la ronda: los
+  regalos solo suman mientras corre y, al terminar, gana la barra con más monedas.
+  Estilos: css/aurea.css + css/widget.css + css/widgets/activacion.css · Lógica: js/widgets/activacion.js
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración llega en vivo desde Supabase.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Barras de activación — overlay</title>
+
+  <!-- Estilos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/aurea.css">
+  <link rel="stylesheet" href="css/widget.css">
+  <link rel="stylesheet" href="css/widgets/activacion.css">
+
+  <!-- Lógica -->
+  <script type="module" src="js/widgets/activacion.js"></script>
+</head>
+<body>
+  <main class="escena">
+    <!-- Reloj de la ronda -->
+    <div class="reloj cristal" id="reloj" role="timer">
+      <span class="tiempo" id="tiempo">00:00</span>
+      <span class="estado-reloj" id="estado-reloj"></span>
+    </div>
+
+    <!-- Una fila por barra (el widget las arma con la plantilla de abajo) -->
+    <div class="barras" id="barras"></div>
+
+    <!-- Quién va ganando, quién se unió, quién ganó -->
+    <div class="aviso-juego" id="aviso" role="status" aria-live="polite"></div>
+  </main>
+
+  <template id="plantilla-barra">
+    <article class="barra cristal">
+      <div class="icono">
+        <img class="regalo" alt="" hidden>
+        <span class="inicial" aria-hidden="true"></span>
+      </div>
+      <div class="cuerpo">
+        <div class="titulo">
+          <span class="nombre"></span>
+          <span class="miembros"></span>
+          <span class="mejor"></span>
+        </div>
+        <div class="tubo">
+          <div class="relleno"></div>
+          <span class="monedas">0</span>
+        </div>
+      </div>
+    </article>
+  </template>
+</body>
+</html>

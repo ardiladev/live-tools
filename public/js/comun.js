@@ -58,7 +58,8 @@ export function leerConfig() {
 // Todo lo que llega de Euler Stream se convierte a estos objetos. Los widgets y el panel
 // solo conocen esta forma: si mañana cambia la fuente de datos, solo cambia este archivo.
 //
-//   { tipo: 'regalo', usuario, giftId, nombre, cantidad, diamantes, imagen }
+//   { tipo: 'regalo', usuario, uid, giftId, nombre, cantidad, diamantes, imagen }
+//     (uid = id de la cuenta de TikTok: no cambia aunque la persona cambie su apodo)
 //   { tipo: 'like', usuario, cantidad, total, propios }   (cantidad: ver crearContadorLikes)
 //   { tipo: 'follow', usuario }
 //   { tipo: 'share', usuario }
@@ -124,6 +125,7 @@ export function crearRastreadorRegalos(emitir) {
     const evento = {
       tipo: 'regalo',
       usuario: nombreDe(data.user),
+      uid: String(data.user?.userId || ''),
       giftId: String(data.giftId), // llega a veces como número y a veces como texto
       nombre: data.giftDetails?.giftName || '',
       cantidad: Number(data.repeatCount) || 1,

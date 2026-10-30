@@ -1,0 +1,232 @@
+/* ==========================================================================
+   activacion.css — Widget "Barras de activación" (activacion.html)
+   Arriba el reloj de la ronda; debajo, una placa de cristal por barra (de 2 a 4):
+   la imagen del regalo activador, el nombre, cuántas personas hay en la barra,
+   quién aportó más y un tubo que se llena con el color de la barra. La que va
+   primera se ve llena y brilla; las demás, en proporción a ella. Abajo, el aviso
+   (quién va ganando, quién se unió, quién ganó). El color de cada barra llega en
+   --color (js/widgets/activacion.js).
+   Las medidas van en --u (el menor entre 1 % del ancho y 1,9 % del alto): las
+   4 barras caben enteras en cualquier tamaño de fuente de OBS, ancha o alta.
+
+   Secciones: 1. Escena · 2. Reloj · 3. Barras · 4. Tubo · 5. Aviso · 6. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+:root { --u: min(1vw, 1.9vh); }
+.escena {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 1.4);
+  padding: calc(var(--u) * 2);
+  box-sizing: border-box;
+}
+
+
+/* ---------- 2. Reloj ---------- */
+.reloj {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * .8);
+  padding: calc(var(--u) * .7) calc(var(--u) * 2);
+}
+.tiempo {
+  color: var(--texto-sec);
+  font-weight: 800;
+  font-size: calc(var(--u) * 3.2);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+.estado-reloj {
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.15);
+  letter-spacing: var(--espaciado-widget);
+  text-transform: var(--mayus);
+  opacity: .8;
+}
+.reloj[data-estado="corre"] .estado-reloj { color: var(--ok); opacity: 1; }
+.reloj[data-estado="pausa"] .tiempo { animation: parpadeo 1.2s ease-in-out infinite; }
+.reloj[data-estado="fin"] .estado-reloj { color: var(--activo); opacity: 1; }
+.reloj.urgente .tiempo { color: var(--mal); animation: latido 1s ease-in-out infinite; }
+
+
+/* ---------- 3. Barras ---------- */
+.barras {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1.2);
+  width: 100%;
+}
+.barra {
+  --color: var(--acento, #D4AF37);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.6);
+  padding: calc(var(--u) * 1.1) calc(var(--u) * 1.8);
+  box-sizing: border-box;
+  transition: box-shadow .3s ease;
+}
+/* La que va ganando: borde y brillo de su color. */
+.barra.gana {
+  box-shadow: 0 0 calc(var(--u) * 3) color-mix(in srgb, var(--color) 60%, transparent);
+}
+.barra.gana::before { background: var(--color); }
+.icono {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: calc(var(--u) * 5.4);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--color) 35%, transparent), transparent 70%), var(--cristal-claro);
+  box-shadow: 0 0 0 2px var(--color), 0 0 14px color-mix(in srgb, var(--color) 50%, transparent);
+}
+.regalo {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+}
+.inicial {
+  color: var(--color);
+  font-weight: 800;
+  font-size: calc(var(--u) * 2.4);
+}
+.inicial:empty { display: none; }
+.cuerpo {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: calc(var(--u) * .6);
+  min-width: 0;
+}
+.titulo {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * 1.4);
+  min-width: 0;
+  white-space: nowrap;
+}
+.nombre {
+  overflow: hidden;
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 1.6);
+  letter-spacing: .06em;
+  text-overflow: ellipsis;
+  text-transform: var(--mayus);
+}
+.miembros,
+.mejor {
+  flex: none;
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.2);
+  opacity: .85;
+}
+/* Quien aportó más va al final de la línea; si no cabe, se corta con "…". */
+.mejor {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* ---------- 4. Tubo (la barra que se llena) ---------- */
+.tubo {
+  position: relative;
+  height: calc(var(--u) * 3.2);
+  overflow: hidden;
+  border-radius: var(--radio);
+  background: color-mix(in srgb, var(--color) 14%, rgba(0, 0, 0, .35));
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
+}
+.relleno {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--color) 55%, transparent),
+    color-mix(in srgb, var(--color) 90%, transparent));
+  box-shadow: 0 0 calc(var(--u) * 1.4) color-mix(in srgb, var(--color) 50%, transparent);
+  transition: width .45s ease;
+}
+/* Brillo que recorre el relleno (solo en la que va ganando). */
+.gana .relleno::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .28) 50%, transparent 70%);
+  background-size: 250% 100%;
+  animation: brillo 2.4s linear infinite;
+}
+.monedas {
+  position: absolute;
+  top: 50%;
+  right: calc(var(--u) * 1.2);
+  z-index: 2;
+  color: var(--texto-sec);
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.8);
+  font-variant-numeric: tabular-nums;
+  text-shadow: var(--sombra-texto);
+  transform: translateY(-50%);
+}
+
+
+/* ---------- 5. Aviso ---------- */
+.aviso-juego {
+  --color: transparent;
+  max-width: 100%;
+  overflow: hidden;
+  padding: calc(var(--u) * .5) calc(var(--u) * 2);
+  border-radius: var(--radio);
+  box-sizing: border-box;
+  background: var(--cristal-oscuro);
+  -webkit-backdrop-filter: var(--desenfoque);
+  backdrop-filter: var(--desenfoque);
+  box-shadow: inset 3px 0 0 var(--color);
+  color: var(--oro-texto);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.3);
+  letter-spacing: var(--espaciado-widget);
+  text-overflow: ellipsis;
+  text-transform: var(--mayus);
+  text-shadow: var(--sombra-texto);
+  white-space: nowrap;
+}
+
+
+/* ---------- 6. Animaciones ---------- */
+/* "+25" que sube al llegar un regalo, sobre las monedas de la barra. */
+.suma {
+  position: absolute;
+  top: calc(var(--u) * 1.6);
+  right: calc(var(--u) * 3);
+  z-index: 4;
+  color: var(--color);
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.8);
+  text-shadow: var(--sombra-texto);
+  pointer-events: none;
+  animation: subir 1.1s ease-out forwards;
+}
+.golpe .icono { animation: golpe .35s ease-out; }
+
+@keyframes subir { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(calc(var(--u) * -3)); } }
+@keyframes golpe { 40% { transform: scale(1.12); } }
+@keyframes brillo { from { background-position: 150% 0; } to { background-position: -100% 0; } }
+@keyframes parpadeo { 50% { opacity: .35; } }
+@keyframes latido { 50% { transform: scale(1.1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .relleno, .barra { transition: none; }
+  .suma, .golpe .icono, .gana .relleno::after,
+  .reloj[data-estado="pausa"] .tiempo, .reloj.urgente .tiempo { animation: none; }
+}

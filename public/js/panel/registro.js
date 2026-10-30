@@ -22,6 +22,7 @@ import tragamonedas from './vistas/tragamonedas.js';
 import carrera from './vistas/carrera.js';
 import marcador from './vistas/marcador.js';
 import batalla from './vistas/batalla.js';
+import activacion from './vistas/activacion.js';
 import jefe from './vistas/jefe.js';
 import boveda from './vistas/boveda.js';
 import subathon from './vistas/subathon.js';
@@ -49,7 +50,7 @@ export const CATEGORIAS = [
     icono: 'juegos',
     grupos: [
       { id: 'sorteos', titulo: 'Sorteos', vistas: [ruletaNormal, ruletaPremium, tragamonedas] },
-      { id: 'competencias', titulo: 'Competencias', vistas: [carrera, marcador, batalla] },
+      { id: 'competencias', titulo: 'Competencias', vistas: [carrera, marcador, batalla, activacion] },
       { id: 'retos', titulo: 'Retos del público', vistas: [cola, jefe, boveda, subathon, repertorio] },
     ],
   },
