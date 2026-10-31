@@ -25,7 +25,7 @@ import batalla from './vistas/batalla.js';
 import activacion from './vistas/activacion.js';
 import jefe from './vistas/jefe.js';
 import boveda from './vistas/boveda.js';
-import subathon from './vistas/subathon.js';
+import { subathon, extensible } from './vistas/subathon.js';
 import repertorio from './vistas/repertorio.js';
 import cola from './vistas/cola.js';
 import { metaLikes, metaSeguidores, metaCompartidos, metaMonedas } from './vistas/metas.js';
@@ -51,7 +51,7 @@ export const CATEGORIAS = [
     grupos: [
       { id: 'sorteos', titulo: 'Sorteos', vistas: [ruletaNormal, ruletaPremium, tragamonedas] },
       { id: 'competencias', titulo: 'Competencias', vistas: [carrera, marcador, batalla, activacion] },
-      { id: 'retos', titulo: 'Retos del público', vistas: [cola, jefe, boveda, subathon, repertorio] },
+      { id: 'retos', titulo: 'Retos del público', vistas: [cola, jefe, boveda, subathon, extensible, repertorio] },
     ],
   },
   {

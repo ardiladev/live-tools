@@ -1,8 +1,14 @@
 // =============================================================================
-// subathon.js — Lógica del widget "Subathon" (subathon.html)
+// subathon.js — Lógica de los widgets "Subathon" (subathon.html) y "Subathon extensible"
+// (extensible.html)
 //
 // Un reloj que cuenta hacia atrás. El público le suma tiempo: `sl` segundos por cada 100 likes y
 // `sd` segundos por cada moneda de regalo, sin pasar nunca del tope (`cap`). Si llega a 0, terminó.
+//
+// Con meta (`mt` > 0, el subathon extensible): primero el público junta `mt` monedas en regalos
+// y, mientras tanto, ni los regalos ni los likes suman tiempo. Desde que se alcanza la meta, todo
+// suma: del regalo que la cruza cuenta solo lo que pasa de la meta. La barra de la meta va en
+// #meta (solo existe en extensible.html; en subathon.html no hay meta).
 //
 // Quién lleva qué:
 //   - El panel lleva el reloj base `t` (como en js/reloj.js: hora de término si corre, lo que
@@ -17,9 +23,11 @@
 //   borra lo sumado) · ex = ms agregados desde el panel · cap = tope en segundos
 //   sl = segundos por 100 likes · sd = segundos por moneda · v = monedas de un regalo sin precio
 //   s = sonido (1/0) · est = estilo visual (js/tema.js; lo aplica comun.js)
+//   mt = monedas de la meta (0 o ausente = sin meta: suma desde el primer regalo)
 //
 // Lo sumado se guarda en este navegador: si OBS recarga la fuente, se conserva.
-// Secciones: 1. Configuración · 2. Tiempo · 3. Guardado · 4. Pintado · 5. Sumar tiempo · 6. Arranque
+// Secciones: 1. Configuración · 2. Tiempo · 3. Guardado · 4. Pintado · 5. Meta · 6. Sumar tiempo
+//            7. Arranque
 // =============================================================================
 
 import { leerConfig, iniciarWidget, sonar } from '../comun.js';
@@ -42,11 +50,13 @@ let segPorLikes = 5;    // por cada 100 likes
 let segPorMoneda = 10;
 let valorRegalo = 1;
 let sonido = true;
+let meta = 0;     // monedas que hay que juntar antes de que algo sume tiempo (0 = sin meta)
 
 let ronda = null;
 let claveGuardado = '';
 let extraMs = 0;  // tiempo sumado (público + "+5 min" del panel ya aplicados)
 let exVisto = 0;  // cuánto de `ex` (panel) ya se aplicó
+let monedas = 0;  // monedas juntadas para la meta en esta ronda
 
 /** Aplica una configuración. Puede llegar en cualquier momento (cambios en vivo, reloj, +5 min). */
 function aplicarConfig(cfg) {
@@ -57,6 +67,7 @@ function aplicarConfig(cfg) {
   segPorMoneda = Math.max(0, Number(cfg.sd ?? 10));
   valorRegalo = Math.max(0, Number(cfg.v) || 1);
   sonido = cfg.s !== 0;
+  meta = Math.max(0, Math.round(Number(cfg.mt) || 0));
   claveGuardado = `${CLAVE_GUARDADO}${cfg.w || 'url'}`;
 
   // Ronda nueva (el panel pulsó "Reiniciar"): se borra todo lo sumado.
@@ -65,6 +76,7 @@ function aplicarConfig(cfg) {
     ronda = nuevaRonda;
     extraMs = 0;
     exVisto = 0;
+    monedas = 0;
     restaurar();
   }
 
@@ -75,6 +87,7 @@ function aplicarConfig(cfg) {
   guardar();
 
   $('titulo').textContent = titulo;
+  pintarMeta();
   pintar();
 }
 
@@ -111,10 +124,11 @@ function restaurar() {
   if (guardado?.ro !== ronda) return; // la ronda empieza sin tiempo sumado
   extraMs = Number(guardado.x) || 0;
   exVisto = Math.max(0, Number(guardado.ev) || 0);
+  monedas = Math.max(0, Number(guardado.m) || 0);
 }
 
 function guardar() {
-  escribirGuardado(claveGuardado, { ro: ronda, x: extraMs, ev: exVisto });
+  escribirGuardado(claveGuardado, { ro: ronda, x: extraMs, ev: exVisto, m: monedas });
 }
 
 
@@ -186,7 +200,49 @@ function mostrarSuma(ms) {
 
 
 // -----------------------------------------------------------------------------
-// 5. Sumar tiempo
+// 5. Meta (solo con `mt`: el subathon extensible)
+// -----------------------------------------------------------------------------
+
+const formato = new Intl.NumberFormat('es-CO');
+const metaCumplida = () => monedas >= meta;
+
+/** Barra y texto de la meta. Sin meta (o sin #meta en el HTML), no se muestra nada. */
+function pintarMeta() {
+  const caja = $('meta');
+  if (!caja) return;
+  caja.hidden = !meta;
+  if (!meta) return;
+  const cumplida = metaCumplida();
+  caja.classList.toggle('cumplida', cumplida);
+  $('meta-relleno').style.setProperty('--progreso', String(Math.min(1, monedas / meta)));
+  $('meta-texto').textContent = cumplida
+    ? 'Meta cumplida: regalos y taps suman tiempo'
+    : `Meta: ${formato.format(monedas)} / ${formato.format(meta)} monedas`;
+}
+
+/**
+ * Anota las monedas de un regalo en la meta y devuelve las que suman tiempo: todas si ya se
+ * cumplió (o no hay meta), solo lo que pasa de la meta si este regalo la cruza, 0 si aún falta.
+ */
+function monedasQueSuman(cantidad) {
+  if (!meta) return cantidad;
+  if (metaCumplida()) return cantidad;
+  monedas += cantidad;
+  guardar();
+  pintarMeta();
+  if (!metaCumplida()) return 0;
+  // ¡Se cruzó la meta! Celebración: la píldora brilla y suena un acorde.
+  const caja = $('subathon');
+  caja.classList.remove('meta-lograda');
+  void caja.offsetWidth;
+  caja.classList.add('meta-lograda');
+  if (sonido) [660, 880, 1320].forEach((f, i) => setTimeout(() => sonar({ frecuencia: f, duracion: 0.35, volumen: 0.1 }), i * 140));
+  return monedas - meta;
+}
+
+
+// -----------------------------------------------------------------------------
+// 6. Sumar tiempo
 // -----------------------------------------------------------------------------
 
 let ultimoSonido = 0;
@@ -196,9 +252,14 @@ let ultimoSonido = 0;
  * pausa) y sin terminar; el panel ("+5 min") suma siempre, incluso para revivir un reloj en 0.
  * Devuelve lo que de verdad se sumó.
  */
-function sumar(ms, { delPanel = false } = {}) {
+/** ¿Cuenta ahora lo que manda el público? Con el reloj en marcha o en pausa (o en la vista previa). */
+function publicoCuenta() {
   const f = fase();
-  if (!delPanel && !prueba && f !== 'corre' && f !== 'pausa') return 0;
+  return prueba || f === 'corre' || f === 'pausa';
+}
+
+function sumar(ms, { delPanel = false } = {}) {
+  if (!delPanel && !publicoCuenta()) return 0;
   const ahora = restante();
   const nuevo = Math.min(capMs, Math.max(0, ahora) + ms);
   if (nuevo <= ahora) return 0; // ya está en el tope
@@ -209,18 +270,26 @@ function sumar(ms, { delPanel = false } = {}) {
   return nuevo - ahora;
 }
 
-/** Segundos que suma un evento: likes / 100 × sl, o monedas × sd. */
+/**
+ * Segundos que suma un evento: likes / 100 × sl, o monedas × sd. Con meta, antes de cumplirla
+ * los likes no suman y los regalos solo llenan la meta.
+ */
 function segundosDe(evento) {
-  if (evento.tipo === 'like') return (Math.max(0, Number(evento.cantidad) || 0) / 100) * segPorLikes;
+  if (evento.tipo === 'like') {
+    if (meta && !metaCumplida()) return 0;
+    return (Math.max(0, Number(evento.cantidad) || 0) / 100) * segPorLikes;
+  }
   if (evento.tipo === 'regalo') {
     // TikTok no siempre manda el precio: entonces vale lo configurado en el panel.
-    const monedas = (Number(evento.diamantes) || valorRegalo) * Math.max(1, Number(evento.cantidad) || 1);
-    return monedas * segPorMoneda;
+    const valor = (Number(evento.diamantes) || valorRegalo) * Math.max(1, Number(evento.cantidad) || 1);
+    return monedasQueSuman(valor) * segPorMoneda;
   }
   return 0;
 }
 
 function alEvento(evento) {
+  // Antes de iniciar o después de terminar no cuenta nada (ni para la meta).
+  if (!publicoCuenta()) return;
   const segundos = segundosDe(evento);
   if (!segundos) return;
   const sumado = sumar(segundos * 1000);
@@ -232,7 +301,7 @@ function alEvento(evento) {
 
 
 // -----------------------------------------------------------------------------
-// 6. Arranque
+// 7. Arranque
 // -----------------------------------------------------------------------------
 
 iniciarWidget({ cfg: leerConfig(), alConfig: aplicarConfig, alEvento });

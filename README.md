@@ -3,7 +3,7 @@
 Herramientas para transmisiones de TikTok LIVE, al estilo de TikFinity, organizadas en el panel así:
 
 - **Juegos** — *Sorteos*: ruleta de regalos (normal y premium) y tragamonedas · *Competencias*: carrera de
-  regalos, marcador, batalla de regalos y barra de activación · *Retos del público*: jefe del LIVE, bóveda dorada, subathon y repertorio.
+  regalos, marcador, batalla de regalos y barra de activación · *Retos del público*: jefe del LIVE, bóveda dorada, subathon, subathon extensible y repertorio.
 - **Superposiciones** — *Metas* con barra de progreso · *Alertas* animadas · *Reconocimiento*: mensaje VIP
   destacado y trono (el rey del LIVE).
 - **Actividad** — eventos del LIVE en vivo y un **catálogo con el ID de cada regalo**.
@@ -71,7 +71,7 @@ con **Supabase** para los cambios en vivo: no hay servidor propio, ni Node.js, n
    premios y regalo y prueba con el botón **Test**.
 4. Pulsa **Copy URL** y, en OBS, agrega una **Fuente de navegador** con esa URL
    (en TikTok LIVE Studio: fuente **Enlace**). Tamaños recomendados:
-   ruleta 1080 × 1920 · meta 1200 × 400 · alertas 1280 × 720 · carrera 1920 × 400 · batalla 1600 × 300 · barra de activación 1600 × 400 · jefe 1920 × 300 (arriba de la escena) · subathon 900 × 300 · bóveda 1200 × 400 · trono 700 × 320 · marcador 1920 × 400 ·
+   ruleta 1080 × 1920 · meta 1200 × 400 · alertas 1280 × 720 · carrera 1920 × 400 · batalla 1600 × 300 · barra de activación 1600 × 400 · jefe 1920 × 300 (arriba de la escena) · subathon 900 × 300 · subathon extensible 900 × 400 · bóveda 1200 × 400 · trono 700 × 320 · marcador 1920 × 400 ·
    repertorio 600 × 900 · mensaje VIP 900 × 300 · tragamonedas 1200 × 500.
 5. Listo. Cuando la cuenta esté en vivo, el widget se conecta solo. Si el LIVE todavía no empieza
    o se corta, reintenta cada minuto.
@@ -143,6 +143,7 @@ flowchart LR
   EU -->|eventos JSON| W5b[activacion.html]
   EU -->|eventos JSON| W6[jefe.html]
   EU -->|eventos JSON| W7[subathon.html]
+  EU -->|eventos JSON| W7b[extensible.html]
   EU -->|eventos JSON| W8[boveda.html]
   EU -->|eventos JSON| W9[trono.html]
   EU -->|eventos JSON| W10[marcador.html]
@@ -207,6 +208,7 @@ La configuración de cada widget (en Supabase o en la URL completa) usa estas cl
 | `activacion.html` | `eq` equipos (2 a 4) `[{n nombre, g id del regalo activador, v monedas del activador, c color, img imagen del regalo}]` · `pr` precios del Buscador `{giftId: monedas}` · `ro` ronda (al cambiar, monedas y equipos a 0) · `s` sonido · `t` reloj `{e, d, fin, r}` |
 | `jefe.html` | `ti` nombre del jefe · `hp` vida total · `t` reloj (como en la carrera) · `ro` ronda (al cambiar, vida llena) · `dl` vida por like · `dr` vida por moneda de regalo · `v` monedas de un regalo sin precio · `tv` texto de victoria · `sr` solo con el reloj en marcha · `s` sonido |
 | `subathon.html` | `ti` título · `t` reloj base (como en la carrera) · `ro` ronda (al cambiar, se borra lo sumado) · `ex` ms agregados con «+5 min» · `cap` tope en segundos · `sl` segundos por 100 likes · `sd` segundos por moneda · `v` monedas de un regalo sin precio · `s` sonido |
+| `extensible.html` | Las mismas claves del subathon (usa el mismo `js/widgets/subathon.js`) más `mt` = monedas de la meta: hasta juntarlas, ni regalos ni likes suman tiempo; del regalo que la cruza cuenta solo lo que sobra |
 | `boveda.html` | `ti` título · `pi` pista (se ve con la bóveda cerrada) · `sec` texto secreto · `o` meta en monedas · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, se cierra y vuelve a 0) · `ab` 1 = abrir ahora · `s` sonido |
 | `trono.html` | `ti` título · `m` modo (`combo`/`total`) · `min` monedas mínimas para reinar · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, trono libre) · `s` sonido |
 | `marcador.html` | `ti` título junto al reloj · `j` integrantes `[{i id, n nombre, c color (vacío = acento del estilo), g id del regalo, gn nombre del regalo, v monedas por regalo, img imagen}]` · `t` reloj (como en la carrera) · `ro` ronda (al cambiar, puntos a 0) · `sr` solo con el reloj en marcha (por defecto 0) · `s` sonido |
@@ -295,6 +297,10 @@ si la URL tiene `w`, cada vez que llega una configuración nueva. Cada widget la
   el subathon no usa `leerReloj`. El público suma con el reloj en marcha o en pausa; «+5 min» suma siempre (incluso
   revive un reloj en 0). Lo sumado se guarda en `live-tools:subathon:<w>`. El panel no ve lo que suma el chat: su
   reloj marca igual o menos que el de OBS.
+  El **subathon extensible** (`extensible.html`, vista `extensible`) es el mismo widget con meta (`mt`): las monedas
+  de regalos (con el reloj en marcha o en pausa) llenan una barra y, hasta cumplirla, nada suma tiempo; desde ahí,
+  regalos y likes suman como en el subathon. Las monedas juntadas se guardan con lo sumado (`m`) y vuelven a 0 al
+  reiniciar. Las dos vistas del panel salen de la misma fábrica (`crearVista` en `vistas/subathon.js`).
 - **Bóveda dorada:** el progreso lo cuenta el widget (precio × cantidad de cada regalo; sin precio, `v`) y se guarda en
   `live-tools:boveda:<w>` junto con si está abierta. El panel manda órdenes: `ro` nueva = cerrar y volver a 0;
   `ab = 1` = abrir aunque no se llegue a la meta. El texto secreto **no se escribe en la página** hasta que se abre.
@@ -454,6 +460,7 @@ live-tools/
 │   ├── activacion.html             widget barra act. │
 │   ├── jefe.html                   widget jefe       │
 │   ├── subathon.html               widget subathon   │
+│   ├── extensible.html             widget extensible │
 │   ├── boveda.html                 widget bóveda     │
 │   ├── trono.html                  widget trono      │
 │   ├── marcador.html               widget marcador   │
@@ -474,6 +481,7 @@ live-tools/
 │   │       ├── activacion.css
 │   │       ├── jefe.css
 │   │       ├── subathon.css
+│   │       ├── extensible.css      barra de la meta (va encima de subathon.css)
 │   │       ├── boveda.css
 │   │       ├── trono.css
 │   │       ├── marcador.css
@@ -497,7 +505,7 @@ live-tools/
 │       │   ├── batalla.js          tira y afloja: puntos por equipo, barra y ventaja
 │       │   ├── activacion.js       barra de activación: unirse por activador, cuadrantes por % de monedas
 │       │   ├── jefe.js             boss raid: vida, daño por likes y regalos, victoria
-│       │   ├── subathon.js         reloj al que el público suma tiempo, con tope
+│       │   ├── subathon.js         reloj al que el público suma tiempo, con tope (y meta opcional: extensible)
 │       │   ├── boveda.js           caja sorpresa: progreso, candado y texto secreto
 │       │   ├── trono.js            rey del LIVE: jugadas de 3 s, modos combo/total
 │       │   ├── marcador.js         puntajes por integrante y reloj arriba
@@ -522,7 +530,7 @@ live-tools/
 │               ├── batalla.js      dos equipos y "Reiniciar batalla"
 │               ├── activacion.js   2 a 4 equipos con su activador y reloj de la ronda
 │               ├── jefe.js         jefe, daño y raid (iniciar/pausar/reiniciar)
-│               ├── subathon.js     tiempos, tasas y reloj (iniciar/pausar/+5 min/reiniciar)
+│               ├── subathon.js     subathon y subathon extensible: tiempos, tasas, meta y reloj
 │               ├── boveda.js       meta, secreto y órdenes (cerrar y reiniciar / abrir ahora)
 │               ├── trono.js        modo, mínimo y "Reiniciar trono"
 │               ├── marcador.js     integrantes (color opcional) y reloj
