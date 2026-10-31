@@ -13,6 +13,7 @@
 
 import * as almacen from '../almacen.js';
 import { editorEstilo } from '../estilo.js';
+import { textoLimpio } from '../piezas.js';
 import * as sincronizar from '../sincronizar.js';
 import { el, tarjeta, tarjetaWidget, campo, casilla, nota, crearAviso, numero } from '../ui.js';
 
@@ -41,7 +42,6 @@ const POR_DEFECTO = {
 // Se registra al cargar, para que los cambios en vivo funcionen con o sin la vista abierta.
 
 const ajustes = () => almacen.widget(ID, POR_DEFECTO);
-const textoLimpio = (texto) => String(texto ?? '').trim();
 
 sincronizar.registrar(ID, {
   config: () => {

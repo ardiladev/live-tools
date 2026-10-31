@@ -14,8 +14,8 @@
 // =============================================================================
 
 import * as almacen from '../almacen.js';
-import { leerReloj, iniciarReloj, pausarReloj, reiniciarReloj, formatoReloj } from '../../reloj.js';
 import { editorEstilo } from '../estilo.js';
+import { textoLimpio, acotarDuracion, listaRegalos, usarLista, relojDeRonda, campoDuracion, TEXTOS_RELOJ } from '../piezas.js';
 import * as sincronizar from '../sincronizar.js';
 import { el, tarjeta, tarjetaWidget, campo, casilla, nota, crearAviso } from '../ui.js';
 
@@ -27,8 +27,6 @@ import { el, tarjeta, tarjetaWidget, campo, casilla, nota, crearAviso } from '..
 const ID = 'batalla';
 const MAX_NOMBRE = 24;
 const LETRAS = ['A', 'B'];
-const DURACION_MIN_S = 10;
-const DURACION_MAX_S = 24 * 3600;
 
 const POR_DEFECTO = {
   sonido: true,
@@ -50,8 +48,7 @@ const POR_DEFECTO = {
 // Se registra al cargar, para que los cambios en vivo funcionen con o sin la vista abierta.
 
 const ajustes = () => almacen.widget(ID, POR_DEFECTO);
-const duracion = () => Math.min(DURACION_MAX_S, Math.max(DURACION_MIN_S, Number(ajustes().duracion) || POR_DEFECTO.duracion));
-const textoLimpio = (texto) => String(texto ?? '').trim();
+const duracion = () => acotarDuracion(ajustes().duracion, POR_DEFECTO.duracion);
 const urlValida = (texto) => /^https?:\/\/\S+$/i.test(textoLimpio(texto));
 
 sincronizar.registrar(ID, {
@@ -143,32 +140,18 @@ export default {
     });
 
     // ---------- Reloj y victorias ----------
-    const tiempo = el('div', { class: 'reloj-tiempo', role: 'timer' });
-    const estadoReloj = el('div', { class: 'reloj-estado' });
-    const botonIniciar = el('button', { class: 'principal', onclick: iniciar });
-    const botonPausar = el('button', { onclick: () => aplicarReloj(pausarReloj(relojActual())) }, 'Pausar');
+    const reloj = relojDeRonda({
+      id: ID, cfg, duracion, actualizar: () => widget.actualizar(), senal,
+      textos: {
+        ...TEXTOS_RELOJ,
+        corre: ['En juego: los regalos suman', 'Iniciar'],
+        pausa: ['En pausa: los regalos no suman', 'Reanudar'],
+      },
+    });
 
-    const relojActual = () => ({ ...cfg.reloj, d: duracion() });
-
-    /** Guarda el reloj (y la ronda, si cambia) y lo manda a OBS de inmediato (sin la espera habitual). */
-    function aplicarReloj(nuevo, { nuevaRonda = false } = {}) {
-      cfg.reloj = { e: nuevo.e, fin: nuevo.fin, r: nuevo.r };
-      if (nuevaRonda) cfg.ronda = Date.now();
-      almacen.guardar();
-      sincronizar.subir(ID);
-      widget.actualizar();
-      pintarReloj();
-    }
-
-    // Desde "Final", iniciar es empezar una ronda nueva (puntos en 0; las victorias se quedan).
-    function iniciar() {
-      const terminada = leerReloj(relojActual()).estado === 'fin';
-      aplicarReloj(iniciarReloj(terminada ? reiniciarReloj(relojActual()) : relojActual()), { nuevaRonda: terminada });
-    }
-
-    /** Puntos en 0 y reloj detenido con la duración completa. */
+    /** Puntos en 0 y reloj detenido con la duración completa (las victorias se quedan). */
     function reiniciar() {
-      aplicarReloj(reiniciarReloj(relojActual()), { nuevaRonda: true });
+      reloj.reiniciar();
       avisarReinicio('Batalla reiniciada: los puntos de los dos equipos vuelven a 0 en OBS.');
     }
 
@@ -178,41 +161,14 @@ export default {
      */
     function reiniciarVictorias() {
       cfg.rondaVictorias = Date.now();
-      const terminada = leerReloj(relojActual()).estado === 'fin';
-      aplicarReloj(terminada ? reiniciarReloj(relojActual()) : relojActual(), { nuevaRonda: terminada });
+      if (reloj.terminada()) reloj.reiniciar();
+      else reloj.aplicar(reloj.actual());
       avisarReinicio('Victorias reiniciadas: los dos equipos vuelven a 0 victorias en OBS.');
     }
 
-    const TEXTOS = {
-      listo: ['Lista para empezar', 'Iniciar'],
-      corre: ['En juego: los regalos suman', 'Iniciar'],
-      pausa: ['En pausa: los regalos no suman', 'Reanudar'],
-      fin: ['Terminó la ronda', 'Nueva ronda'],
-    };
-    function pintarReloj() {
-      const { estado, restanteMs } = leerReloj(relojActual());
-      tiempo.textContent = formatoReloj(restanteMs);
-      tiempo.dataset.estado = estado;
-      estadoReloj.textContent = TEXTOS[estado][0];
-      botonIniciar.textContent = TEXTOS[estado][1];
-      botonIniciar.disabled = estado === 'corre';
-      botonPausar.disabled = estado !== 'corre';
-    }
-    const intervalo = setInterval(pintarReloj, 250);
-    senal.addEventListener('abort', () => clearInterval(intervalo), { once: true });
-    pintarReloj();
-
-    const campoDuracion = campo('Duración de cada ronda (segundos):', {
-      tipo: 'number', valor: cfg.duracion, min: DURACION_MIN_S, max: DURACION_MAX_S, step: 10,
-      alCambiar: (v) => { cfg.duracion = v; cambio(); pintarReloj(); pintarMinutos(); },
-    });
-    const minutos = el('span', { class: 'nota sin-margen' });
-    const pintarMinutos = () => { minutos.textContent = `= ${formatoReloj(duracion() * 1000)}`; };
-    pintarMinutos();
+    const duracionRonda = campoDuracion('Duración de cada ronda (segundos):', { cfg, duracion, alCambiar: () => { cambio(); reloj.pintar(); } });
 
     // Lo que solo tiene sentido con cronómetro se oculta sin él.
-    const relojPanel = el('div', { class: 'reloj-panel' }, tiempo, estadoReloj);
-    const filaDuracion = el('div', { class: 'campos duracion separado-arriba' }, campoDuracion);
     const botonVictorias = el('button', {
       onclick: reiniciarVictorias, title: 'Pone las victorias y las rachas de los dos equipos en 0',
     }, 'Reiniciar victorias');
@@ -222,13 +178,15 @@ export default {
       'Las victorias se ven solo en OBS: el panel no recibe los puntos.');
     const notaSinReloj = nota('El reinicio llega a OBS en uno o dos segundos. Si OBS recarga la fuente, los puntos se conservan hasta que reinicies.');
     function mostrarReloj() {
-      [relojPanel, filaDuracion, minutos, botonIniciar, botonPausar, botonVictorias, notaReloj]
+      [reloj.panel, duracionRonda.fila, duracionRonda.minutos, reloj.botonIniciar, reloj.botonPausar, botonVictorias, notaReloj]
         .forEach((nodo) => { nodo.hidden = !cfg.conReloj; });
       notaSinReloj.hidden = cfg.conReloj;
     }
     mostrarReloj();
 
     // ---------- Equipos ----------
+    const datalist = listaRegalos('regalos-batalla');
+
     function tarjetaEquipo(e, i) {
       const valor = campo('Monedas por regalo:', {
         tipo: 'number', valor: e.valor, min: 0, step: 1,
@@ -246,7 +204,7 @@ export default {
           cambio();
         },
       });
-      giftId.querySelector('input').setAttribute('list', 'regalos-batalla'); // `list` es de solo lectura como propiedad
+      usarLista(giftId.querySelector('input'), datalist);
       const nombreRegalo = el('p', { class: 'nota sin-margen' }, e.regalo ? `Regalo: ${e.regalo}` : '');
 
       return tarjeta(`Equipo ${LETRAS[i]} (${i ? 'derecha' : 'izquierda'})`, {},
@@ -264,12 +222,6 @@ export default {
         nota('Sin foto, se muestra la imagen del regalo (si está en el Buscador de regalos) o la inicial del nombre.'));
     }
 
-    const regalos = Object.values(almacen.regalos()).sort((a, b) => (b.veces || 0) - (a.veces || 0));
-    const datalist = el('datalist', { id: 'regalos-batalla' }, ...regalos.map((r) => el('option', {
-      value: r.giftId,
-      label: `${almacen.nombreRegalo(r) || 'Sin nombre'}${r.diamantes ? ` · ${r.diamantes} monedas` : ''}`,
-    })));
-
     pintarProblemas();
 
     // ---------- Estructura ----------
@@ -277,14 +229,14 @@ export default {
       widget.elemento,
 
       tarjeta('Batalla', { ancha: true },
-        relojPanel,
+        reloj.panel,
         el('div', { class: 'fila-acciones separado-arriba' },
-          botonIniciar,
-          botonPausar,
+          reloj.botonIniciar,
+          reloj.botonPausar,
           el('button', { onclick: reiniciar, title: 'Detiene el reloj y pone los puntos de los dos equipos en 0' }, 'Reiniciar batalla'),
           botonVictorias),
-        filaDuracion,
-        minutos,
+        duracionRonda.fila,
+        duracionRonda.minutos,
         avisoReinicio,
         aviso,
         notaReloj,

@@ -396,6 +396,7 @@ Los mensajes solo se aceptan si vienen del mismo origen.
 | `js/panel/sincronizar.js` | Cambios en vivo: cada vista de widget registra aquí su configuración; al guardar algo, la sube a Supabase si cambió |
 | `js/panel/envivo.js` | Conexión del panel al LIVE: contadores, lista de eventos, regalos de la sesión |
 | `js/panel/ui.js` | Componentes: `el()`, `icono()`, `tarjeta`, `campo`, `casilla`, `deslizador`, `segmentado`, `nota`, `tarjetaWidget` |
+| `js/panel/piezas.js` | Piezas comunes de las vistas de juegos: `textoLimpio`, `acotarDuracion`, `listaRegalos` / `usarLista` (sugerencias de IDs del Buscador), `relojDeRonda` (reloj con Iniciar/Pausar/Reiniciar) y `campoDuracion` |
 | `js/tema.js` | **Estilo de los widgets** (compartido con los widgets): presets, valores por defecto, `normalizarTema`, `aplicarTema` (variables CSS) y `paletaRuleta` (colores del canvas) |
 | `js/panel/vistas/*.js` | Una vista por archivo |
 
@@ -511,6 +512,7 @@ live-tools/
 │           ├── sincronizar.js      sube a Supabase la configuración de cada widget
 │           ├── envivo.js
 │           ├── ui.js
+│           ├── piezas.js           piezas comunes de las vistas de juegos: reloj de la ronda, lista de regalos, textos
 │           ├── estilo.js           editor del estilo visual (va en "Personalizar" de cada widget)
 │           └── vistas/
 │               ├── ruleta.js       ruleta normal y premium (misma fábrica)
@@ -570,6 +572,8 @@ Ejemplo: un widget **“Último seguidor”**.
      funcionan aunque la vista no esté abierta);
    - en `render`, `tarjetaWidget({ id: 'ultimo', titulo, archivo: 'ultimo.html', pruebas, senal })` te da la
      URL, el estado de los cambios en vivo, los botones y la vista previa.
+   - si es un juego con reloj por rondas o pide IDs de regalos, usa `js/panel/piezas.js` (`relojDeRonda`,
+     `campoDuracion`, `listaRegalos`) en vez de copiarlos de otra vista.
 3. **El menú**: impórtala en `public/js/panel/registro.js` y agrégala a un grupo, o crea un grupo o una
    categoría nueva. El menú y la navegación se arman solos.
 

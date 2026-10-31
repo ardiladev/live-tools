@@ -10,8 +10,8 @@
 // =============================================================================
 
 import * as almacen from '../almacen.js';
-import { leerReloj, iniciarReloj, pausarReloj, reiniciarReloj, formatoReloj } from '../../reloj.js';
 import { editorEstilo } from '../estilo.js';
+import { textoLimpio, relojDeRonda } from '../piezas.js';
 import * as sincronizar from '../sincronizar.js';
 import { el, tarjeta, tarjetaWidget, campo, casilla, nota, numero } from '../ui.js';
 
@@ -46,7 +46,6 @@ const POR_DEFECTO = {
 
 const ajustes = () => almacen.widget(ID, POR_DEFECTO);
 const minutos = () => Math.min(MINUTOS_MAX, Math.max(MINUTOS_MIN, Number(ajustes().minutos) || POR_DEFECTO.minutos));
-const textoLimpio = (texto) => String(texto ?? '').trim();
 
 sincronizar.registrar(ID, {
   config: () => {
@@ -99,7 +98,7 @@ export default {
         campo('Vida total:', { tipo: 'number', valor: cfg.vida, min: 1, step: 1000, alCambiar: (v) => { cfg.vida = v; cambio(); } }),
         campo('Tiempo límite (minutos):', {
           tipo: 'number', valor: cfg.minutos, min: MINUTOS_MIN, max: MINUTOS_MAX, step: 0.5,
-          alCambiar: (v) => { cfg.minutos = v; cambio(); pintarReloj(); },
+          alCambiar: (v) => { cfg.minutos = v; cambio(); reloj.pintar(); },
         }),
         campo('Texto de victoria:', { valor: cfg.textoVictoria, maxLength: 40, alCambiar: (v) => { cfg.textoVictoria = v; cambio(); } }),
       ],
@@ -117,51 +116,20 @@ export default {
     });
 
     // ---------- Raid (reloj) ----------
-    const tiempo = el('div', { class: 'reloj-tiempo', role: 'timer' });
-    const estadoReloj = el('div', { class: 'reloj-estado' });
-    const botonIniciar = el('button', { class: 'principal', onclick: iniciar });
-    const botonPausar = el('button', { onclick: () => aplicarReloj(pausarReloj(relojActual())) }, 'Pausar');
+    const reloj = relojDeRonda({
+      id: ID, cfg, duracion: () => Math.round(minutos() * 60), actualizar: () => widget.actualizar(), senal,
+      // Desde "Tiempo agotado", iniciar es empezar una raid nueva (vida llena).
+      textos: {
+        listo: ['Lista para empezar', 'Iniciar raid'],
+        corre: ['En combate', 'Iniciar raid'],
+        pausa: ['En pausa', 'Reanudar'],
+        fin: ['Tiempo agotado', 'Nueva raid'],
+      },
+    });
     const botonReiniciar = el('button', {
-      onclick: () => aplicarReloj(reiniciarReloj(relojActual()), { nuevaRonda: true }),
+      onclick: reloj.reiniciar,
       title: 'Detiene el reloj y le devuelve al jefe toda su vida',
     }, 'Reiniciar');
-
-    const relojActual = () => ({ ...cfg.reloj, d: Math.round(minutos() * 60) });
-
-    /** Guarda el reloj nuevo y lo manda a OBS de inmediato (sin la espera habitual). */
-    function aplicarReloj(nuevo, { nuevaRonda = false } = {}) {
-      cfg.reloj = { e: nuevo.e, fin: nuevo.fin, r: nuevo.r };
-      if (nuevaRonda) cfg.ronda = Date.now();
-      almacen.guardar();
-      sincronizar.subir(ID);
-      widget.actualizar();
-      pintarReloj();
-    }
-
-    // Desde "Tiempo agotado", iniciar es empezar una raid nueva (vida llena).
-    function iniciar() {
-      const terminada = leerReloj(relojActual()).estado === 'fin';
-      aplicarReloj(iniciarReloj(terminada ? reiniciarReloj(relojActual()) : relojActual()), { nuevaRonda: terminada });
-    }
-
-    const TEXTOS = {
-      listo: ['Lista para empezar', 'Iniciar raid'],
-      corre: ['En combate', 'Iniciar raid'],
-      pausa: ['En pausa', 'Reanudar'],
-      fin: ['Tiempo agotado', 'Nueva raid'],
-    };
-    function pintarReloj() {
-      const { estado, restanteMs } = leerReloj(relojActual());
-      tiempo.textContent = formatoReloj(restanteMs);
-      tiempo.dataset.estado = estado;
-      estadoReloj.textContent = TEXTOS[estado][0];
-      botonIniciar.textContent = TEXTOS[estado][1];
-      botonIniciar.disabled = estado === 'corre';
-      botonPausar.disabled = estado !== 'corre';
-    }
-    const intervalo = setInterval(pintarReloj, 250);
-    senal.addEventListener('abort', () => clearInterval(intervalo), { once: true });
-    pintarReloj();
 
     // ---------- Daño ----------
     // Cuánto hace falta para vencer al jefe, para calibrar la vida con el público que suele haber.
@@ -184,8 +152,8 @@ export default {
       widget.elemento,
 
       tarjeta('Raid', { ancha: true },
-        el('div', { class: 'reloj-panel' }, tiempo, estadoReloj),
-        el('div', { class: 'fila-acciones separado-arriba' }, botonIniciar, botonPausar, botonReiniciar),
+        reloj.panel,
+        el('div', { class: 'fila-acciones separado-arriba' }, reloj.botonIniciar, reloj.botonPausar, botonReiniciar),
         nota('Iniciar, pausar y reiniciar llegan a OBS en uno o dos segundos. Reiniciar le devuelve al jefe toda su vida. ',
           'El panel no ve la vida del jefe: la lleva el widget en OBS. Si el chat lo vence antes de tiempo, OBS muestra la victoria ',
           'aunque aquí el reloj siga corriendo.')),

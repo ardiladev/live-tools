@@ -20,6 +20,7 @@
 import * as almacen from '../almacen.js';
 import { nubeActiva, escucharRetos, leerRetos, agregarReto, marcarReto, vaciarRetos } from '../../nube.js';
 import { editorEstilo } from '../estilo.js';
+import { textoLimpio, listaRegalos as sugerenciasRegalos, usarLista } from '../piezas.js';
 import * as sincronizar from '../sincronizar.js';
 import { el, tarjeta, tarjetaWidget, campo, casilla, nota, crearAviso, numero } from '../ui.js';
 
@@ -48,7 +49,6 @@ const POR_DEFECTO = {
 // Se registra al cargar, para que los cambios en vivo funcionen con o sin la vista abierta.
 
 const ajustes = () => almacen.widget(ID, POR_DEFECTO);
-const textoLimpio = (texto) => String(texto ?? '').trim();
 
 sincronizar.registrar(ID, {
   config: () => {
@@ -263,12 +263,7 @@ export default {
 
     // ---------- Retos por regalo ----------
     const listaRegalos = el('div');
-    const datalist = el('datalist', { id: 'regalos-cola' });
-    const regalos = Object.values(almacen.regalos()).sort((a, b) => (b.veces || 0) - (a.veces || 0));
-    datalist.replaceChildren(...regalos.map((r) => el('option', {
-      value: r.giftId,
-      label: `${almacen.nombreRegalo(r) || 'Sin nombre'}${r.diamantes ? ` · ${r.diamantes} monedas` : ''}`,
-    })));
+    const datalist = sugerenciasRegalos('regalos-cola');
     const botonAgregarRegalo = el('button', {
       class: 'enlace separado-arriba',
       onclick: () => {
@@ -294,7 +289,7 @@ export default {
         value: r.giftId, inputMode: 'numeric', placeholder: 'ID', 'aria-label': `ID del regalo ${i + 1}`,
         oninput: (e) => { r.giftId = e.target.value.trim(); cambio(); pintarNombre(); },
       });
-      id.setAttribute('list', datalist.id);
+      usarLista(id, datalist);
       return el('div', { class: 'reto-regalo-fila' },
         el('span', {}, miniatura), // la celda queda aunque la miniatura esté oculta
         el('div', { class: 'reto-regalo-id' }, id, nombre),

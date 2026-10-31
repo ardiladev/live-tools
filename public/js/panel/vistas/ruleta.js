@@ -14,6 +14,7 @@
 
 import * as almacen from '../almacen.js';
 import { editorEstilo } from '../estilo.js';
+import { listaRegalos, usarLista } from '../piezas.js';
 import * as sincronizar from '../sincronizar.js';
 import { el, tarjeta, tarjetaWidget, campo, casilla, nota } from '../ui.js';
 import { idCola, asegurarCola } from './cola.js';
@@ -229,7 +230,7 @@ function crearVista(tipo) {
       const sinMiniatura = el('span', { class: 'sin-miniatura', 'aria-hidden': 'true' }, '🎁');
       const nombreElegido = el('b');
       const detalleElegido = el('span', { class: 'nota sin-margen' });
-      const datalist = el('datalist', { id: `regalos-${id}` });
+      const datalist = listaRegalos(`regalos-${id}`);
 
       function pintarRegaloElegido() {
         const giftId = String(cfg.giftId).trim();
@@ -247,17 +248,11 @@ function crearVista(tipo) {
         }
       }
 
-      const regalos = Object.values(almacen.regalos()).sort((a, b) => (b.veces || 0) - (a.veces || 0));
-      datalist.replaceChildren(...regalos.map((r) => el('option', {
-        value: r.giftId,
-        label: `${almacen.nombreRegalo(r) || 'Sin nombre'}${r.diamantes ? ` · ${r.diamantes} monedas` : ''}`,
-      })));
-
       const campoGiftId = campo('ID del regalo:', {
         valor: cfg.giftId, inputMode: 'numeric',
         alCambiar: (v) => { cfg.giftId = v.trim(); cambio(); pintarRegaloElegido(); },
       });
-      campoGiftId.querySelector('input').setAttribute('list', datalist.id); // `list` es de solo lectura como propiedad
+      usarLista(campoGiftId.querySelector('input'), datalist);
 
       pintarRegaloElegido();
 

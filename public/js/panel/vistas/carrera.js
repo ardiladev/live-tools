@@ -12,8 +12,8 @@
 
 import * as almacen from '../almacen.js';
 import { idAleatorio } from '../../nube.js';
-import { leerReloj, iniciarReloj, pausarReloj, reiniciarReloj, formatoReloj } from '../../reloj.js';
 import { editorEstilo } from '../estilo.js';
+import { textoLimpio, acotarDuracion, listaRegalos, usarLista, relojDeRonda, campoDuracion } from '../piezas.js';
 import * as sincronizar from '../sincronizar.js';
 import { el, tarjeta, tarjetaWidget, campo, casilla, nota } from '../ui.js';
 
@@ -25,8 +25,6 @@ import { el, tarjeta, tarjetaWidget, campo, casilla, nota } from '../ui.js';
 const ID = 'carrera';
 const MAX_INTEGRANTES = 6;
 const MAX_NOMBRE = 24;
-const DURACION_MIN_S = 10;
-const DURACION_MAX_S = 24 * 3600;
 
 const COLORES = ['#D4AF37', '#4FC3F7', '#F06292', '#81C784', '#B388FF', '#FF8A65'];
 
@@ -62,8 +60,7 @@ const POR_DEFECTO = {
 // Se registra al cargar, para que los cambios en vivo funcionen con o sin la vista abierta.
 
 const ajustes = () => almacen.widget(ID, POR_DEFECTO);
-const duracion = () => Math.min(DURACION_MAX_S, Math.max(DURACION_MIN_S, Number(ajustes().duracion) || POR_DEFECTO.duracion));
-const textoLimpio = (texto) => String(texto ?? '').trim();
+const duracion = () => acotarDuracion(ajustes().duracion, POR_DEFECTO.duracion);
 
 sincronizar.registrar(ID, {
   config: () => {
@@ -158,73 +155,18 @@ export default {
     });
 
     // ---------- Reloj de la ronda ----------
-    const tiempo = el('div', { class: 'reloj-tiempo', role: 'timer' });
-    const estadoReloj = el('div', { class: 'reloj-estado' });
-    const botonIniciar = el('button', { class: 'principal', onclick: iniciar });
-    const botonPausar = el('button', { onclick: () => aplicarReloj(pausarReloj(relojActual())) }, 'Pausar');
+    const reloj = relojDeRonda({ id: ID, cfg, duracion, actualizar: () => widget.actualizar(), senal });
     const botonReiniciar = el('button', {
-      onclick: () => aplicarReloj(reiniciarReloj(relojActual()), { nuevaRonda: true }),
+      onclick: reloj.reiniciar,
       title: 'Detiene el reloj y pone los puntos de todos en 0',
     }, 'Reiniciar');
-
-    const relojActual = () => ({ ...cfg.reloj, d: duracion() });
-
-    /** Guarda el reloj nuevo y lo manda a OBS de inmediato (sin la espera habitual). */
-    function aplicarReloj(nuevo, { nuevaRonda = false } = {}) {
-      cfg.reloj = { e: nuevo.e, fin: nuevo.fin, r: nuevo.r };
-      if (nuevaRonda) cfg.ronda = Date.now();
-      almacen.guardar();
-      sincronizar.subir(ID);
-      widget.actualizar();
-      pintarReloj();
-    }
-
-    // Desde "Final", iniciar es empezar una ronda nueva (puntos en 0).
-    function iniciar() {
-      const terminada = leerReloj(relojActual()).estado === 'fin';
-      aplicarReloj(iniciarReloj(terminada ? reiniciarReloj(relojActual()) : relojActual()), { nuevaRonda: terminada });
-    }
-
-    const TEXTOS = {
-      listo: ['Lista para empezar', 'Iniciar'],
-      corre: ['En juego', 'Iniciar'],
-      pausa: ['En pausa', 'Reanudar'],
-      fin: ['Terminó la ronda', 'Nueva ronda'],
-    };
-    function pintarReloj() {
-      const { estado, restanteMs } = leerReloj(relojActual());
-      tiempo.textContent = formatoReloj(restanteMs);
-      tiempo.dataset.estado = estado;
-      estadoReloj.textContent = TEXTOS[estado][0];
-      botonIniciar.textContent = TEXTOS[estado][1];
-      botonIniciar.disabled = estado === 'corre';
-      botonPausar.disabled = estado !== 'corre';
-    }
-    const intervalo = setInterval(pintarReloj, 250);
-    senal.addEventListener('abort', () => clearInterval(intervalo), { once: true });
-    pintarReloj();
-
-    const campoDuracion = campo('Duración (segundos):', {
-      tipo: 'number', valor: cfg.duracion, min: DURACION_MIN_S, max: DURACION_MAX_S, step: 10,
-      alCambiar: (v) => { cfg.duracion = v; cambio(); pintarReloj(); pintarMinutos(); },
-    });
-    const minutos = el('span', { class: 'nota sin-margen' });
-    const pintarMinutos = () => { minutos.textContent = `= ${formatoReloj(duracion() * 1000)}`; };
-    pintarMinutos();
+    const duracionRonda = campoDuracion('Duración (segundos):', { cfg, duracion, alCambiar: () => { cambio(); reloj.pintar(); } });
 
     // ---------- Integrantes ----------
     const lista = el('div');
     const avisoRegalos = el('div', { class: 'aviso error', role: 'status' });
-    const datalist = el('datalist', { id: 'regalos-carrera' });
+    const datalist = listaRegalos('regalos-carrera');
     const botonAgregar = el('button', { class: 'enlace separado-arriba', onclick: agregar }, '+ Agregar integrante');
-
-    function pintarCatalogo() {
-      const regalos = Object.values(almacen.regalos()).sort((a, b) => (b.veces || 0) - (a.veces || 0));
-      datalist.replaceChildren(...regalos.map((r) => el('option', {
-        value: r.giftId,
-        label: `${almacen.nombreRegalo(r) || 'Sin nombre'}${r.diamantes ? ` · ${r.diamantes} monedas` : ''}`,
-      })));
-    }
 
     function filaIntegrante(j, i) {
       const n = i + 1;
@@ -251,7 +193,7 @@ export default {
           cambio();
         },
       });
-      giftId.setAttribute('list', 'regalos-carrera'); // `list` es de solo lectura como propiedad: el() no puede ponerlo
+      usarLista(giftId, datalist);
 
       return el('div', { class: 'integrante-fila' },
         el('input', {
@@ -295,7 +237,6 @@ export default {
       pintarIntegrantes();
     }
 
-    pintarCatalogo();
     pintarIntegrantes();
     pintarProblemas();
 
@@ -304,10 +245,10 @@ export default {
       widget.elemento,
 
       tarjeta('Reloj de la ronda', { ancha: true },
-        el('div', { class: 'reloj-panel' }, tiempo, estadoReloj),
-        el('div', { class: 'fila-acciones separado-arriba' }, botonIniciar, botonPausar, botonReiniciar),
-        el('div', { class: 'campos duracion separado-arriba' }, campoDuracion),
-        minutos,
+        reloj.panel,
+        el('div', { class: 'fila-acciones separado-arriba' }, reloj.botonIniciar, reloj.botonPausar, botonReiniciar),
+        duracionRonda.fila,
+        duracionRonda.minutos,
         nota('Iniciar, pausar y reiniciar llegan a OBS en uno o dos segundos. Reiniciar pone los puntos de todos en 0. ',
           'Con «Contar regalos solo con el reloj en marcha» (en Personalizar), los regalos enviados con el reloj detenido no suman.')),
 

@@ -11,6 +11,7 @@
 
 import * as almacen from '../almacen.js';
 import { editorEstilo } from '../estilo.js';
+import { textoLimpio } from '../piezas.js';
 import * as sincronizar from '../sincronizar.js';
 import { el, tarjeta, tarjetaWidget, campo, casilla, nota, crearAviso } from '../ui.js';
 import { idCola, asegurarCola } from './cola.js';
@@ -46,7 +47,6 @@ const POR_DEFECTO = {
 // Se registra al cargar, para que los cambios en vivo funcionen con o sin la vista abierta.
 
 const ajustes = () => almacen.widget(ID, POR_DEFECTO);
-const textoLimpio = (texto) => String(texto ?? '').trim();
 const textosValidos = (rodillo) => rodillo.textos.map((t) => textoLimpio(t).slice(0, MAX_TEXTO)).filter(Boolean);
 
 sincronizar.registrar(ID, {
