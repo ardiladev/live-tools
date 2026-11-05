@@ -1,4 +1,5 @@
-// Provisional: se reemplaza al portar legado/batalla.html (modelo: src/widgets/carrera).
+// batalla.html → widget "Batalla de regalos" (ver Batalla.tsx y motor.ts).
 import { montarWidget } from '../../componentes/montarWidget';
+import { Batalla } from './Batalla';
 
-montarWidget(null);
+montarWidget(<Batalla />);

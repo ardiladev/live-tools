@@ -94,24 +94,24 @@ export function useRelojDeRonda<T extends AjustesConReloj>({ id, ajustes, cambia
   };
 }
 
-/** Tiempo grande y su estado (verde corriendo, dorado al terminar). */
-export function PanelReloj({ reloj }: { reloj: RelojDeRonda }) {
+/** Tiempo grande y su estado (verde corriendo, dorado al terminar). `oculto`: con el atributo hidden. */
+export function PanelReloj({ reloj, oculto = false }: { reloj: RelojDeRonda; oculto?: boolean }) {
   const { estado, restanteMs } = reloj.lectura;
   return (
-    <div className="reloj-panel">
+    <div className="reloj-panel" hidden={oculto}>
       <div className="reloj-tiempo" role="timer" data-estado={estado}>{formatoReloj(restanteMs)}</div>
       <div className="reloj-estado">{reloj.textos[estado][0]}</div>
     </div>
   );
 }
 
-/** Botones Iniciar (Reanudar / Nueva ronda según el estado) y Pausar. */
-export function BotonesReloj({ reloj }: { reloj: RelojDeRonda }) {
+/** Botones Iniciar (Reanudar / Nueva ronda según el estado) y Pausar. `oculto`: con el atributo hidden. */
+export function BotonesReloj({ reloj, oculto = false }: { reloj: RelojDeRonda; oculto?: boolean }) {
   const { estado } = reloj.lectura;
   return (
     <>
-      <button className="principal" onClick={reloj.iniciar} disabled={estado === 'corre'}>{reloj.textos[estado][1]}</button>
-      <button onClick={reloj.pausar} disabled={estado !== 'corre'}>Pausar</button>
+      <button className="principal" onClick={reloj.iniciar} disabled={estado === 'corre'} hidden={oculto}>{reloj.textos[estado][1]}</button>
+      <button onClick={reloj.pausar} disabled={estado !== 'corre'} hidden={oculto}>Pausar</button>
     </>
   );
 }
@@ -122,8 +122,10 @@ export function BotonesReloj({ reloj }: { reloj: RelojDeRonda }) {
 // -----------------------------------------------------------------------------
 
 /** Campo de la duración en segundos, con su equivalente en minutos debajo («= 5:00»). */
-export function CampoDuracion({ etiqueta, valor, duracionS, alCambiar }: {
+export function CampoDuracion({ etiqueta, valor, duracionS, alCambiar, oculto = false }: {
   etiqueta: string;
+  /** Con el atributo hidden (p. ej. la batalla sin cronómetro). */
+  oculto?: boolean;
   /** Lo que está guardado (puede estar a medio escribir). */
   valor: number | string;
   /** La duración ya acotada (lo que de verdad usa el reloj). */
@@ -132,10 +134,10 @@ export function CampoDuracion({ etiqueta, valor, duracionS, alCambiar }: {
 }) {
   return (
     <>
-      <div className="campos duracion separado-arriba">
+      <div className="campos duracion separado-arriba" hidden={oculto}>
         <Campo etiqueta={etiqueta} tipo="number" valor={valor} min={DURACION_MIN_S} max={DURACION_MAX_S} step={10} alCambiar={alCambiar} />
       </div>
-      <span className="nota sin-margen">{`= ${formatoReloj(duracionS * 1000)}`}</span>
+      <span className="nota sin-margen" hidden={oculto}>{`= ${formatoReloj(duracionS * 1000)}`}</span>
     </>
   );
 }
