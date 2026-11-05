@@ -1,0 +1,437 @@
+{
+ "pagina": "destacado",
+ "ancho": 900,
+ "alto": 300,
+ "atributos": ".destacado, .tiempo",
+ "config": {
+  "um": 500,
+  "d": 5,
+  "ti": "VIP",
+  "tx": "¡Gracias por tu apoyo!",
+  "v": 1,
+  "lp": 0,
+  "pr": 0,
+  "s": 0
+ },
+ "pasos": [
+  {
+   "captura": "inicio"
+  },
+  {
+   "evento": {
+    "tipo": "chat",
+    "usuario": "Ana",
+    "texto": "  Hola desde Cali, ¡qué buen LIVE!  "
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 300,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 1000
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 300,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 2400
+  },
+  {
+   "captura": "aun-juntando"
+  },
+  {
+   "esperar": 200
+  },
+  {
+   "captura": "ana-con-mensaje"
+  },
+  {
+   "esperar": 400
+  },
+  {
+   "captura": "ana-entrando"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 500,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 2600
+  },
+  {
+   "captura": "ana-renovada"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 1000,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 2600
+  },
+  {
+   "captura": "beto-espera"
+  },
+  {
+   "esperar": 2400
+  },
+  {
+   "captura": "ana-saliendo"
+  },
+  {
+   "esperar": 700
+  },
+  {
+   "captura": "beto-sin-chat"
+  },
+  {
+   "config": {
+    "um": 500,
+    "d": 5,
+    "ti": "ÉLITE",
+    "tx": "Mil gracias",
+    "v": 1,
+    "lp": 0,
+    "pr": 0,
+    "s": 0
+   }
+  },
+  {
+   "captura": "config-no-repinta"
+  },
+  {
+   "config": {
+    "um": 500,
+    "d": 5,
+    "ti": "ÉLITE",
+    "tx": "Mil gracias",
+    "v": 1,
+    "lp": 0,
+    "pr": 1,
+    "s": 0
+   }
+  },
+  {
+   "captura": "probar-en-fila"
+  },
+  {
+   "esperar": 5000
+  },
+  {
+   "esperar": 700
+  },
+  {
+   "captura": "valentina-prueba"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Caro",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 600,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Dani",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 700,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 2600
+  },
+  {
+   "config": {
+    "um": 500,
+    "d": 5,
+    "ti": "ÉLITE",
+    "tx": "Mil gracias",
+    "v": 1,
+    "lp": 1,
+    "pr": 1,
+    "s": 0
+   }
+  },
+  {
+   "esperar": 800
+  },
+  {
+   "captura": "quitado-y-fila-vacia"
+  },
+  {
+   "esperar": 6000
+  },
+  {
+   "captura": "sigue-vacio"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Eli",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 1,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 2600
+  },
+  {
+   "captura": "pequeno-no-alcanza"
+  },
+  {
+   "evento": {
+    "tipo": "chat",
+    "usuario": "U5",
+    "texto": "Soy el cinco"
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "U1",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 500,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "U2",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 500,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "U3",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 500,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "U4",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 500,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "U5",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 500,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "U6",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 500,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "U7",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 500,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 2600
+  },
+  {
+   "captura": "u1"
+  },
+  {
+   "esperar": 5700
+  },
+  {
+   "captura": "u3-salta-u2"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "U5",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 500,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 2600
+  },
+  {
+   "esperar": 3100
+  },
+  {
+   "esperar": 5700
+  },
+  {
+   "captura": "u5-sumado-en-fila"
+  },
+  {
+   "config": {
+    "um": 500,
+    "d": 5,
+    "ti": "ÉLITE",
+    "tx": "Mil gracias",
+    "v": 1,
+    "lp": 2,
+    "pr": 1,
+    "s": 0
+   }
+  },
+  {
+   "esperar": 800
+  },
+  {
+   "config": {
+    "um": 500,
+    "d": 5,
+    "ti": "ÉLITE",
+    "tx": "Mil gracias",
+    "v": 1,
+    "lp": 2,
+    "pr": 2,
+    "s": 0
+   }
+  },
+  {
+   "esperar": 1000
+  },
+  {
+   "captura": "valentina-otra-vez"
+  },
+  {
+   "config": {
+    "um": 500,
+    "d": 5,
+    "ti": "ÉLITE",
+    "tx": "Mil gracias",
+    "v": 1,
+    "lp": 3,
+    "pr": 2,
+    "s": 0
+   }
+  },
+  {
+   "config": {
+    "um": 500,
+    "d": 5,
+    "ti": "ÉLITE",
+    "tx": "Mil gracias",
+    "v": 1,
+    "lp": 3,
+    "pr": 3,
+    "s": 0
+   }
+  },
+  {
+   "captura": "renovar-durante-salida"
+  },
+  {
+   "esperar": 700
+  },
+  {
+   "captura": "se-fue-igual"
+  },
+  {
+   "esperar": 5000
+  },
+  {
+   "captura": "sin-fantasmas"
+  },
+  {
+   "config": {
+    "um": 0,
+    "d": 1,
+    "ti": "",
+    "tx": "",
+    "v": 1,
+    "lp": 3,
+    "pr": 4,
+    "s": 0
+   }
+  },
+  {
+   "esperar": 100
+  },
+  {
+   "captura": "etiqueta-vacia-d-minimo"
+  },
+  {
+   "esperar": 3000
+  },
+  {
+   "captura": "d-minimo-3s"
+  }
+ ]
+}

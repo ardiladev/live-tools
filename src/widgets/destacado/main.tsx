@@ -1,4 +1,5 @@
-// Provisional: se reemplaza al portar legado/destacado.html (modelo: src/widgets/carrera).
+// destacado.html → widget "Mensaje VIP destacado" (ver Destacado.tsx y motor.ts).
 import { montarWidget } from '../../componentes/montarWidget';
+import { Destacado } from './Destacado';
 
-montarWidget(null);
+montarWidget(<Destacado />);
