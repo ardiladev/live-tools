@@ -1,0 +1,154 @@
+{
+ "pagina": "jefe",
+ "consulta": "",
+ "ancho": 1920,
+ "alto": 300,
+ "config": {
+  "ti": "Dragón",
+  "hp": 1000,
+  "t": {
+   "e": "corre",
+   "d": 60,
+   "fin": 1793898060150,
+   "r": 0
+  },
+  "ro": 1,
+  "dl": 2,
+  "dr": 3,
+  "v": 5,
+  "tv": "¡Victoria!",
+  "sr": 1,
+  "s": 0
+ },
+ "pasos": [
+  {
+   "captura": "inicio"
+  },
+  {
+   "evento": {
+    "tipo": "like",
+    "usuario": "Ana",
+    "cantidad": 50,
+    "total": 0,
+    "propios": 50
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 2,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 1000
+  },
+  {
+   "captura": "con-dano"
+  },
+  {
+   "recargar": true
+  },
+  {
+   "captura": "recarga-no-cura"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 1000,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 1000
+  },
+  {
+   "captura": "vencido"
+  },
+  {
+   "evento": {
+    "tipo": "like",
+    "usuario": "Ana",
+    "cantidad": 10,
+    "total": 0,
+    "propios": 10
+   }
+  },
+  {
+   "captura": "vencido-no-recibe"
+  },
+  {
+   "esperar": 70000
+  },
+  {
+   "captura": "reloj-congelado"
+  },
+  {
+   "config": {
+    "ti": "Dragón",
+    "hp": 1000,
+    "t": {
+     "e": "corre",
+     "d": 60,
+     "fin": 1793898200000,
+     "r": 0
+    },
+    "ro": 2,
+    "dl": 2,
+    "dr": 3,
+    "v": 5,
+    "tv": "¡Victoria!",
+    "sr": 1,
+    "s": 0
+   }
+  },
+  {
+   "captura": "ronda-nueva"
+  },
+  {
+   "esperar": 130000
+  },
+  {
+   "captura": "escapo"
+  },
+  {
+   "config": {
+    "ti": "Dragón",
+    "hp": 1000,
+    "t": {
+     "e": "listo",
+     "d": 60,
+     "fin": 0,
+     "r": 0
+    },
+    "ro": 3,
+    "dl": 2,
+    "dr": 3,
+    "v": 5,
+    "tv": "¡Victoria!",
+    "sr": 0,
+    "s": 0
+   }
+  },
+  {
+   "evento": {
+    "tipo": "like",
+    "usuario": "Ana",
+    "cantidad": 5,
+    "total": 0,
+    "propios": 5
+   }
+  },
+  {
+   "captura": "sin-reloj-suma"
+  }
+ ]
+}

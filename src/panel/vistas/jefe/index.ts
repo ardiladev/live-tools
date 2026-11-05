@@ -1,4 +1,11 @@
-// Vista provisional: se reemplaza al portar legado/js/panel/vistas/jefe.js (ver vistas/tipos.ts).
-import { vistaEnMigracion } from '../EnMigracion';
+// Juegos → Retos del público → Jefe del LIVE (#/jefe). Ver config.ts y VistaJefe.tsx.
+import type { DefinicionVista } from '../tipos';
+import './config';
+import { VistaJefe } from './VistaJefe';
 
-export const jefe = vistaEnMigracion('jefe', 'Jefe del LIVE', 'Un reto cooperativo: el chat le quita vida al jefe con likes y regalos. Si lo dejan en 0 antes de que se acabe el tiempo, se desbloquea el reto.');
+export const jefe: DefinicionVista = {
+  id: 'jefe',
+  titulo: 'Jefe del LIVE',
+  descripcion: 'Un reto cooperativo: el chat le quita vida al jefe con likes y regalos. Si lo dejan en 0 antes de que se acabe el tiempo, se desbloquea el reto.',
+  Componente: VistaJefe,
+};

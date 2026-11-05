@@ -69,7 +69,11 @@ async function correr(navegador, version, escenario, salida) {
   const errores = [];
   pagina.on('pageerror', (e) => errores.push(String(e)));
   pagina.on('console', (m) => { if (m.type() === 'error' && !/realtime|websocket|ERR_FAILED/i.test(m.text())) errores.push(m.text()); });
-  await pagina.clock.install({ time: new Date(escenario.inicio || '2026-11-05T12:00:00-05:00') });
+  // Reloj simulado y DETENIDO: solo avanza con "esperar" (si corriera solo, lo que tarda cada
+  // versión en cargar cambiaría los tiempos).
+  const inicio = new Date(escenario.inicio || '2026-11-05T12:00:00-05:00');
+  await pagina.clock.install({ time: inicio });
+  await pagina.clock.pauseAt(new Date(inicio.getTime() + 1));
   const url = `${VERSIONES[version]}/${escenario.pagina}.html${escenario.consulta === undefined ? '?prueba=1&fondo=1' : (escenario.consulta ? `?${escenario.consulta}` : '')}#c=${codificar(escenario.config || {})}`;
   await pagina.goto(url, { waitUntil: 'load' });
   await pagina.clock.runFor(300);
