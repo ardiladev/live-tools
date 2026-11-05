@@ -1,0 +1,5 @@
+{
+  // Tailwind CSS 4 usa reglas propias (@theme, @utility…) que el revisor de CSS de VS Code no
+  // conoce: sin esto las marca como "regla desconocida" aunque sean correctas.
+  "css.lint.unknownAtRules": "ignore"
+}

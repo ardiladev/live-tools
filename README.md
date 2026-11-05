@@ -716,6 +716,12 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
 
 Hace falta **Node.js 24** (con npm). Una vez: `npm ci`.
 
+> **En Windows, cierra antes cualquier `npm run dev` (o `vite`) abierto.** Un programa en ejecución bloquea
+> sus archivos y `npm ci` deja `node_modules` a medias; VS Code lo muestra como decenas de errores
+> («Cannot find module 'react'», «JSX.IntrinsicElements»…). Arreglo: cerrar esos procesos, `npm ci` otra vez y,
+> en VS Code, *TypeScript: Restart TS Server*. VS Code revisa con su propio TypeScript (6.x); el proyecto usa
+> TypeScript 7 para `npm run typecheck` / `npm run build`, y el código pasa limpio con los dos.
+
 1. **Sin conexión:** `npm run dev` y abre `http://localhost:5173` (el panel; los widgets están en
    `http://localhost:5173/ruleta.html`, etc.). Usa los botones de prueba de cada tarjeta. Los cambios en el
    código se ven al instante.

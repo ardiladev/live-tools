@@ -1,0 +1,4 @@
+{
+  // Tailwind CSS IntelliSense: entiende @theme / @utility y autocompleta las clases (bg-oro, text-carbon…).
+  "recommendations": ["bradlc.vscode-tailwindcss"]
+}
