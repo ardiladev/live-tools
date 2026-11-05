@@ -1,0 +1,90 @@
+{
+ "pagina": "meta",
+ "ancho": 1200,
+ "alto": 400,
+ "config": {
+  "t": "monedas",
+  "o": 500,
+  "ti": "Meta de monedas",
+  "col": "#ff3366",
+  "al": "reiniciar",
+  "s": 0
+ },
+ "pasos": [
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "1",
+    "nombre": "X",
+    "cantidad": 5,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "1",
+    "nombre": "X",
+    "cantidad": 3,
+    "diamantes": 100,
+    "imagen": ""
+   }
+  },
+  {
+   "captura": "sin-precio-no-suma"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "1",
+    "nombre": "X",
+    "cantidad": 1,
+    "diamantes": 250,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 1000
+  },
+  {
+   "captura": "llena"
+  },
+  {
+   "esperar": 3000
+  },
+  {
+   "captura": "reiniciada"
+  },
+  {
+   "config": {
+    "t": "monedas",
+    "o": 500,
+    "ti": "Meta",
+    "col": "",
+    "al": "nada",
+    "s": 0
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "1",
+    "nombre": "X",
+    "cantidad": 1,
+    "diamantes": 600,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 4000
+  },
+  {
+   "captura": "nada-queda-llena"
+  }
+ ]
+}

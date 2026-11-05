@@ -1,4 +1,5 @@
-// Provisional: se reemplaza al portar legado/meta.html (modelo: src/widgets/carrera).
+// meta.html → widget "Meta" (likes, seguidores, compartidos o monedas; ver Meta.tsx y motor.ts).
 import { montarWidget } from '../../componentes/montarWidget';
+import { Meta } from './Meta';
 
-montarWidget(null);
+montarWidget(<Meta />);

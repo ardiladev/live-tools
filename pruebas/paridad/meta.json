@@ -1,0 +1,135 @@
+{
+ "pagina": "meta",
+ "ancho": 1200,
+ "alto": 400,
+ "config": {
+  "t": "likes",
+  "o": 100,
+  "ti": "Meta de likes",
+  "col": "",
+  "al": "duplicar",
+  "s": 0
+ },
+ "pasos": [
+  {
+   "captura": "inicio"
+  },
+  {
+   "evento": {
+    "tipo": "like",
+    "usuario": "Ana",
+    "cantidad": 30,
+    "total": 0,
+    "propios": 30
+   }
+  },
+  {
+   "evento": {
+    "tipo": "like",
+    "usuario": "Ana",
+    "cantidad": 30,
+    "total": 0,
+    "propios": 30
+   }
+  },
+  {
+   "evento": {
+    "tipo": "like",
+    "usuario": "Ana",
+    "cantidad": 30,
+    "total": 0,
+    "propios": 30
+   }
+  },
+  {
+   "captura": "noventa"
+  },
+  {
+   "evento": {
+    "tipo": "like",
+    "usuario": "Ana",
+    "cantidad": 20,
+    "total": 0,
+    "propios": 20
+   }
+  },
+  {
+   "esperar": 500
+  },
+  {
+   "captura": "alcanzada"
+  },
+  {
+   "esperar": 3600
+  },
+  {
+   "captura": "duplicada"
+  },
+  {
+   "config": {
+    "t": "likes",
+    "o": 100,
+    "ti": "Otra",
+    "col": "",
+    "al": "duplicar",
+    "s": 0
+   }
+  },
+  {
+   "captura": "config-conserva"
+  },
+  {
+   "config": {
+    "t": "likes",
+    "o": 50,
+    "ti": "Meta de likes",
+    "col": "",
+    "al": "duplicar",
+    "s": 0
+   }
+  },
+  {
+   "captura": "objetivo-nuevo"
+  },
+  {
+   "evento": {
+    "tipo": "follow",
+    "usuario": "X"
+   }
+  },
+  {
+   "captura": "follow-no-cuenta"
+  },
+  {
+   "config": {
+    "t": "follows",
+    "o": 2,
+    "ti": "Meta de likes",
+    "col": "",
+    "al": "duplicar",
+    "s": 0
+   }
+  },
+  {
+   "captura": "cambio-tipo"
+  },
+  {
+   "evento": {
+    "tipo": "follow",
+    "usuario": "X"
+   }
+  },
+  {
+   "evento": {
+    "tipo": "follow",
+    "usuario": "Y"
+   }
+  },
+  {
+   "esperar": 3600
+  },
+  {
+   "captura": "follows-duplicada"
+  }
+ ]
+}
