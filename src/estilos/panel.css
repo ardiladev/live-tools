@@ -47,6 +47,20 @@
   --ancho-riel: 64px;
   --ancho-menu: 210px;
   --arriba: calc(var(--alto-barra) + env(safe-area-inset-top, 0px));
+  /* Velo oscuro sobre la textura estática del panel: el patrón se ve, pero el texto se lee. */
+  --textura-velo: rgba(15, 15, 18, .55);
+}
+
+/* Colores del panel como utilidades de Tailwind: text-suave, border-linea-tenue, bg-resalte… */
+@theme inline {
+  --color-texto: var(--texto);
+  --color-suave: var(--suave);
+  --color-borde: var(--borde);
+  --color-resalte: var(--resalte);
+  --color-linea: rgba(212, 175, 55, .4);
+  --color-linea-tenue: rgba(212, 175, 55, .16);
+  --color-tarjeta: var(--tarjeta);
+  --color-campo: var(--campo);
 }
 
 

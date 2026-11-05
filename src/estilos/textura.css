@@ -38,10 +38,11 @@
     linear-gradient(45deg, var(--textura-morado-oscuro) 0 25%, transparent 25% 75%, var(--textura-morado-oscuro) 75% 100%);
 }
 
-/* La ventana más sencilla: el fondo del propio elemento, fijo a la pantalla. */
+/* La ventana más sencilla: el fondo del propio elemento, fijo a la pantalla.
+   --textura-velo (opcional) oscurece el patrón para que el texto encima se lea; también es fijo. */
 @utility textura-estatica {
   background-color: var(--textura-morado);
-  background-image: var(--textura-patron);
+  background-image: linear-gradient(var(--textura-velo, transparent), var(--textura-velo, transparent)), var(--textura-patron);
   background-size: var(--textura-tamano) var(--textura-tamano);
   background-position: 0 0;
   background-attachment: fixed;

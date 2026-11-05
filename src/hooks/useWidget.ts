@@ -33,7 +33,7 @@ import { avisarPadre } from '../nucleo/mensajes';
 import { aplicarTema } from '../nucleo/tema';
 import type { EventoLive } from '../tipos/eventos';
 import type { TemaEntrada } from '../tipos/tema';
-import type { ConfigWidget } from '../tipos/widgets';
+import type { ConfigBase, ConfigWidget } from '../tipos/widgets';
 import { useConfigEnVivo } from './useConfigEnVivo';
 import { useTikTokLive } from './useTikTokLive';
 
@@ -48,7 +48,7 @@ export const MENSAJES_WIDGET = {
   faltan: 'Falta el usuario de TikTok o la clave de Euler Stream en la URL.',
 } as const;
 
-export interface OpcionesWidget<C extends ConfigWidget = ConfigWidget> {
+export interface OpcionesWidget<C extends ConfigBase = ConfigWidget> {
   /** Cada configuración: al arrancar y en cada cambio en vivo (o de la vista previa). */
   alConfig: (config: C) => void;
   /** Eventos del LIVE y de prueba. */
@@ -140,7 +140,7 @@ function prepararArranque(): Arranque {
 // Hook
 // -----------------------------------------------------------------------------
 
-export function useWidget<C extends ConfigWidget = ConfigWidget>({ alConfig, alEvento }: OpcionesWidget<C>): EstadoWidget {
+export function useWidget<C extends ConfigBase = ConfigWidget>({ alConfig, alEvento }: OpcionesWidget<C>): EstadoWidget {
   const [arranque] = useState(prepararArranque);
   const manejadores = useRef({ alConfig, alEvento });
   manejadores.current = { alConfig, alEvento };
@@ -161,7 +161,7 @@ export function useWidget<C extends ConfigWidget = ConfigWidget>({ alConfig, alE
   /** Estilo + configuración del widget + usuario (lo que hacía el alConfig de iniciarWidget). */
   const aplicarConfig = useRef((config: ConfigWidget) => {
     aplicarTema(config.est);
-    manejadores.current.alConfig(config as C);
+    manejadores.current.alConfig(config as unknown as C);
     if (config.u) seguirUsuario(String(config.u));
   }).current;
 
@@ -170,7 +170,7 @@ export function useWidget<C extends ConfigWidget = ConfigWidget>({ alConfig, alE
     if (arranque.vistaPrevia) document.body.classList.add('vista-previa');
     if (arranque.inicial) {
       aplicarTema(arranque.inicial.est);
-      manejadores.current.alConfig(arranque.inicial as C);
+      manejadores.current.alConfig(arranque.inicial as unknown as C);
     }
   }, [arranque]);
 
