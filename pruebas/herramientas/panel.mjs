@@ -96,6 +96,10 @@ async function correr(navegador, version) {
 
   await pagina.goto(`${VERSIONES[version]}#/${vista}`, { waitUntil: 'load' });
   await esperar(2500); // la vista previa carga a los 400 ms
+  // Un id que no existe hace que el panel muestre la vista inicial (la ruleta) y la comparación
+  // "pasaría" sin probar nada: se exige que la vista pedida sea la activa del menú.
+  const existe = await pagina.evaluate((id) => Boolean(document.querySelector(`a[aria-current="page"][href="#/${id}"]`)), vista);
+  if (!existe) throw new Error(`[${version}] La vista «${vista}» no existe: el panel mostró otra. Revisa el id (#/${vista}).`);
   for (const { tipo, valor } of acciones) {
     if (tipo === '--simular') {
       // La versión nueva lo expone en liveTools; en la vieja, el módulo envivo.js es el mismo que usa el panel.
@@ -121,6 +125,9 @@ async function correr(navegador, version) {
   }
   if (acciones.length) await esperar(1500); // lo que se guarda o se sube con espera
   const texto = await pagina.evaluate(() => document.querySelector('main')?.innerText.replace(/\s+/g, ' ').trim() || '');
+  // El original escribe los valores por defecto en memoria al pintar una vista y los guarda en la
+  // siguiente escritura: se le pide guardar ya, para comparar lo que de verdad tiene.
+  if (version === 'legado') await pagina.evaluate(async () => { (await import('/js/panel/almacen.js')).guardar(); });
   const { ajustes, idNube, otras } = await pagina.evaluate(([id, nombres]) => {
     const guardado = JSON.parse(localStorage.getItem('panel-live') || '{}');
     return {
@@ -153,14 +160,17 @@ async function correr(navegador, version) {
 const tapar = (v) => (v ? `<huella ${createHash('sha256').update(String(v)).digest('hex').slice(0, 8)}>` : '');
 
 /**
- * Para comparar: claves en orden, las horas (Date.now(): _v, ronda…) como "<hora>" y la clave de
- * Euler (k) tapada. `tx: 0` (textura estática apagada, agregada a propósito en la versión nueva) no cuenta.
+ * Para comparar: claves en orden, las horas (Date.now(): _v, ronda…) como "<hora>", las claves por su
+ * huella, los ids aleatorios de la cola (cl, rc) como "<id de nube>". `tx: 0` (textura estática apagada,
+ * agregada a propósito en la versión nueva) no cuenta.
  */
 function normalizar(valor) {
   if (Array.isArray(valor)) return valor.map(normalizar);
   if (valor && typeof valor === 'object') {
     return Object.fromEntries(Object.keys(valor).filter((k) => !(k === 'tx' && valor[k] === 0)).sort()
-      .map((k) => [k, ['k', 'clave', 'secreto'].includes(k) ? tapar(valor[k]) : normalizar(valor[k])]));
+      .map((k) => [k, ['k', 'clave', 'secreto'].includes(k) ? tapar(valor[k])
+        : ['cl', 'rc'].includes(k) ? (valor[k] ? '<id de nube>' : '') // ids aleatorios de la cola (crypto)
+          : normalizar(valor[k])]));
   }
   return typeof valor === 'number' && valor > 1e12 ? '<hora>' : valor;
 }

@@ -26,7 +26,7 @@ const ESTADO = ['--estado', 'pruebas/panel/estado.json'];
 const VISTAS = [
   ['ruleta', 'Probar 1 regalo'], ['ruleta-premium', 'Probar 1 regalo'], ['tragamonedas', 'Probar giro'],
   ['carrera', 'Regalo al azar'], ['marcador', 'Regalo al azar'], ['batalla', 'Regalo al equipo A'],
-  ['activacion', 'Unirme al siguiente equipo'], ['cola', 'Reto de prueba'], ['jefe', '+100 likes'],
+  ['activacion', 'Unirme al siguiente equipo'], ['cola-retos', 'Reto de prueba'], ['jefe', '+100 likes'],
   ['boveda', 'Regalo de 100'], ['subathon', '+100 likes'], ['extensible', '+100 likes'],
   ['repertorio', 'Regalo de 100'], ['meta-likes', '+50 likes'], ['meta-follows', '+1 seguidor'],
   ['meta-shares', '+1 compartido'], ['meta-monedas', 'Regalo de 100'], ['alertas', 'Regalo'],
