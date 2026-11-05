@@ -1,4 +1,5 @@
-// Provisional: se reemplaza al portar legado/marcador.html (modelo: src/widgets/carrera).
+// marcador.html → widget "Marcador" (ver Marcador.tsx y motor.ts).
 import { montarWidget } from '../../componentes/montarWidget';
+import { Marcador } from './Marcador';
 
-montarWidget(null);
+montarWidget(<Marcador />);

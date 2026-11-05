@@ -1,0 +1,220 @@
+{
+ "pagina": "marcador",
+ "consulta": "",
+ "ancho": 1920,
+ "alto": 400,
+ "config": {
+  "ti": "Marcador",
+  "j": [
+   {
+    "i": "m1",
+    "n": "Ana",
+    "c": "#D4AF37",
+    "g": "5655",
+    "gn": "Rose",
+    "v": 1,
+    "img": ""
+   },
+   {
+    "i": "m2",
+    "n": "Beto",
+    "c": "",
+    "g": "5487",
+    "gn": "Finger Heart",
+    "v": 5,
+    "img": ""
+   },
+   {
+    "i": "m3",
+    "n": "Caro",
+    "c": "#F06292",
+    "g": "",
+    "gn": "Ice Cream Cone",
+    "v": 1,
+    "img": ""
+   }
+  ],
+  "t": {
+   "e": "corre",
+   "d": 60,
+   "fin": 1793898030000,
+   "r": 0
+  },
+  "ro": 1,
+  "sr": 0,
+  "s": 0
+ },
+ "pasos": [
+  {
+   "captura": "inicio"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "A",
+    "giftId": "5655",
+    "nombre": "",
+    "cantidad": 10,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "B",
+    "giftId": "5487",
+    "nombre": "",
+    "cantidad": 2,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "C",
+    "giftId": "999",
+    "nombre": "Ice Cream Cone",
+    "cantidad": 3,
+    "diamantes": 2,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 1000
+  },
+  {
+   "captura": "con-puntos"
+  },
+  {
+   "recargar": true
+  },
+  {
+   "captura": "tras-recargar"
+  },
+  {
+   "esperar": 40000
+  },
+  {
+   "captura": "final"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "D",
+    "giftId": "5655",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "captura": "sr0-suma-tras-final"
+  },
+  {
+   "config": {
+    "ti": "Marcador",
+    "j": [
+     {
+      "i": "m1",
+      "n": "Ana",
+      "c": "#D4AF37",
+      "g": "5655",
+      "gn": "Rose",
+      "v": 1,
+      "img": ""
+     },
+     {
+      "i": "m2",
+      "n": "Beto",
+      "c": "",
+      "g": "5487",
+      "gn": "Finger Heart",
+      "v": 5,
+      "img": ""
+     },
+     {
+      "i": "m3",
+      "n": "Caro",
+      "c": "#F06292",
+      "g": "",
+      "gn": "Ice Cream Cone",
+      "v": 1,
+      "img": ""
+     }
+    ],
+    "t": {
+     "e": "corre",
+     "d": 60,
+     "fin": 1793898030000,
+     "r": 0
+    },
+    "ro": 1,
+    "sr": 1,
+    "s": 0
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "E",
+    "giftId": "5655",
+    "nombre": "",
+    "cantidad": 5,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "captura": "sr1-no-suma"
+  },
+  {
+   "config": {
+    "ti": "Marcador",
+    "j": [
+     {
+      "i": "m1",
+      "n": "Ana",
+      "c": "#D4AF37",
+      "g": "5655",
+      "gn": "Rose",
+      "v": 1,
+      "img": ""
+     },
+     {
+      "i": "m2",
+      "n": "Beto",
+      "c": "",
+      "g": "5487",
+      "gn": "Finger Heart",
+      "v": 5,
+      "img": ""
+     },
+     {
+      "i": "m3",
+      "n": "Caro",
+      "c": "#F06292",
+      "g": "",
+      "gn": "Ice Cream Cone",
+      "v": 1,
+      "img": ""
+     }
+    ],
+    "t": {
+     "e": "pausa",
+     "d": 60,
+     "fin": 0,
+     "r": 30000
+    },
+    "ro": 2,
+    "sr": 0,
+    "s": 0
+   }
+  },
+  {
+   "captura": "ronda-nueva-pausa"
+  }
+ ]
+}
