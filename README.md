@@ -10,7 +10,11 @@ Herramientas para transmisiones de TikTok LIVE, al estilo de TikFinity, organiza
 
 Los widgets se pegan como **URL** en OBS o en TikTok LIVE Studio y funcionan solos: no hay que dejar
 ningún programa abierto en el computador. Todo funciona desde **GitHub Pages** + **Euler Stream**,
-con **Supabase** para los cambios en vivo: no hay servidor propio, ni Node.js, ni nada que instalar.
+con **Supabase** para los cambios en vivo: no hay servidor propio ni nada que instalar para usarlo.
+
+**Código:** React 19 + Vite + TypeScript (estricto) + Tailwind CSS. Para usar el panel no hace falta
+nada de eso: GitHub Actions arma la versión publicada. Para desarrollar, ver la
+[sección 11](#11-cómo-probar-los-cambios).
 
 **Cambios en vivo:** la URL de cada widget se copia **una sola vez**. Lo que edites después en el panel
 (premios, metas, colores, alertas…) llega solo al widget en OBS en uno o dos segundos, sin recargarlo.
@@ -45,7 +49,7 @@ con **Supabase** para los cambios en vivo: no hay servidor propio, ni Node.js, n
 
 | Pieza | Para qué |
 |---|---|
-| **GitHub Pages** | Publica el panel y los widgets (carpeta `public/`). Es solo una web estática: no ejecuta código en el servidor. |
+| **GitHub Pages** | Publica el panel y los widgets (la carpeta `dist/` que arma `npm run build`). Es solo una web estática: no ejecuta código en el servidor. |
 | **Euler Stream** (plan gratuito) | Lee el LIVE de TikTok y entrega los eventos por WebSocket. Hace falta una **API key**. |
 | **Supabase** (plan gratuito) | Guarda la configuración de cada widget y se la avisa al instante (Realtime). Ya está configurado: proyecto `live-tools`. |
 | **OBS** o **TikTok LIVE Studio** | Muestra los widgets como fuente de navegador / enlace. |
@@ -187,7 +191,7 @@ flowchart LR
 ### 4.2 La URL del widget y su configuración
 
 La URL lleva los datos en el **fragmento** (lo que está después de `#`), como `#c=…`:
-un JSON → UTF-8 → base64 "url-safe" (`codificar` / `decodificar` en `js/comun.js`). El navegador
+un JSON → UTF-8 → base64 "url-safe" (`codificar` / `decodificar` en `src/nucleo/configUrl.ts`). El navegador
 **nunca envía el fragmento a ningún servidor**: ni GitHub ni nadie ve la clave al cargar la página.
 
 Hay dos formas de URL, y el widget entiende las dos:
@@ -197,7 +201,8 @@ Hay dos formas de URL, y el widget entiende las dos:
 | **Con cambios en vivo** (la que genera el panel) | `u` usuario · `k` API key · `w` identificador del widget | De Supabase, al abrir el widget y cada vez que cambia. Incluye `u`, que gana sobre el de la URL |
 | **Completa** (sin Supabase, o URLs viejas) | `u` · `k` · y toda la configuración (tabla de abajo) | De la propia URL; cambiarla = copiar otra URL |
 
-La configuración de cada widget (en Supabase o en la URL completa) usa estas claves cortas:
+La configuración de cada widget (en Supabase o en la URL completa) usa estas claves cortas (cada widget las
+documenta, con su interfaz TypeScript, en `src/widgets/<widget>/config.ts`):
 
 | Widget | Claves de configuración |
 |---|---|
@@ -208,7 +213,7 @@ La configuración de cada widget (en Supabase o en la URL completa) usa estas cl
 | `activacion.html` | `eq` equipos (2 a 4) `[{n nombre, g id del regalo activador, v monedas del activador, c color, img imagen del regalo}]` · `pr` precios del Buscador `{giftId: monedas}` · `ro` ronda (al cambiar, monedas y equipos a 0) · `s` sonido · `t` reloj `{e, d, fin, r}` |
 | `jefe.html` | `ti` nombre del jefe · `hp` vida total · `t` reloj (como en la carrera) · `ro` ronda (al cambiar, vida llena) · `dl` vida por like · `dr` vida por moneda de regalo · `v` monedas de un regalo sin precio · `tv` texto de victoria · `sr` solo con el reloj en marcha · `s` sonido |
 | `subathon.html` | `ti` título · `t` reloj base (como en la carrera) · `ro` ronda (al cambiar, se borra lo sumado) · `ex` ms agregados con «+5 min» · `cap` tope en segundos · `sl` segundos por 100 likes · `sd` segundos por moneda · `v` monedas de un regalo sin precio · `s` sonido |
-| `extensible.html` | Las mismas claves del subathon (usa el mismo `js/widgets/subathon.js`) más `mt` = monedas de la meta: hasta juntarlas, ni regalos ni likes suman tiempo; del regalo que la cruza cuenta solo lo que sobra |
+| `extensible.html` | Las mismas claves del subathon (usa el mismo componente, `src/widgets/subathon/`) más `mt` = monedas de la meta: hasta juntarlas, ni regalos ni likes suman tiempo; del regalo que la cruza cuenta solo lo que sobra |
 | `boveda.html` | `ti` título · `pi` pista (se ve con la bóveda cerrada) · `sec` texto secreto · `o` meta en monedas · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, se cierra y vuelve a 0) · `ab` 1 = abrir ahora · `s` sonido |
 | `trono.html` | `ti` título · `m` modo (`combo`/`total`) · `min` monedas mínimas para reinar · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, trono libre) · `s` sonido |
 | `marcador.html` | `ti` título junto al reloj · `j` integrantes `[{i id, n nombre, c color (vacío = acento del estilo), g id del regalo, gn nombre del regalo, v monedas por regalo, img imagen}]` · `t` reloj (como en la carrera) · `ro` ronda (al cambiar, puntos a 0) · `sr` solo con el reloj en marcha (por defecto 0) · `s` sonido |
@@ -226,8 +231,10 @@ que usa la vista previa del panel. Por compatibilidad, la ruleta acepta también
 
 ### 4.3 Cómo aplica un widget los cambios en vivo
 
-`iniciarWidget({ cfg, alEvento, alConfig })` (en `js/comun.js`) llama `alConfig(config)` al arrancar y,
-si la URL tiene `w`, cada vez que llega una configuración nueva. Cada widget la aplica **sin recargarse**:
+El hook `useWidget({ alConfig, alEvento })` (`src/hooks/useWidget.ts`) llama `alConfig(config)` al arrancar y,
+si la URL tiene `w`, cada vez que llega una configuración nueva (`useConfigEnVivo`: Supabase Realtime). Cada widget
+la aplica **sin recargarse**. Las reglas de cada uno viven en su `motor.ts` (TypeScript sin React, port línea a línea
+del original); el componente solo pinta lo que el motor publica:
 
 - **Ruleta:** si está girando, los premios nuevos esperan a que se vacíe la cola, para que el premio
   anunciado sea el mismo sobre el que se detuvo la rueda. El resto (regalo, giros, sonido…) cambia al instante.
@@ -240,20 +247,21 @@ si la URL tiene `w`, cada vez que llega una configuración nueva. Cada widget la
 - **Alertas:** cambian al instante; las alertas que ya estaban en fila se muestran igual.
 - **Carrera de regalos:** conserva los puntos (también si OBS recarga la fuente: se guardan en
   `live-tools:carrera:<w>`). Solo vuelven a 0 cuando cambia `ro` (botón *Reiniciar* o *Nueva ronda*).
-  El reloj viaja como la **hora en que termina** (`js/reloj.js`), así el panel y OBS marcan lo mismo aunque
-  el cambio tarde un momento; *Iniciar/Pausar/Reiniciar* se suben a Supabase sin la espera habitual. En la
-  vista previa, el reloj y la ronda llegan por mensaje (`sinRecargar` en `tarjetaWidget`) sin reiniciarla.
+  El reloj viaja como la **hora en que termina** (`src/nucleo/reloj.ts`, hook `useRondaReloj`), así el panel y OBS
+  marcan lo mismo aunque el cambio tarde un momento o la fuente se recargue; *Iniciar/Pausar/Reiniciar* se suben a
+  Supabase sin la espera habitual. En la vista previa, el reloj y la ronda llegan por mensaje (prop `sinRecargar` de
+  `<TarjetaWidget>`) sin reiniciarla.
   Los regalos se asignan por ID; si ninguno coincide, por el nombre que manda TikTok. Si TikTok no manda el
   precio, vale lo puesto en «Monedas c/u». Con el reloj detenido no suman (opción en *Personalizar*); los
   combos que terminan hasta 3 s después del final sí cuentan.
 - **Marcador:** misma lógica de la carrera (regalo por ID o, si no coincide, por nombre; precio × cantidad; reloj de
-  `js/reloj.js`; tarjetas reusadas por id; puntos en `live-tools:marcador:<w>`), pero sin metas ni barras y con el
+  `src/nucleo/reloj.ts`; tarjetas reusadas por id; puntos en `live-tools:marcador:<w>`), pero sin metas ni barras y con el
   reloj en una sección aparte arriba. A diferencia de la carrera, `sr` viene apagado: los regalos suman siempre hasta
   reiniciar. Al terminar el tiempo, quien va primero queda destacado y los demás atenuados. Medidas con
   `--u: min(1vw, 4.5vh)`, así cabe en cualquier tamaño de fuente.
 - **Cola de retos:** es el único caso en que los widgets **escriben** en Supabase (tabla `retos`): la ruleta y el
   tragamonedas llaman `agregar_reto` cuando ya se vio el resultado en pantalla (con reintentos, `mandarReto` en
-  `js/juego.js`; nunca desde la vista previa), y `cola.html` lo hace con los retos por regalo (junta un combo hasta
+  `src/nucleo/juego.ts`; nunca desde la vista previa), y `cola.html` lo hace con los retos por regalo (junta un combo hasta
   3 s de silencio). La cola se lee con `leer_retos` y Realtime (canal `retos-<cola>`), y además cada 30 s. El panel
   marca con `marcar_reto` / `vaciar_retos`, que piden el secreto. Pon la fuente una sola vez: abierta en dos
   programas, los retos por regalo entrarían dos veces.
@@ -286,7 +294,7 @@ si la URL tiene `w`, cada vez que llega una configuración nueva. Cada widget la
   activador» (solo para el activador), si no el del Buscador de regalos (`pr`), si no 1. Las monedas cuentan con el
   reloj en marcha y 3 s de gracia; pasada la gracia nadie se une ni suma hasta la ronda siguiente. Ancho de cada
   cuadrante = monedas del equipo / total (mínimo 3 % si tiene monedas; sin monedas en total, todos iguales).
-- **Jefe del LIVE:** usa el mismo reloj que la carrera (`js/reloj.js`) y el mismo reinicio por `ro`. Cada like
+- **Jefe del LIVE:** usa el mismo reloj que la carrera (`src/nucleo/reloj.ts`) y el mismo reinicio por `ro`. Cada like
   quita `dl` de vida y cada regalo `(precio × cantidad) × dr` (sin precio, el precio es `v`). La vida no baja de 0:
   al llegar a 0 el jefe queda vencido, el reloj del widget se congela en lo que sobró y los ataques siguientes no
   cuentan. El daño se guarda en `live-tools:jefe:<w>` (una recarga de OBS no cura al jefe). El panel no ve la
@@ -300,7 +308,7 @@ si la URL tiene `w`, cada vez que llega una configuración nueva. Cada widget la
   El **subathon extensible** (`extensible.html`, vista `extensible`) es el mismo widget con meta (`mt`): las monedas
   de regalos (con el reloj en marcha o en pausa) llenan una barra y, hasta cumplirla, nada suma tiempo; desde ahí,
   regalos y likes suman como en el subathon. Las monedas juntadas se guardan con lo sumado (`m`) y vuelven a 0 al
-  reiniciar. Las dos vistas del panel salen de la misma fábrica (`crearVista` en `vistas/subathon.js`).
+  reiniciar. Las dos vistas del panel salen de la misma fábrica (`crearVista` en `src/panel/vistas/subathon/index.ts`).
 - **Bóveda dorada:** el progreso lo cuenta el widget (precio × cantidad de cada regalo; sin precio, `v`) y se guarda en
   `live-tools:boveda:<w>` junto con si está abierta. El panel manda órdenes: `ro` nueva = cerrar y volver a 0;
   `ab = 1` = abrir aunque no se llegue a la meta. El texto secreto **no se escribe en la página** hasta que se abre.
@@ -321,7 +329,8 @@ El widget guarda una copia de la última configuración en su navegador (`localS
 ### 4.4 Eventos normalizados
 
 Euler Stream entrega los mensajes de TikTok (`WebcastGiftMessage`, `WebcastLikeMessage`…).
-`js/comun.js` los convierte en objetos simples, y **los widgets y el panel solo conocen esta forma**:
+`src/nucleo/eventos.ts` los convierte en objetos simples (sus interfaces están en `src/tipos/eventos.ts`), y
+**los widgets y el panel solo conocen esta forma**:
 
 ```js
 { tipo: 'regalo', usuario, uid, giftId, nombre, cantidad, diamantes, imagen }   // uid = id de la cuenta de TikTok
@@ -340,7 +349,7 @@ Si algún día cambia la fuente de datos, solo hay que tocar `normalizar` y `cre
 
 > **TikTok tampoco entrega todos los mensajes de likes**: cuando llegan muchos, manda solo una parte, y sumar
 > `likeCount` se quedaba corto (una meta de 5.000 se llenaba con 13.000 likes en TikTok). Cada mensaje trae
-> `totalLikeCount`, el contador que se ve en TikTok, así que `crearContadorLikes` (en `js/comun.js`) pone en
+> `totalLikeCount`, el contador que se ve en TikTok, así que `crearContadorLikes` (en `src/nucleo/contadorLikes.ts`) pone en
 > `cantidad` lo que subió ese total desde el mensaje anterior. Así se cuentan también los likes que no llegaron
 > y los de un corte de conexión. El primer mensaje solo cuenta su `likeCount` (el total incluye los likes de
 > antes de abrir el widget); tras reconectar, un total menor = LIVE nuevo. `propios` es lo que dio esa persona
@@ -352,9 +361,9 @@ Si algún día cambia la fuente de datos, solo hay que tocar `normalizar` y `cre
   última vez al terminar (`repeatEnd = 1`), con la cantidad total.
 - Un regalo **suelto** (el capibara) llega **una sola vez**, con `repeatEnd = 0`.
 
-Como TikTok no siempre dice de qué tipo es, `crearRastreadorRegalos` (en `js/comun.js`) hace esto:
+Como TikTok no siempre dice de qué tipo es, `crearRastreadorRegalos` (en `src/nucleo/rastreadorRegalos.ts`) hace esto:
 
-1. Cada mensaje de un mismo usuario + regalo + grupo reinicia una espera de **2 segundos**.
+1. Cada mensaje de un mismo usuario + regalo + grupo reinicia una espera de **2 segundos** (`ESPERA_RACHA_MS`).
 2. Si la espera se cumple sin mensajes nuevos, **cuenta lo acumulado** (así un regalo suelto se cuenta a los ~2 s).
 3. Si después llega el fin de racha, **solo suma lo que faltaba**: un combo nunca se cuenta doble.
 4. En una racha la cantidad solo crece. Si el mismo regalo vuelve a llegar con una cantidad que **ya se contó**
@@ -364,8 +373,9 @@ El mismo rastreador lo usan los widgets y el panel.
 
 ### 4.6 Conexión y reintentos
 
-`conectarTikTok` (en `js/comun.js`) abre el WebSocket de Euler Stream y decide qué hacer cuando se cierra,
-según el código de cierre:
+`conectarTikTok` (en `src/nucleo/euler.ts`; los widgets lo usan con el hook `useTikTokLive` y el panel desde
+`src/panel/estado/envivo.ts`) abre el WebSocket de Euler Stream y decide qué hacer cuando se cierra, según el
+código de cierre (tabla `CIERRES`):
 
 | Código | Significado | Qué hace |
 |---|---|---|
@@ -383,7 +393,9 @@ abierto en OBS y el panel reintentan por separado.
 ### 4.7 Vista previa y pruebas
 
 La vista previa de cada tarjeta es un `<iframe>` con el widget real en modo `prueba=1`. Los botones de prueba
-le mandan **eventos normalizados** por `postMessage`, y el widget los procesa igual que uno real. El widget
+le mandan **eventos normalizados** por `postMessage` (`{ tipo: 'simular', evento }`), y el widget los procesa igual
+que uno real. Los cambios de estilo llegan con `{ tipo: 'tema', est }` y las órdenes de juego con
+`{ tipo: 'config', config }`, sin recargar la vista previa. El widget
 responde con su estado (por ejemplo, “Modo prueba”), que el panel muestra junto al punto verde o naranja.
 Los mensajes solo se aceptan si vienen del mismo origen.
 
@@ -396,38 +408,47 @@ Los mensajes solo se aceptan si vienen del mismo origen.
 
 | Archivo | Responsabilidad |
 |---|---|
-| `js/panel/app.js` | Arranque, riel, menú desplegable, navegación por `#/id-de-vista`, barra superior, conexión automática |
-| `js/panel/registro.js` | **Mapa del panel**: categorías → grupos → vistas. Agregar una función empieza aquí |
-| `js/panel/almacen.js` | Lo que el panel guarda en el navegador (`localStorage`, clave `panel-live`), incluidos el identificador de cada widget y el secreto para Supabase |
-| `js/panel/sincronizar.js` | Cambios en vivo: cada vista de widget registra aquí su configuración; al guardar algo, la sube a Supabase si cambió |
-| `js/panel/envivo.js` | Conexión del panel al LIVE: contadores, lista de eventos, regalos de la sesión |
-| `js/panel/ui.js` | Componentes: `el()`, `icono()`, `tarjeta`, `campo`, `casilla`, `deslizador`, `segmentado`, `nota`, `tarjetaWidget` |
-| `js/panel/piezas.js` | Piezas comunes de las vistas de juegos: `textoLimpio`, `acotarDuracion`, `listaRegalos` / `usarLista` (sugerencias de IDs del Buscador), `relojDeRonda` (reloj con Iniciar/Pausar/Reiniciar) y `campoDuracion` |
-| `js/tema.js` | **Estilo de los widgets** (compartido con los widgets): presets, valores por defecto, `normalizarTema`, `aplicarTema` (variables CSS) y `paletaRuleta` (colores del canvas) |
-| `js/panel/vistas/*.js` | Una vista por archivo |
+| `src/panel/main.tsx` | Arranque: carga lo guardado, importa URLs viejas de la ruleta, inicia los cambios en vivo y la conexión automática, y monta `<App>` |
+| `src/panel/App.tsx`, `src/panel/layout/` | Riel, menú desplegable y barra superior (con la textura estática) y la vista actual |
+| `src/panel/rutas.ts` + `useRuta.ts` | **Mapa del panel** (categorías → grupos → vistas) y navegación por `#/id-de-vista`. Agregar una función empieza aquí |
+| `src/panel/estado/almacen.ts` | El estado del panel (Zustand + Immer), guardado en el navegador con **la misma clave y la misma forma de antes** (`localStorage`, `panel-live`): conexión, ajustes de cada widget, catálogo de regalos, estilos, identificadores y secreto de Supabase. Une lo que guardan otras pestañas |
+| `src/panel/estado/sincronizar.ts` | Cambios en vivo: cada vista registra al cargarse la configuración de su widget (una función **pura** del estado); al cambiar algo, la sube a Supabase 0,6 s después del último cambio; las órdenes de juego (`subir`) van de inmediato; si falla, reintenta (5 s → 1 min) |
+| `src/panel/estado/envivo.ts` | Conexión del panel al LIVE (un servicio fuera de React) y sus hooks: `useEnVivo`, `useEnVivoAcompasado` (repinta como mucho cada N ms) y `useConexionEnVivo` |
+| `src/panel/componentes/` | `ui.tsx` (`Tarjeta`, `Campo`, `Casilla`, `Deslizador`, `Segmentado`, `Nota`, `Aviso`…), `TarjetaWidget.tsx` (URL, estado de los cambios en vivo, pruebas y vista previa), `EditorEstilo.tsx` y `piezasJuego.tsx` (reloj de la ronda, duración, lista de regalos) |
+| `src/panel/vistas/<vista>/` | Una carpeta por vista: `config.ts` (valores por defecto, configuración del widget y validación), `Vista*.tsx` (la interfaz) e `index.ts` (id, título y descripción) |
+| `src/nucleo/tema.ts` | **Estilo de los widgets** (compartido con los widgets): presets, `normalizarTema`, `aplicarTema` (variables CSS) y `paletaRuleta` (colores del canvas) |
 
-**Ciclo de vida de una vista.** Una vista es `{ id, titulo, descripcion, render({ senal }) }`. Al entrar,
-`app.js` llama `render`, que devuelve los nodos de la vista. Al salir, cancela `senal` (un `AbortSignal`):
-todas las suscripciones (`almacen.alCambiar(fn, senal)`, `envivo.alCambiar(fn, senal)`) y los oyentes
-(`addEventListener(…, { signal: senal })`) se sueltan en ese momento.
+**Ciclo de vida de una vista.** React monta la vista al entrar y la desmonta al salir. Las suscripciones
+(almacén, conexión, temporizadores) viven en hooks con su limpieza, así que al salir no queda nada colgado.
 
 **Estilo de los widgets.** Cada widget tiene el suyo y se edita en su desplegable *Personalizar*
-(`js/panel/estilo.js` → `editorEstilo(id, alCambiar)`, que cada vista agrega al final de `personalizar`). Se
-guarda en `almacen.temasPropios[id]`; un widget que nunca se personalizó usa el estilo base (`almacen.tema`).
-`almacen.temaDe(id)` da el que corresponde y `sincronizar.registrar` lo agrega a la configuración del widget con
-la clave `est`, así que viaja igual que el resto (en la URL o por Supabase). En el widget, `iniciarWidget`
-(comun.js) llama `aplicarTema(est)` antes de entregar la configuración: escribe las variables CSS
-(`--cristal-oscuro`, `--filo-oro`, `--borde-ancho`, `--resplandor`, `--fuente`, `--mayus`…) y avisa con el
-evento `tema-aplicado`, que la ruleta usa para redibujar el canvas. La vista previa de la tarjeta recibe cada
-cambio de estilo con `postMessage({ tipo: 'tema', est })`, sin recargarse. Para agregar un preset: una entrada en
-`PRESETS` de `js/tema.js` y su muestra `.muestra-<id>` en `panel.css`.
+(`<EditorEstilo id>`, al final de `personalizar` de cada vista). Se guarda en `temasPropios[id]`; un widget que
+nunca se personalizó usa el estilo base (`tema`). `temaDe(estado, id)` da el que corresponde y `sincronizar`
+lo agrega a la configuración del widget con la clave `est`, así que viaja igual que el resto (en la URL o por
+Supabase). En el widget, `useWidget` llama `aplicarTema(est)` antes de entregar la configuración: escribe las
+variables CSS (`--cristal-oscuro`, `--filo-oro`, `--borde-ancho`, `--resplandor`, `--fuente`, `--mayus`…) y avisa
+con el evento `tema-aplicado`, que la ruleta usa para redibujar el canvas. La vista previa de la tarjeta recibe
+cada cambio de estilo con `postMessage({ tipo: 'tema', est })`, sin recargarse. Para agregar un preset: una
+entrada en `PRESETS` de `src/nucleo/tema.ts` y su muestra `.muestra-<id>` en `src/estilos/panel.css`.
 
-**Interfaz sin `innerHTML`.** Todo se construye con `el()`, que inserta el texto como texto. Por eso es
-seguro mostrar nombres y mensajes del chat que vienen de TikTok.
+**Diseño ÁUREA NETWORK en Tailwind.** Los tokens del sistema de diseño (carbón `#0F0F12`, oro `#D4AF37`, cristal
+obsidiana, escala φ, tipografía) están en `src/estilos/aurea.css` como variables CSS y como tema de Tailwind
+(`@theme`: `bg-carbon`, `text-oro`, `bg-cristal-obsidiana`, `rounded-aurea`…). El CSS propio de cada widget se
+conservó tal cual, junto a su componente.
+
+**Textura estática (de prueba).** Un patrón de cuadros morados y rosados que **no se mueve** aunque el contenido
+se desplace (`background-attachment: fixed`; utilidades `textura-estatica` y `textura-ventana` en
+`src/estilos/textura.css`). El panel la usa en el riel, el menú, la barra superior y el fondo de detrás de las
+tarjetas. En cada widget se activa con la casilla «Textura estática» de *Personalizar* (clave `est.tx`, apagada
+por defecto): las placas de cristal se vuelven ventanas al patrón.
+
+**Textos seguros.** React inserta los textos como texto (no se usa `dangerouslySetInnerHTML` en ningún lado):
+es seguro mostrar nombres y mensajes del chat que vienen de TikTok.
 
 ### 4.9 Catálogo de regalos y cambios de código
 
-- Cada regalo que llega mientras el panel está conectado se anota en `almacen.regalos`: ID, nombre de TikTok,
+- Cada regalo que llega mientras el panel está conectado se anota en el catálogo (`regalos` en
+  `src/panel/estado/almacen.ts`): ID, nombre de TikTok,
   nombre propio, precio, veces, primera y última vez.
 - **Nombre:** si TikTok manda el nombre del regalo (en inglés, por ejemplo “Rose”), queda puesto en el campo
   desde que llega. Puedes escribir otro (se guarda como nombre propio y debajo se recuerda el de TikTok);
@@ -450,105 +471,63 @@ seguro mostrar nombres y mensajes del chat que vienen de TikTok.
 
 ```
 live-tools/
-├── public/                         ← lo que publica GitHub Pages
-│   ├── index.html                  panel principal (esqueleto; lo arma js/panel/app.js)
-│   ├── ruleta.html                 widget ruleta     ┐
-│   ├── meta.html                   widget meta       ├ solo estructura HTML
-│   ├── alertas.html                widget alertas    │
-│   ├── carrera.html                widget carrera    │
-│   ├── batalla.html                widget batalla    │
-│   ├── activacion.html             widget barra act. │
-│   ├── jefe.html                   widget jefe       │
-│   ├── subathon.html               widget subathon   │
-│   ├── extensible.html             widget extensible │
-│   ├── boveda.html                 widget bóveda     │
-│   ├── trono.html                  widget trono      │
-│   ├── marcador.html               widget marcador   │
-│   ├── repertorio.html             widget repertorio │
-│   ├── cola.html                   widget cola retos │
-│   ├── destacado.html              widget mensaje VIP│
-│   ├── tragamonedas.html           widget tragamon.  ┘
-│   ├── css/
-│   │   ├── aurea.css               sistema de diseño ÁUREA NETWORK: oro/carbón, cristal (glassmorphism), escala φ, tipografía
-│   │   ├── panel.css               estilos del panel
-│   │   ├── widget.css              base común de los widgets (transparencia, placas de cristal .cristal / .filo-oro, píldora de estado)
-│   │   └── widgets/
-│   │       ├── ruleta.css
-│   │       ├── meta.css
-│   │       ├── alertas.css
-│   │       ├── carrera.css
-│   │       ├── batalla.css
-│   │       ├── activacion.css
-│   │       ├── jefe.css
-│   │       ├── subathon.css
-│   │       ├── extensible.css      barra de la meta (va encima de subathon.css)
-│   │       ├── boveda.css
-│   │       ├── trono.css
-│   │       ├── marcador.css
-│   │       ├── repertorio.css
-│   │       ├── cola.css
-│   │       ├── destacado.css
-│   │       └── tragamonedas.css
-│   └── js/
-│       ├── comun.js                URL ↔ config, eventos normalizados, rastreador de regalos,
-│       │                           conexión con Euler Stream, arranque de widgets, sonido
-│       ├── nube.js                 Supabase: proyecto, leer/guardar configuración, Realtime
-│       ├── tema.js                 estilo de los widgets: presets, variables CSS, colores de la ruleta
-│       ├── reloj.js                reloj por rondas (hora de término): carrera, marcador, jefe y sus vistas (el subathon solo usa formatoReloj)
-│       ├── juego.js                piezas comunes de los juegos: modo prueba, guardado de la ronda, gracia del reloj,
-│       │                           cifras animadas y regalo → integrante (por ID o por nombre)
-│       ├── widgets/
-│       │   ├── ruleta.js           dibujo, giro, cola y sorteo de premios
-│       │   ├── meta.js
-│       │   ├── alertas.js
-│       │   ├── carrera.js          tarjetas, puntos por regalo, reloj y ganador
-│       │   ├── batalla.js          tira y afloja: puntos por equipo, barra y ventaja
-│       │   ├── activacion.js       barra de activación: unirse por activador, cuadrantes por % de monedas
-│       │   ├── jefe.js             boss raid: vida, daño por likes y regalos, victoria
-│       │   ├── subathon.js         reloj al que el público suma tiempo, con tope (y meta opcional: extensible)
-│       │   ├── boveda.js           caja sorpresa: progreso, candado y texto secreto
-│       │   ├── trono.js            rey del LIVE: jugadas de 3 s, modos combo/total
-│       │   ├── marcador.js         puntajes por integrante y reloj arriba
-│       │   ├── repertorio.js       canciones con meta; la activa se desbloquea
-│       │   ├── cola.js             retos pendientes (Supabase + Realtime) y retos por regalo
-│       │   ├── destacado.js        mensaje del VIP: últimos mensajes, umbral, fila
-│       │   └── tragamonedas.js     tres rodillos con translateY y freno escalonado
-│       └── panel/
-│           ├── app.js
-│           ├── registro.js
-│           ├── almacen.js
-│           ├── sincronizar.js      sube a Supabase la configuración de cada widget
-│           ├── envivo.js
-│           ├── ui.js
-│           ├── piezas.js           piezas comunes de las vistas de juegos: reloj de la ronda, lista de regalos, textos
-│           ├── estilo.js           editor del estilo visual (va en "Personalizar" de cada widget)
-│           └── vistas/
-│               ├── ruleta.js       ruleta normal y premium (misma fábrica)
-│               ├── metas.js
-│               ├── alertas.js
-│               ├── carrera.js      integrantes, reloj (iniciar/pausar/reiniciar)
-│               ├── batalla.js      dos equipos y "Reiniciar batalla"
-│               ├── activacion.js   2 a 4 equipos con su activador y reloj de la ronda
-│               ├── jefe.js         jefe, daño y raid (iniciar/pausar/reiniciar)
-│               ├── subathon.js     subathon y subathon extensible: tiempos, tasas, meta y reloj
-│               ├── boveda.js       meta, secreto y órdenes (cerrar y reiniciar / abrir ahora)
-│               ├── trono.js        modo, mínimo y "Reiniciar trono"
-│               ├── marcador.js     integrantes (color opcional) y reloj
-│               ├── repertorio.js   canciones, activar / hecha y siguiente / reiniciar
-│               ├── cola.js         cola real: hecho / deshacer / vaciar / agregar; retos por regalo
-│               ├── destacado.js    umbral, segundos, quitar y probar en OBS
-│               ├── tragamonedas.js regalo, textos de los rodillos y probar en OBS
-│               ├── actividad.js
-│               ├── regalos.js
-│               └── conexion.js
-├── supabase/
-│   └── esquema.sql                 tabla, funciones y permisos de Supabase (se ejecuta una vez)
-├── README.md                       esta documentación
-└── .github/workflows/pages.yml     publica public/ en GitHub Pages
+├── index.html                       panel (lo monta src/panel/main.tsx)
+├── ruleta.html, meta.html, …        los 16 widgets: una página cada uno, con los MISMOS nombres de antes
+│                                    (las URLs ya pegadas en OBS siguen sirviendo). Cada una solo carga
+│                                    src/widgets/<widget>/main.tsx
+├── src/
+│   ├── tipos/                       interfaces estrictas: eventos del LIVE (y mensajes crudos de Euler),
+│   │                                reloj, estilo, configuración de los widgets y estado del panel
+│   ├── nucleo/                      reglas compartidas, sin React (port 1:1 de la versión original)
+│   │   ├── configUrl.ts             URL ↔ configuración (#c=…)
+│   │   ├── eventos.ts               mensajes de Euler Stream → eventos normalizados
+│   │   ├── rastreadorRegalos.ts     combos y regalos sueltos (espera de 2 s, sin duplicados)
+│   │   ├── contadorLikes.ts         likes según el total de TikTok
+│   │   ├── euler.ts                 conexión con Euler Stream: códigos de cierre y reintentos
+│   │   ├── nube.ts                  Supabase: leer/guardar configuración, Realtime, cola de retos
+│   │   ├── reloj.ts                 reloj por rondas (guarda la hora de término)
+│   │   ├── juego.ts                 piezas de los juegos: modo prueba, guardado de la ronda, gracia del
+│   │   │                            reloj, cifras animadas, regalo → integrante, mandar retos
+│   │   ├── tema.ts                  estilo de los widgets: presets, variables CSS, colores de la ruleta
+│   │   ├── sonido.ts                sonidos (Web Audio)
+│   │   └── mensajes.ts              mensajes widget → panel (vista previa)
+│   ├── hooks/                       useWidget (arranque de un widget), useTikTokLive, useConfigEnVivo,
+│   │                                useRondaReloj, useMotor, useCifraAnimada, useReiniciarAnimacion,
+│   │                                useRetos, useIntervalo, useAcompasado
+│   ├── componentes/                 lo común de los widgets: montarWidget, PildoraEstado, Cristal
+│   ├── estilos/
+│   │   ├── aurea.css                sistema de diseño ÁUREA NETWORK: variables + tema de Tailwind (@theme)
+│   │   ├── textura.css              textura estática (utilidades textura-estatica / textura-ventana)
+│   │   ├── widget.css               base de los widgets (transparencia, .cristal, .filo-oro, píldora de estado)
+│   │   └── panel.css                estilos del panel (Tailwind + las clases del panel)
+│   ├── widgets/<widget>/            uno por widget (ruleta, meta, alertas, carrera, batalla, activacion,
+│   │   │                            jefe, subathon (+ extensible), boveda, trono, marcador, repertorio,
+│   │   │                            cola, destacado, tragamonedas):
+│   │   ├── main.tsx                 entrada de su .html (monta el componente)
+│   │   ├── <Widget>.tsx             lo que se ve
+│   │   ├── motor.ts                 sus reglas (sin React)
+│   │   ├── config.ts                sus claves de configuración, con tipos
+│   │   └── <widget>.css             su diseño (el original, tal cual)
+│   └── panel/
+│       ├── main.tsx, App.tsx, rutas.ts, useRuta.ts, importarUrlVieja.ts, piezas.ts
+│       ├── layout/                  barra superior, riel y menú
+│       ├── estado/                  almacen.ts (Zustand + Immer) · sincronizar.ts · envivo.ts
+│       ├── componentes/             ui.tsx · TarjetaWidget.tsx · EditorEstilo.tsx · piezasJuego.tsx
+│       └── vistas/<vista>/          las 23 vistas: config.ts · Vista*.tsx · index.ts
+├── pruebas/
+│   ├── unidad/                      pruebas diferenciales contra la versión original (Vitest)
+│   ├── paridad/                     escenarios de los widgets (JSON) para compararlos con la versión original
+│   ├── panel/estado.json            estado de prueba del panel (cuenta y clave falsas)
+│   ├── herramientas/                paridad.mjs (widgets) · panel.mjs (vistas) · servir.mjs · legado.mjs
+│   └── e2e/todas.mjs                todas las comparaciones juntas (npm run e2e)
+├── supabase/esquema.sql             tabla, funciones y permisos de Supabase (se ejecuta una vez)
+├── vite.config.ts                   build de varias páginas (una por widget + el panel)
+├── tsconfig*.json, package.json     TypeScript estricto y dependencias con versión exacta
+└── .github/workflows/pages.yml      arma (npm ci + pruebas + build) y publica dist/
 ```
 
-Cada archivo empieza con un encabezado que explica qué hace y lista sus secciones. Cada sección está
-marcada con un separador (`// ---- 1. … ----` en JS y `/* ---- 1. … ---- */` en CSS).
+Las pruebas unitarias del núcleo están junto a cada módulo (`src/nucleo/*.test.ts`). Cada archivo empieza con
+un encabezado que explica qué hace y lista sus secciones; cada sección está marcada con un separador.
 
 ---
 
@@ -557,39 +536,54 @@ marcada con un separador (`// ---- 1. … ----` en JS y `/* ---- 1. … ---- */`
 Ejemplo: un widget **“Último seguidor”**.
 
 1. **El widget** (si va en OBS):
-   - `public/ultimo.html`: copia `alertas.html` y cambia el HTML y las rutas de CSS/JS.
-   - `public/css/widgets/ultimo.css`: sus estilos.
-   - `public/js/widgets/ultimo.js`: su lógica. La pieza clave es `iniciarWidget`:
-     ```js
-     import { leerConfig, iniciarWidget } from '../comun.js';
-     let color = '#fff';
-     iniciarWidget({
-       cfg: leerConfig(),
-       alConfig(cfg) { color = cfg.col || '#fff'; },   // al arrancar y en cada cambio en vivo
-       alEvento(evento) {
-         if (evento.tipo === 'follow') document.getElementById('nombre').textContent = evento.usuario;
-       },
-     });
+   - `ultimo.html` en la raíz: copia `alertas.html` y cambia el título y la entrada
+     (`<script type="module" src="/src/widgets/ultimo/main.tsx">`). Agrega `'ultimo'` a `PAGINAS` en
+     `vite.config.ts`.
+   - `src/widgets/ultimo/config.ts`: sus claves (`interface ConfigUltimo extends ConfigBase { col?: string }`).
+   - `src/widgets/ultimo/motor.ts`: sus reglas, sin React (`crearEstadoObservable` de `hooks/useMotor`).
+   - `src/widgets/ultimo/Ultimo.tsx` y `main.tsx`:
+     ```tsx
+     export function Ultimo() {
+       const [estado, motor] = useMotor(crearMotorUltimo);
+       const widget = useWidget<ConfigUltimo>({ alConfig: motor.aplicarConfig, alEvento: motor.alEvento });
+       return (
+         <>
+           <main className="escena"><div className="cristal">{estado.nombre}</div></main>
+           <PildoraEstado widget={widget} />
+         </>
+       );
+     }
+     // main.tsx
+     montarWidget(<Ultimo />);
      ```
      `alEvento` recibe los eventos reales del LIVE **y** los de prueba del panel. `alConfig` debe poder
-     llamarse muchas veces: aplica la configuración nueva sin perder el estado del widget.
-     Si es un juego que guarda su ronda o anima cifras, usa `js/juego.js` (`leerGuardado` / `escribirGuardado`,
-     `relojCuenta`, `animarCifra`, `buscarPorRegalo`) en vez de copiar esas funciones de otro widget.
-2. **La vista del panel**: `public/js/panel/vistas/ultimo.js`. Copia `vistas/alertas.js`:
-   - al cargar el módulo, `sincronizar.registrar('ultimo', { config, validar })` (así los cambios en vivo
-     funcionan aunque la vista no esté abierta);
-   - en `render`, `tarjetaWidget({ id: 'ultimo', titulo, archivo: 'ultimo.html', pruebas, senal })` te da la
-     URL, el estado de los cambios en vivo, los botones y la vista previa.
-   - si es un juego con reloj por rondas o pide IDs de regalos, usa `js/panel/piezas.js` (`relojDeRonda`,
-     `campoDuracion`, `listaRegalos`) en vez de copiarlos de otra vista.
-3. **El menú**: impórtala en `public/js/panel/registro.js` y agrégala a un grupo, o crea un grupo o una
-   categoría nueva. El menú y la navegación se arman solos.
+     llamarse muchas veces: aplica la configuración nueva sin perder el estado del widget. Si es un juego que
+     guarda su ronda o anima cifras, usa `src/nucleo/juego.ts` (`leerGuardado` / `escribirGuardado`,
+     `relojCuenta`, `buscarPorRegalo`) y los hooks `useRondaReloj`, `useCifraAnimada` y `useReiniciarAnimacion`.
+2. **La vista del panel**: `src/panel/vistas/ultimo/`. Copia `vistas/alertas/`:
+   - `config.ts`: `POR_DEFECTO`, la configuración del widget como función **pura** del estado y, al cargar el
+     módulo, `registrar('ultimo', { config, validar })` (así los cambios en vivo funcionan aunque la vista no esté
+     abierta);
+   - `VistaUltimo.tsx`: `useAjustesWidget('ultimo', POR_DEFECTO)` para leer y cambiar los ajustes, y
+     `<TarjetaWidget id="ultimo" archivo="ultimo.html" pruebas={…} personalizar={<EditorEstilo id="ultimo" />}>`,
+     que da la URL, el estado de los cambios en vivo, los botones y la vista previa. Las órdenes de juego se
+     mandan con `subir('ultimo')` (sin la espera de 0,6 s);
+   - si es un juego con reloj por rondas o pide IDs de regalos, usa `componentes/piezasJuego.tsx`
+     (`useRelojDeRonda`, `PanelReloj`, `BotonesReloj`, `CampoDuracion`, `ListaRegalos`).
+3. **El menú**: agrégala a un grupo en `src/panel/rutas.ts` (o crea un grupo o una categoría nueva). El menú y
+   la navegación se arman solos.
+4. **Pruebas**: un escenario en `pruebas/paridad/` si reemplaza algo que ya existía, y pruebas en Vitest
+   para sus reglas.
 
 ---
 
 ## 7. Publicación en GitHub Pages
 
-- Cada `git push` a `main` ejecuta `.github/workflows/pages.yml`, que publica **solo la carpeta `public/`**.
+- Cada `git push` a `main` ejecuta `.github/workflows/pages.yml`: instala las dependencias (`npm ci`, versiones
+  exactas), corre las pruebas (`npm test`), arma el proyecto (`npm run build`) y publica **solo la carpeta
+  `dist/`**. Si las pruebas o el build fallan, no se publica nada y queda la versión anterior.
+- Las páginas conservan sus nombres (`index.html`, `ruleta.html`, `carrera.html`…) y usan rutas relativas
+  (`base: './'`), así que las URLs ya pegadas en OBS / TikTok LIVE Studio siguen funcionando.
 - En el repositorio: **Settings → Pages → Source: GitHub Actions** (ya configurado).
 - La dirección publicada sale del nombre del repositorio: `https://ardiladev.github.io/live-tools/`.
   Si algún día se renombra el repositorio, la dirección cambia y hay que volver a copiar las URLs de
@@ -610,7 +604,7 @@ WebSocket). Aquí se usa solo para guardar la configuración de cada widget y av
 
 - Proyecto: `live-tools` (organización `ardiladev`, región East US, plan gratuito).
 - Dashboard: `https://supabase.com/dashboard/project/sjiptivsxisnyleyanxk`
-- URL y clave pública: en `public/js/nube.js` (`SUPABASE_URL`, `SUPABASE_CLAVE`). Si se dejan vacías,
+- URL y clave pública: en `src/nucleo/nube.ts` (`SUPABASE_URL`, `SUPABASE_CLAVE`). Si se dejan vacías,
   el proyecto vuelve a funcionar sin Supabase (configuración completa en la URL).
 
 ### 8.1 Cómo viaja un cambio
@@ -656,7 +650,7 @@ las otras, así ninguna borra lo de las demás.
   la conexión del panel (Actividad) hace lo mismo a los 1,5 s y pone en 0 los contadores de la sesión.
 
 Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard → **SQL Editor** → pegar
-`supabase/esquema.sql` → **Run**, y poner la URL y la clave pública del proyecto nuevo en `public/js/nube.js`.
+`supabase/esquema.sql` → **Run**, y poner la URL y la clave pública del proyecto nuevo en `src/nucleo/nube.ts`.
 
 ### 8.3 Lo que conviene saber
 
@@ -707,7 +701,7 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
 - El panel guarda usuario, clave, catálogo y el secreto de Supabase **solo en tu navegador** (`localStorage`).
   En Supabase solo queda la configuración de los widgets (premios, títulos, colores…).
 - El repositorio no guarda claves privadas: la API key de Euler solo vive en el navegador y en las URLs que
-  copias. La clave de Supabase que está en `nube.js` es la **pública** (hecha para ir en páginas web); la tabla
+  copias. La clave de Supabase que está en `src/nucleo/nube.ts` es la **pública** (hecha para ir en páginas web); la tabla
   está protegida como se explica en la sección 8.2. **Nunca** pongas en el código la clave secreta de Supabase.
 - Los datos que vienen de TikTok (nombres, chat) se muestran siempre como texto, nunca como HTML.
 - La comunicación panel ↔ vista previa usa `postMessage` restringido al mismo origen.
@@ -716,19 +710,32 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
 
 ## 11. Cómo probar los cambios
 
-1. **Sin conexión:** sirve `public/` con cualquier servidor estático (por ejemplo
-   `python -m http.server 8080 -d public` y abre `http://localhost:8080`) y usa los botones de prueba de
-   cada tarjeta. Abrir `index.html` con doble clic no sirve: los módulos JS necesitan `http://`.
+Hace falta **Node.js 24** (con npm). Una vez: `npm ci`.
+
+1. **Sin conexión:** `npm run dev` y abre `http://localhost:5173` (el panel; los widgets están en
+   `http://localhost:5173/ruleta.html`, etc.). Usa los botones de prueba de cada tarjeta. Los cambios en el
+   código se ven al instante.
    Ojo: en local el panel **también usa el Supabase real** y crea filas de prueba en la tabla `widgets`
    (cada navegador u origen crea las suyas). Se pueden borrar desde el dashboard (Table Editor → widgets).
-2. **Eventos simulados en Actividad:** en la consola del navegador:
+   Para ver la versión armada como en GitHub Pages: `npm run build && npm run preview`.
+2. **Pruebas automáticas** (ninguna toca Supabase ni Euler Stream: los dos se simulan):
+   - `npm run typecheck` (TypeScript estricto) y `npm test` (Vitest): las pruebas del núcleo y las
+     **diferenciales**, que pasan miles de casos al azar por la versión original y por la nueva y exigen el mismo
+     resultado (regalos en combo y sueltos con su espera de 2 s, likes, reloj, URL, conexión y reintentos, estilo,
+     catálogo de regalos y cambios en vivo con sus 0,6 s y reintentos). Las diferenciales necesitan la versión
+     original: `npm run legado:extraer` la saca del historial de git (si no está, se saltan solas).
+   - **Paridad de punta a punta:** en una terminal `npm run legado` (la versión original en
+     `http://localhost:8080`), en otra `npm run dev`, y `npm run e2e`: abre los 16 widgets y las 23 vistas en las
+     dos versiones con Chrome, hace lo mismo en ambas (eventos, órdenes, recargas, con un reloj simulado) y compara
+     textos, clases, lo guardado en el navegador y lo que se subiría a Supabase. Para probar el build:
+     `npm run build`, `node pruebas/herramientas/servir.mjs dist 4173` y `E2E_NUEVO=http://localhost:4173 npm run e2e`.
+3. **Eventos simulados en Actividad:** en la consola del navegador del panel:
    ```js
-   const envivo = await import('./js/panel/envivo.js');
-   envivo.simular({ tipo: 'regalo', usuario: 'Ana', giftId: '5655', nombre: '', cantidad: 3, diamantes: 0, imagen: '' });
+   liveTools.simular({ tipo: 'regalo', usuario: 'Ana', giftId: '5655', nombre: '', cantidad: 3, diamantes: 0, imagen: '' });
    ```
-3. **Con el LIVE real:** Actividad → Eventos en vivo → **Conectar al LIVE**, y pide que te envíen regalos,
+4. **Con el LIVE real:** Actividad → Eventos en vivo → **Conectar al LIVE**, y pide que te envíen regalos,
    likes y follows.
-4. **Cambios en vivo:** abre la URL de un widget (la de **Copy URL**) en otra pestaña, cambia algo en el
+5. **Cambios en vivo:** abre la URL de un widget (la de **Copy URL**) en otra pestaña, cambia algo en el
    panel y mira que el widget cambie en uno o dos segundos. Ojo: Chrome frena las animaciones en pestañas
    de fondo, así que la ruleta solo gira con su pestaña visible (en OBS siempre gira).
    Para la **carrera**, pulsa *Iniciar*, *Pausar* y *Reiniciar* en el panel y mira que el reloj del widget
@@ -744,7 +751,7 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
    chat» y «2. Regalo VIP» (aparece a los ~2,5 s). **Tragamonedas**: «Probar giro» o *Probar en OBS*.
    **Cola de retos**: «Reto de prueba» y «Combo ×5» muestran retos de mentira en la vista previa (se van a los 15 s;
    la cola real no se toca). Para probar la cola real, usa *+ Agregar a la cola* y luego *Hecho* / *Deshacer*.
-5. **Publicado:** después del `git push`, espera la publicación (pestaña *Actions* del repositorio) y
+6. **Publicado:** después del `git push`, espera la publicación (pestaña *Actions* del repositorio) y
    recarga el panel en `https://ardiladev.github.io/live-tools/`.
 
 ---

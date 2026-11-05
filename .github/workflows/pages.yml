@@ -1,5 +1,7 @@
-# Publica la carpeta public/ en GitHub Pages cada vez que se sube un cambio a main.
-# Solo sale public/: el README y la documentación se quedan en el repositorio.
+# Arma el proyecto (React + Vite + TypeScript) y publica la carpeta dist/ en GitHub Pages cada vez
+# que se sube un cambio a main. Solo sale dist/: el código fuente, el README y la documentación se
+# quedan en el repositorio. Las páginas conservan sus nombres (index.html, ruleta.html, …), así que
+# las URLs ya pegadas en OBS / TikTok LIVE Studio siguen funcionando.
 name: Publicar en GitHub Pages
 
 on:
@@ -24,9 +26,19 @@ jobs:
       url: ${{ steps.despliegue.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Instalar dependencias (versiones exactas del package-lock.json)
+        run: npm ci
+      - name: Pruebas unitarias
+        run: npm test
+      - name: Armar (tsc + vite build → dist/)
+        run: npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: public
+          path: dist
       - id: despliegue
         uses: actions/deploy-pages@v4

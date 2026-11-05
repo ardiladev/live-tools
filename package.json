@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "legado": "node pruebas/herramientas/servir.mjs legado 8080",
+    "legado:extraer": "node pruebas/herramientas/legado.mjs",
     "e2e": "node pruebas/e2e/todas.mjs"
   },
   "dependencies": {

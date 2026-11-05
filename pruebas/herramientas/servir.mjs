@@ -3,15 +3,18 @@
 //
 // Sirve una carpeta por HTTP, por ejemplo la versión anterior del proyecto para compararla:
 //   node pruebas/herramientas/servir.mjs legado 8080   →  http://localhost:8080/carrera.html
+//   node pruebas/herramientas/servir.mjs dist 4173     →  el build de producción
 // (Los módulos JS necesitan http://; abrir los .html con doble clic no sirve.)
 // =============================================================================
 
 import { createReadStream, existsSync, statSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { extname, join, normalize, resolve } from 'node:path';
+import { carpetaLegado } from './legado.mjs';
 
 const [carpeta = 'legado', puerto = '8080'] = process.argv.slice(2);
-const raiz = resolve(carpeta);
+// "legado": la versión original; si ya no está en el repositorio, se saca del historial de git.
+const raiz = carpeta === 'legado' ? carpetaLegado() : resolve(carpeta);
 const TIPOS = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png',
