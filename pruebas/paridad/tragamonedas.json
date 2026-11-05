@@ -1,0 +1,162 @@
+{
+ "pagina": "tragamonedas",
+ "ancho": 1200,
+ "alto": 500,
+ "config": {
+  "g": "5655",
+  "r": "una rosa 🌹",
+  "max": 3,
+  "rd": [
+   {
+    "t": "Quién",
+    "i": [
+     "Valentina",
+     "Camilo",
+     "Sofía",
+     "Mateo"
+    ]
+   },
+   {
+    "t": "Qué",
+    "i": [
+     "Salsa",
+     "K-pop",
+     "Champeta"
+    ]
+   },
+   {
+    "t": "Cómo",
+    "i": [
+     "Lento",
+     "Rápido"
+    ]
+   }
+  ],
+  "oc": 0,
+  "pr": 0,
+  "s": 0,
+  "rc": ""
+ },
+ "pasos": [
+  {
+   "captura": "reposo"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "5655",
+    "nombre": "",
+    "cantidad": 5,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 1000
+  },
+  {
+   "captura": "girando-con-fila"
+  },
+  {
+   "esperar": 2500
+  },
+  {
+   "captura": "resultado-1"
+  },
+  {
+   "esperar": 4000
+  },
+  {
+   "captura": "segundo-giro"
+  },
+  {
+   "esperar": 20000
+  },
+  {
+   "captura": "fin"
+  },
+  {
+   "config": {
+    "g": "5655",
+    "r": "una rosa 🌹",
+    "max": 3,
+    "rd": [
+     {
+      "t": "A",
+      "i": [
+       "Uno"
+      ]
+     },
+     {
+      "t": "B",
+      "i": []
+     },
+     {
+      "t": "C",
+      "i": [
+       "Tres",
+       "Cuatro"
+      ]
+     }
+    ],
+    "oc": 0,
+    "pr": 123,
+    "s": 0,
+    "rc": ""
+   }
+  },
+  {
+   "esperar": 4000
+  },
+  {
+   "captura": "probar-en-obs"
+  },
+  {
+   "esperar": 6000
+  },
+  {
+   "config": {
+    "g": "5655",
+    "r": "una rosa 🌹",
+    "max": 3,
+    "rd": [
+     {
+      "t": "Quién",
+      "i": [
+       "Valentina",
+       "Camilo",
+       "Sofía",
+       "Mateo"
+      ]
+     },
+     {
+      "t": "Qué",
+      "i": [
+       "Salsa",
+       "K-pop",
+       "Champeta"
+      ]
+     },
+     {
+      "t": "Cómo",
+      "i": [
+       "Lento",
+       "Rápido"
+      ]
+     }
+    ],
+    "oc": 1,
+    "pr": 123,
+    "s": 0,
+    "rc": ""
+   }
+  },
+  {
+   "esperar": 500
+  },
+  {
+   "captura": "oculta"
+  }
+ ]
+}

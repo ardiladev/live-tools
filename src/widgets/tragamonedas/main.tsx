@@ -1,4 +1,5 @@
-// Provisional: se reemplaza al portar legado/tragamonedas.html (modelo: src/widgets/carrera).
+// tragamonedas.html → widget "Tragamonedas" (ver Tragamonedas.tsx y motor.ts).
 import { montarWidget } from '../../componentes/montarWidget';
+import { Tragamonedas } from './Tragamonedas';
 
-montarWidget(null);
+montarWidget(<Tragamonedas />);
