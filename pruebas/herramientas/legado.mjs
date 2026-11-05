@@ -33,7 +33,8 @@ export function carpetaLegado() {
   const commit = execSync('git rev-list -1 HEAD -- legado/js/comun.js', { encoding: 'utf8' }).trim();
   if (!commit) throw new Error('No encontré legado/ en el historial de git.');
   mkdirSync(resolve('pruebas/salida'), { recursive: true });
-  execSync(`git archive --format=tar ${commit}^ legado | tar -x -C pruebas/salida`, { stdio: 'inherit' });
+  // `~1` (el padre) y no `^`: en Windows, cmd.exe usa ^ como carácter de escape.
+  execSync(`git archive --format=tar ${commit}~1 legado | tar -x -C pruebas/salida`, { stdio: 'inherit' });
   if (!existsSync(resolve(EXTRAIDA, MARCA))) throw new Error('No se pudo extraer legado/ del historial.');
   return EXTRAIDA;
 }
