@@ -1,0 +1,210 @@
+{
+ "pagina": "trono",
+ "consulta": "",
+ "ancho": 700,
+ "alto": 320,
+ "config": {
+  "ti": "Áurea VIP",
+  "m": "combo",
+  "min": 10,
+  "v": 1,
+  "ro": 1,
+  "s": 0
+ },
+ "pasos": [
+  {
+   "captura": "libre"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 5,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 3500
+  },
+  {
+   "captura": "no-llega-al-minimo"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 20,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 30,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 1000
+  },
+  {
+   "captura": "desafia-mientras-junta"
+  },
+  {
+   "esperar": 3000
+  },
+  {
+   "captura": "saliendo"
+  },
+  {
+   "esperar": 1000
+  },
+  {
+   "captura": "ana-reina"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 50,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 3600
+  },
+  {
+   "captura": "empate-no-basta"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Caro",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 60,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Dani",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 70,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 3200
+  },
+  {
+   "captura": "dos-jugadas-juntas"
+  },
+  {
+   "esperar": 1500
+  },
+  {
+   "captura": "un-solo-cambio"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Dani",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 100,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 3600
+  },
+  {
+   "captura": "mismo-rey-sube"
+  },
+  {
+   "recargar": true
+  },
+  {
+   "captura": "recarga-conserva"
+  },
+  {
+   "config": {
+    "ti": "Áurea VIP",
+    "m": "total",
+    "min": 10,
+    "v": 1,
+    "ro": 1,
+    "s": 0
+   }
+  },
+  {
+   "captura": "cambio-de-modo-libre"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Eli",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 20,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 3500
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Eli",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 20,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 3500
+  },
+  {
+   "esperar": 1000
+  },
+  {
+   "captura": "total-acumula"
+  },
+  {
+   "config": {
+    "ti": "Áurea VIP",
+    "m": "total",
+    "min": 10,
+    "v": 1,
+    "ro": 2,
+    "s": 0
+   }
+  },
+  {
+   "captura": "reiniciado"
+  }
+ ]
+}
