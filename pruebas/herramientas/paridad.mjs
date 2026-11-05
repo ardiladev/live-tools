@@ -75,13 +75,27 @@ async function correr(navegador, version, escenario, salida) {
   const inicio = new Date(escenario.inicio || '2026-11-05T12:00:00-05:00');
   await pagina.clock.install({ time: inicio });
   await pagina.clock.pauseAt(new Date(inicio.getTime() + 1));
+  // Cuadros de animación deterministas: el reloj simulado reparte requestAnimationFrame en una
+  // rejilla de 16 ms cuya fase depende de cuándo se instaló (distinta en cada página), y una
+  // captura a mitad de una cuenta podía diferir en un cuadro. Aquí cada cuadro llega 16 ms
+  // (simulados) después de pedirse. Va después de instalar el reloj, para usar sus temporizadores.
+  await pagina.addInitScript(() => {
+    window.requestAnimationFrame = (fn) => window.setTimeout(() => fn(performance.now()), 16);
+    window.cancelAnimationFrame = (id) => window.clearTimeout(id);
+  });
   const url = `${VERSIONES[version]}/${escenario.pagina}.html${escenario.consulta === undefined ? '?prueba=1&fondo=1' : (escenario.consulta ? `?${escenario.consulta}` : '')}#c=${codificar(escenario.config || {})}`;
   await pagina.goto(url, { waitUntil: 'load' });
   await pagina.clock.runFor(300);
 
   const capturas = {};
-  const mandar = (datos) => pagina.evaluate((d) => window.postMessage(d, location.origin), datos);
-  for (const paso of escenario.pasos || []) {
+  // Despacho SÍNCRONO del mensaje (no postMessage, que es asíncrono): el reloj simulado cede el
+  // control mientras avanza, y un postMessage se procesaría en un momento distinto en cada versión.
+  // Así las dos lo reciben exactamente a la misma hora simulada (y React pinta en la microtarea).
+  const mandar = (datos) => pagina.evaluate((d) => {
+    window.dispatchEvent(new MessageEvent('message', { data: d, origin: location.origin }));
+  }, datos);
+  for (const [indice, paso] of (escenario.pasos || []).entries()) {
+    if (process.env.DEPURAR) console.log(`[${version}] paso ${indice}: ${JSON.stringify(paso).slice(0, 90)}`);
     if (paso.evento || paso.config) await pagina.evaluate(() => window.__reiniciarAzar?.());
     if (paso.evento) await mandar({ tipo: 'simular', evento: paso.evento });
     if (paso.config) await mandar({ tipo: 'config', config: paso.config });
@@ -95,10 +109,11 @@ async function correr(navegador, version, escenario, salida) {
         texto: document.body.innerText.replace(/\s+/g, ' ').trim(),
         guardado: Object.fromEntries(Object.keys(localStorage).filter((k) => k.startsWith('live-tools:') && !k.startsWith('live-tools:widget:'))
           .sort().map((k) => [k, localStorage.getItem(k)])),
-        // Clases (ordenadas), data-* y estilo en línea de los elementos pedidos ("atributos").
+        // Clases (ordenadas), data-*, estilo en línea, src y hidden de los elementos pedidos ("atributos").
         atributos: selector ? [...document.querySelectorAll(selector)].map((el) => (
-          `${[...el.classList].sort().join('.')} ${JSON.stringify({ ...el.dataset })} ${el.getAttribute('style') || ''}`.trim()
-        )) : [],
+          `${[...el.classList].sort().join('.')} ${JSON.stringify({ ...el.dataset })} ${el.getAttribute('style') || ''}`
+          + `${el.hasAttribute('src') ? ` src=${el.getAttribute('src')}` : ''}${el.hidden ? ' hidden' : ''}`
+        ).trim()) : [],
       }), escenario.atributos || '');
       mkdirSync(salida, { recursive: true });
       await pagina.screenshot({ path: `${salida}/${paso.captura}-${version}.png`, animations: 'disabled' });

@@ -9,6 +9,7 @@
 //   t  = reloj { e, d, fin, r } · rv = ronda de victorias (al cambiar, las victorias vuelven a 0)
 // =============================================================================
 
+import { urlSegura } from '../../nucleo/juego';
 import type { RelojRonda } from '../../tipos/reloj';
 import type { ConfigBase } from '../../tipos/widgets';
 
@@ -41,9 +42,6 @@ export interface EquipoBatalla {
   avatar: string;
   imagen: string;
 }
-
-/** Solo direcciones http(s): una URL de foto rara no puede inyectar nada. */
-export const urlSegura = (texto: unknown): string => (/^https?:\/\//i.test(String(texto || '')) ? String(texto) : '');
 
 export function normalizarEquipo(e: EquipoConfigBatalla | undefined, i: number): EquipoBatalla {
   return {

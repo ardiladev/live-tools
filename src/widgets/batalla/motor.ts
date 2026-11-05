@@ -15,12 +15,14 @@
 // =============================================================================
 
 import { crearEstadoObservable, type Observable } from '../../hooks/useMotor';
-import { enGracia, escribirGuardado, leerGuardado, prueba, relojCuenta } from '../../nucleo/juego';
+import {
+  enGracia, escribirGuardado, leerGuardado, prueba, relojCuenta, urlSegura,
+} from '../../nucleo/juego';
 import { leerReloj } from '../../nucleo/reloj';
 import { sonar } from '../../nucleo/sonido';
 import type { EventoLive, EventoRegalo } from '../../tipos/eventos';
 import type { LecturaReloj, RelojRonda } from '../../tipos/reloj';
-import { normalizarEquipo, urlSegura, type ConfigBatalla, type EquipoBatalla } from './config';
+import { normalizarEquipo, type ConfigBatalla, type EquipoBatalla } from './config';
 
 export const CLAVE_PUNTOS = 'live-tools:batalla:';
 export const CLAVE_VICTORIAS = 'live-tools:batalla-victorias:';

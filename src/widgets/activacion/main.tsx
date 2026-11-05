@@ -1,4 +1,5 @@
-// Provisional: se reemplaza al portar legado/activacion.html (modelo: src/widgets/carrera).
+// activacion.html → widget "Barra de activación" (ver Activacion.tsx y motor.ts).
 import { montarWidget } from '../../componentes/montarWidget';
+import { Activacion } from './Activacion';
 
-montarWidget(null);
+montarWidget(<Activacion />);

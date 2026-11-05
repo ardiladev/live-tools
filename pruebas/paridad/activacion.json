@@ -1,0 +1,555 @@
+{
+ "pagina": "activacion",
+ "consulta": "",
+ "ancho": 1600,
+ "alto": 400,
+ "inicio": "2026-11-05T12:00:00-05:00",
+ "atributos": ".reloj, .cuadrante, .cuadrante .regalo, .ficha, .ficha .regalo, .aviso-juego",
+ "config": {
+  "eq": [
+   {
+    "n": "Rosas",
+    "g": "5655",
+    "v": 1,
+    "c": "#D4AF37",
+    "img": "https://p16.tiktokcdn.com/rosa.png"
+   },
+   {
+    "n": "Corazones",
+    "g": "5487",
+    "v": 5,
+    "c": "#C9CDD4",
+    "img": ""
+   },
+   {
+    "n": "Ramos",
+    "g": "5780",
+    "v": 30,
+    "c": "#B87333",
+    "img": ""
+   },
+   {
+    "n": "Capibaras",
+    "g": "17490",
+    "v": 0,
+    "c": "#8FB9A8",
+    "img": ""
+   }
+  ],
+  "pr": {
+   "5487": 5,
+   "5655": 1,
+   "17490": 99
+  },
+  "ro": 1,
+  "s": 0,
+  "t": {
+   "e": "listo",
+   "d": 180,
+   "fin": 0,
+   "r": 0
+  }
+ },
+ "pasos": [
+  {
+   "captura": "inicio"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "uid": "u-ana",
+    "giftId": "5655",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 1,
+    "imagen": ""
+   }
+  },
+  {
+   "captura": "ana-se-une-sin-reloj"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "uid": "u-beto",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 10,
+    "imagen": ""
+   }
+  },
+  {
+   "captura": "beto-sin-equipo-no-suma"
+  },
+  {
+   "esperar": 3600
+  },
+  {
+   "captura": "aviso-vuelve"
+  },
+  {
+   "config": {
+    "eq": [
+     {
+      "n": "Rosas",
+      "g": "5655",
+      "v": 1,
+      "c": "#D4AF37",
+      "img": "https://p16.tiktokcdn.com/rosa.png"
+     },
+     {
+      "n": "Corazones",
+      "g": "5487",
+      "v": 5,
+      "c": "#C9CDD4",
+      "img": ""
+     },
+     {
+      "n": "Ramos",
+      "g": "5780",
+      "v": 30,
+      "c": "#B87333",
+      "img": ""
+     },
+     {
+      "n": "Capibaras",
+      "g": "17490",
+      "v": 0,
+      "c": "#8FB9A8",
+      "img": ""
+     }
+    ],
+    "pr": {
+     "5487": 5,
+     "5655": 1,
+     "17490": 99
+    },
+    "ro": 1,
+    "s": 0,
+    "t": {
+     "e": "corre",
+     "d": 180,
+     "fin": 1793898124001,
+     "r": 0
+    }
+   }
+  },
+  {
+   "captura": "reloj-corre"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "uid": "u-ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 25,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 100
+  },
+  {
+   "captura": "ana-suma-contando"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "uid": "u-beto",
+    "giftId": "5487",
+    "nombre": "Regalo",
+    "cantidad": 3,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "captura": "beto-se-une-y-suma"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "uid": "u-beto",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 10,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "empate"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Caro",
+    "uid": "u-caro",
+    "giftId": "5780",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Dani",
+    "uid": "u-dani",
+    "giftId": "17490",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 0,
+    "imagen": "javascript:alert(1)"
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "ramos-y-capibaras-precio-buscador"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "uid": "u-ana",
+    "giftId": "5487",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 1,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "ana-se-cambia"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Eli",
+    "giftId": "17490",
+    "nombre": "Regalo",
+    "cantidad": 2,
+    "diamantes": 0,
+    "imagen": "https://p16.tiktokcdn.com/capibara.png"
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "imagen-aprendida-sin-uid"
+  },
+  {
+   "config": {
+    "eq": [
+     {
+      "n": "Rosas",
+      "g": "5655",
+      "v": 1,
+      "c": "#D4AF37",
+      "img": "https://p16.tiktokcdn.com/rosa.png"
+     },
+     {
+      "n": "Corazones",
+      "g": "5487",
+      "v": 5,
+      "c": "#C9CDD4",
+      "img": ""
+     },
+     {
+      "n": "Ramos",
+      "g": "5780",
+      "v": 30,
+      "c": "#B87333",
+      "img": ""
+     }
+    ],
+    "pr": {
+     "5487": 5,
+     "5655": 1,
+     "17490": 99
+    },
+    "ro": 1,
+    "s": 0,
+    "t": {
+     "e": "corre",
+     "d": 180,
+     "fin": 1793898124001,
+     "r": 0
+    }
+   }
+  },
+  {
+   "captura": "tres-equipos"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Dani",
+    "uid": "u-dani",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 40,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "dani-fuera-no-suma"
+  },
+  {
+   "config": {
+    "eq": [
+     {
+      "n": "Rosas",
+      "g": "5655",
+      "v": 1,
+      "c": "#D4AF37",
+      "img": "https://p16.tiktokcdn.com/rosa.png"
+     },
+     {
+      "n": "Corazones",
+      "g": "5487",
+      "v": 5,
+      "c": "#C9CDD4",
+      "img": ""
+     },
+     {
+      "n": "Ramos",
+      "g": "5780",
+      "v": 30,
+      "c": "#B87333",
+      "img": ""
+     },
+     {
+      "n": "Capibaras",
+      "g": "17490",
+      "v": 0,
+      "c": "#8FB9A8",
+      "img": ""
+     }
+    ],
+    "pr": {
+     "5487": 5,
+     "5655": 1,
+     "17490": 99
+    },
+    "ro": 1,
+    "s": 0,
+    "t": {
+     "e": "corre",
+     "d": 180,
+     "fin": 1793898124001,
+     "r": 0
+    }
+   }
+  },
+  {
+   "captura": "vuelven-cuatro"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Dani",
+    "uid": "u-dani",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 40,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "dani-vuelve-a-sumar"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Fer",
+    "uid": "u-fer",
+    "giftId": "5655",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 5000,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "rosas-domina-angostos"
+  },
+  {
+   "esperar": 114750
+  },
+  {
+   "captura": "ultimos-segundos"
+  },
+  {
+   "esperar": 400
+  },
+  {
+   "captura": "final-gana"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Gabi",
+    "uid": "u-gabi",
+    "giftId": "5780",
+    "nombre": "Regalo",
+    "cantidad": 2,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "gracia-suma"
+  },
+  {
+   "esperar": 3000
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Hugo",
+    "uid": "u-hugo",
+    "giftId": "5487",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "uid": "u-ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 100,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "cerrada-no-suma"
+  },
+  {
+   "recargar": true
+  },
+  {
+   "captura": "recarga-conserva"
+  },
+  {
+   "config": {
+    "eq": [
+     {
+      "n": "Rosas",
+      "g": "5655",
+      "v": 1,
+      "c": "#D4AF37",
+      "img": "https://p16.tiktokcdn.com/rosa.png"
+     },
+     {
+      "n": "Corazones",
+      "g": "5487",
+      "v": 5,
+      "c": "#C9CDD4",
+      "img": ""
+     },
+     {
+      "n": "Ramos",
+      "g": "5780",
+      "v": 30,
+      "c": "#B87333",
+      "img": ""
+     },
+     {
+      "n": "Capibaras",
+      "g": "17490",
+      "v": 0,
+      "c": "#8FB9A8",
+      "img": ""
+     }
+    ],
+    "pr": {
+     "5487": 5,
+     "5655": 1,
+     "17490": 99
+    },
+    "ro": 2,
+    "s": 0,
+    "t": {
+     "e": "listo",
+     "d": 180,
+     "fin": 0,
+     "r": 0
+    }
+   }
+  },
+  {
+   "captura": "ronda-nueva"
+  },
+  {
+   "config": {
+    "eq": [
+     {
+      "n": "Rosas",
+      "g": "5655",
+      "v": 1,
+      "c": "#D4AF37",
+      "img": "https://p16.tiktokcdn.com/rosa.png"
+     }
+    ],
+    "pr": {
+     "5487": 5,
+     "5655": 1,
+     "17490": 99
+    },
+    "ro": 2,
+    "s": 0,
+    "t": {
+     "e": "listo",
+     "d": 180,
+     "fin": 0,
+     "r": 0
+    }
+   }
+  },
+  {
+   "captura": "minimo-dos-equipos"
+  }
+ ]
+}

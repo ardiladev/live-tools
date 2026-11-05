@@ -115,6 +115,9 @@ export function animarCifra(cifra: CifraAnimada, hasta: number, { animar = true,
 
 export const normalizarTexto = (texto: unknown): string => String(texto || '').trim().toLowerCase();
 
+/** Solo direcciones http(s): una URL de foto o de imagen rara no puede inyectar nada. */
+export const urlSegura = (texto: unknown): string => (/^https?:\/\//i.test(String(texto || '')) ? String(texto) : '');
+
 /** Algo a lo que se le asigna un regalo: por ID (`giftId`) o por nombre (`regalo`, ya normalizado). */
 export interface ConRegalo {
   giftId?: string;

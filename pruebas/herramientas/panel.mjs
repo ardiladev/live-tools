@@ -14,8 +14,8 @@
 //   node pruebas/herramientas/panel.mjs repertorio --clic "boton:Activar@3" --clic "boton:Hecha y siguiente"
 //
 // --clic "texto[@n]" pulsa el n-ésimo elemento (1 por defecto) con ese texto; "boton:nombre[@n]",
-// el n-ésimo botón con ese nombre exacto (su texto o su aria-label). --escribir "etiqueta=valor"
-// llena el campo con esa etiqueta (o aria-label). Se hacen en el orden dado.
+// el n-ésimo botón con ese nombre exacto (su texto o su aria-label). --escribir "etiqueta[@n]=valor"
+// llena el n-ésimo campo con esa etiqueta (o aria-label). Se hacen en el orden dado.
 // Además del texto, compara los ajustes del widget guardados en "panel-live" (widgets[<vista>])
 // y la última configuración subida a Supabase (interceptada), con las horas normalizadas.
 // Sale con código 1 si algo difiere o hay errores solo en la versión nueva. Capturas en
@@ -86,8 +86,9 @@ async function correr(navegador, version) {
   await esperar(2500); // la vista previa carga a los 400 ms
   for (const { tipo, valor } of acciones) {
     if (tipo === '--escribir') {
-      const [etiqueta, ...resto] = valor.split('=');
-      await pagina.getByLabel(etiqueta, { exact: true }).first().fill(resto.join('='));
+      const [campo, ...resto] = valor.split('=');
+      const [, etiqueta, n] = campo.match(/^(.*?)(?:@(\d+))?$/);
+      await pagina.getByLabel(etiqueta, { exact: true }).nth(Number(n || 1) - 1).fill(resto.join('='));
     } else {
       const [, boton, nombre, n] = valor.match(/^(boton:)?(.*?)(?:@(\d+))?$/);
       const elementos = boton
@@ -99,8 +100,12 @@ async function correr(navegador, version) {
   }
   if (acciones.length) await esperar(1500); // lo que se guarda o se sube con espera
   const texto = await pagina.evaluate(() => document.querySelector('main')?.innerText.replace(/\s+/g, ' ').trim() || '');
-  const ajustes = await pagina.evaluate((id) => JSON.parse(localStorage.getItem('panel-live') || '{}').widgets?.[id] ?? null, vista);
-  const subida = llamadas.filter((l) => l.funcion === 'guardar_widget').at(-1);
+  const { ajustes, idNube } = await pagina.evaluate((id) => {
+    const guardado = JSON.parse(localStorage.getItem('panel-live') || '{}');
+    return { ajustes: guardado.widgets?.[id] ?? null, idNube: guardado.nube?.ids?.[id] ?? '' };
+  }, vista);
+  // La última subida DEL WIDGET DE ESTA VISTA (su id de nube): otras pueden subir en otro orden.
+  const subida = llamadas.filter((l) => l.funcion === 'guardar_widget' && JSON.parse(l.cuerpo || '{}').p_id === idNube).at(-1);
   await pagina.screenshot({ path: `${salida}/vista-${version}.png`, fullPage: true });
 
   const previas = [];

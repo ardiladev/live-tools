@@ -43,9 +43,14 @@ export function Icono({ nombre, className }: { nombre: NombreIcono; className?: 
 // 2. Tarjeta con título (`ancha` ocupa todo el ancho de la rejilla)
 // -----------------------------------------------------------------------------
 
-export function Tarjeta({ titulo, ancha = false, id, children }: { titulo: ReactNode; ancha?: boolean; id?: string; children?: ReactNode }) {
+export function Tarjeta({ titulo, ancha = false, id, oculta = false, children }: {
+  titulo: ReactNode; ancha?: boolean; id?: string;
+  /** Con el atributo hidden (p. ej. los equipos que no están en juego). */
+  oculta?: boolean;
+  children?: ReactNode;
+}) {
   return (
-    <section className={ancha ? 'tarjeta ancha' : 'tarjeta'} id={id}>
+    <section className={ancha ? 'tarjeta ancha' : 'tarjeta'} id={id} hidden={oculta}>
       <h2>{titulo}</h2>
       {children}
     </section>
