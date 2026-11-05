@@ -1,0 +1,78 @@
+{
+ "pagina": "cola",
+ "ancho": 600,
+ "alto": 900,
+ "config": {
+  "ti": "Retos pendientes",
+  "mx": 3,
+  "us": 1,
+  "oc": 0,
+  "s": 0,
+  "rg": [],
+  "cl": "colaDePrueba"
+ },
+ "rpc": {
+  "leer_retos": {
+   "pendientes": [
+    {
+     "id": 11,
+     "texto": "Baile sencillo",
+     "usuario": "Ana",
+     "origen": "Ruleta de regalos",
+     "imagen": "",
+     "cantidad": 1,
+     "creado": "2026-11-05T16:59:00Z"
+    },
+    {
+     "id": 12,
+     "texto": "Saludo especial",
+     "usuario": "Beto",
+     "origen": "Ruleta de regalos",
+     "imagen": "",
+     "cantidad": 5,
+     "creado": "2026-11-05T16:59:30Z"
+    },
+    {
+     "id": 13,
+     "texto": "Canción",
+     "usuario": "",
+     "origen": "Ruleta de regalos",
+     "imagen": "",
+     "cantidad": 1,
+     "creado": "2026-11-05T16:59:40Z"
+    },
+    {
+     "id": 14,
+     "texto": "Otro",
+     "usuario": "X",
+     "origen": "Ruleta de regalos",
+     "imagen": "",
+     "cantidad": 1,
+     "creado": "2026-11-05T16:59:50Z"
+    }
+   ],
+   "total": 6,
+   "hechos": []
+  }
+ },
+ "pasos": [
+  {
+   "captura": "antes-de-leer"
+  },
+  {
+   "pausa": 4000
+  },
+  {
+   "esperar": 31000
+  },
+  {
+   "pausa": 1000
+  },
+  {
+   "esperar": 100
+  },
+  {
+   "captura": "cola-real-leida"
+  }
+ ]
+}

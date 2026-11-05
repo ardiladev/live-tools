@@ -1,0 +1,170 @@
+{
+ "pagina": "cola",
+ "ancho": 600,
+ "alto": 900,
+ "config": {
+  "ti": "Retos pendientes",
+  "mx": 3,
+  "us": 1,
+  "oc": 0,
+  "s": 0,
+  "rg": [
+   {
+    "g": "5655",
+    "gn": "Rose",
+    "t": "10 sentadillas",
+    "img": ""
+   },
+   {
+    "g": "",
+    "gn": "Finger Heart",
+    "t": "Cantar",
+    "img": ""
+   }
+  ],
+  "cl": ""
+ },
+ "pasos": [
+  {
+   "captura": "vacia"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "5655",
+    "nombre": "",
+    "cantidad": 2,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "5655",
+    "nombre": "",
+    "cantidad": 3,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 400
+  },
+  {
+   "captura": "combo-junto"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "9",
+    "nombre": "Finger Heart",
+    "cantidad": 1,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Caro",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Dani",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 4,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Eli",
+    "giftId": "777",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 400
+  },
+  {
+   "captura": "mas-en-espera"
+  },
+  {
+   "config": {
+    "ti": "Otra cola",
+    "mx": 5,
+    "us": 0,
+    "oc": 0,
+    "s": 0,
+    "rg": [
+     {
+      "g": "5655",
+      "gn": "Rose",
+      "t": "10 sentadillas",
+      "img": ""
+     },
+     {
+      "g": "",
+      "gn": "Finger Heart",
+      "t": "Cantar",
+      "img": ""
+     }
+    ],
+    "cl": ""
+   }
+  },
+  {
+   "captura": "config-en-vivo"
+  },
+  {
+   "esperar": 15500
+  },
+  {
+   "captura": "se-fueron"
+  },
+  {
+   "config": {
+    "ti": "Retos pendientes",
+    "mx": 3,
+    "us": 1,
+    "oc": 1,
+    "s": 0,
+    "rg": [
+     {
+      "g": "5655",
+      "gn": "Rose",
+      "t": "10 sentadillas",
+      "img": ""
+     },
+     {
+      "g": "",
+      "gn": "Finger Heart",
+      "t": "Cantar",
+      "img": ""
+     }
+    ],
+    "cl": ""
+   }
+  },
+  {
+   "captura": "oculta-sin-retos"
+  }
+ ]
+}

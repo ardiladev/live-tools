@@ -1,4 +1,5 @@
-// Provisional: se reemplaza al portar legado/cola.html (modelo: src/widgets/carrera).
+// cola.html → widget "Cola de retos" (ver Cola.tsx y motor.ts).
 import { montarWidget } from '../../componentes/montarWidget';
+import { Cola } from './Cola';
 
-montarWidget(null);
+montarWidget(<Cola />);

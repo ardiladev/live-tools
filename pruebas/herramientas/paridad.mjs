@@ -57,10 +57,18 @@ async function correr(navegador, version, escenario, salida) {
       return semilla / 2147483648;
     };
   });
+  // Supabase interceptado: ninguna prueba lee ni escribe en la base real (RPC → null, sin Realtime).
+  // "rpc" en el escenario: respuestas simuladas por función, p. ej. { "leer_retos": { … } }.
+  await contexto.route('**/rest/v1/rpc/**', (ruta) => {
+    const funcion = ruta.request().url().split('/rpc/')[1];
+    const respuesta = escenario.rpc?.[funcion] ?? null;
+    return ruta.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(respuesta) });
+  });
+  await contexto.route('**/realtime/**', (ruta) => ruta.abort());
   const pagina = await contexto.newPage();
   const errores = [];
   pagina.on('pageerror', (e) => errores.push(String(e)));
-  pagina.on('console', (m) => { if (m.type() === 'error') errores.push(m.text()); });
+  pagina.on('console', (m) => { if (m.type() === 'error' && !/realtime|websocket|ERR_FAILED/i.test(m.text())) errores.push(m.text()); });
   await pagina.clock.install({ time: new Date(escenario.inicio || '2026-11-05T12:00:00-05:00') });
   const url = `${VERSIONES[version]}/${escenario.pagina}.html${escenario.consulta === undefined ? '?prueba=1&fondo=1' : (escenario.consulta ? `?${escenario.consulta}` : '')}#c=${codificar(escenario.config || {})}`;
   await pagina.goto(url, { waitUntil: 'load' });
@@ -74,6 +82,7 @@ async function correr(navegador, version, escenario, salida) {
     if (paso.config) await mandar({ tipo: 'config', config: paso.config });
     if (paso.tema) await mandar({ tipo: 'tema', est: paso.tema });
     if (paso.esperar) await pagina.clock.runFor(paso.esperar);
+    if (paso.pausa) await pagina.waitForTimeout(paso.pausa); // espera REAL (p. ej. que cargue la librería de Supabase)
     if (paso.recargar) { await pagina.reload({ waitUntil: 'load' }); await pagina.clock.runFor(300); }
     if (paso.evento || paso.config || paso.tema) await pagina.clock.runFor(50);
     if (paso.captura) {
