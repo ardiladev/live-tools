@@ -66,6 +66,8 @@ async function correr(navegador, version, escenario, salida) {
     return ruta.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(respuesta) });
   });
   await contexto.route('**/realtime/**', (ruta) => ruta.abort());
+  // Euler Stream: ninguna prueba abre una conexión real (se cierra como "clave inválida", 4401).
+  await contexto.routeWebSocket(/eulerstream\.com/, (ws) => ws.close({ code: 4401, reason: 'prueba' }));
   const pagina = await contexto.newPage();
   const errores = [];
   pagina.on('pageerror', (e) => errores.push(String(e)));

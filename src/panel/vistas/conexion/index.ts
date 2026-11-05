@@ -1,4 +1,10 @@
-// Vista provisional: se reemplaza al portar legado/js/panel/vistas/conexion.js (ver vistas/tipos.ts).
-import { vistaEnMigracion } from '../EnMigracion';
+// Ajustes → Cuenta → Conexión con TikTok (#/conexion). Ver VistaConexion.tsx.
+import type { DefinicionVista } from '../tipos';
+import { VistaConexion } from './VistaConexion';
 
-export const conexion = vistaEnMigracion('conexion', 'Conexión con TikTok', 'La cuenta y la clave que usan todos los widgets. Si cambias el usuario, los widgets en OBS se pasan solos a la cuenta nueva; si cambias la clave, vuelve a copiar sus URLs.');
+export const conexion: DefinicionVista = {
+  id: 'conexion',
+  titulo: 'Conexión con TikTok',
+  descripcion: 'La cuenta y la clave que usan todos los widgets. Si cambias el usuario, los widgets en OBS se pasan solos a la cuenta nueva; si cambias la clave, vuelve a copiar sus URLs.',
+  Componente: VistaConexion,
+};

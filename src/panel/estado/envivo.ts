@@ -9,6 +9,7 @@
 // =============================================================================
 
 import { useSyncExternalStore } from 'react';
+import { useAcompasado } from '../../hooks/useAcompasado';
 import { conectarTikTok, type ConexionLive } from '../../nucleo/euler';
 import type { EventoLive } from '../../tipos/eventos';
 import { obtener, registrarRegalo, usarAlmacen } from './almacen';
@@ -204,7 +205,20 @@ export function alCambiar(fn: (aviso: AvisoEnVivo) => void): () => void {
   return () => { oyentes.delete(fn); };
 }
 
+const suscribirEnVivo = (fn: () => void): (() => void) => alCambiar(fn);
+
 /** El estado de la conexión del panel y lo recibido en esta sesión (se vuelve a pintar con cada cambio). */
 export function useEnVivo(): EstadoEnVivo {
-  return useSyncExternalStore((fn) => alCambiar(fn), estadoEnVivo, estadoEnVivo);
+  return useSyncExternalStore(suscribirEnVivo, estadoEnVivo, estadoEnVivo);
+}
+
+/** Como useEnVivo, pero repinta como mucho una vez cada `intervaloMs` (ver useAcompasado). */
+export const useEnVivoAcompasado = (intervaloMs: number): EstadoEnVivo => useAcompasado(alCambiar, estadoEnVivo, intervaloMs);
+
+/** Solo el estado de la conexión: NO se vuelve a pintar con cada evento del LIVE. */
+export function useConexionEnVivo(): Pick<EstadoEnVivo, 'conectado' | 'mensaje' | 'activa'> {
+  const conectado = useSyncExternalStore(suscribirEnVivo, () => estado.conectado, () => estado.conectado);
+  const mensaje = useSyncExternalStore(suscribirEnVivo, () => estado.mensaje, () => estado.mensaje);
+  const activaAhora = useSyncExternalStore(suscribirEnVivo, () => estado.activa, () => estado.activa);
+  return { conectado, mensaje, activa: activaAhora };
 }

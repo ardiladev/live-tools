@@ -4,13 +4,13 @@
 // =============================================================================
 
 import { usarAlmacen } from '../estado/almacen';
-import { useEnVivo } from '../estado/envivo';
+import { useConexionEnVivo } from '../estado/envivo';
 import type { Ubicacion } from '../rutas';
 import { Icono } from '../componentes/ui';
 
 export function BarraSuperior({ ubicacion, alAbrirMenu }: { ubicacion: Ubicacion; alAbrirMenu: () => void }) {
   const { usuario, clave } = usarAlmacen((e) => e.conexion);
-  const { conectado, mensaje } = useEnVivo();
+  const { conectado, mensaje } = useConexionEnVivo(); // no se repinta con cada evento del LIVE
   const { categoria, grupo, vista } = ubicacion;
   const sub = conectado ? 'LIVE' : usuario ? (clave ? 'listo' : 'falta la clave') : 'configura la conexión';
 

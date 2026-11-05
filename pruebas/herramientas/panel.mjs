@@ -15,13 +15,20 @@
 //
 // --clic "texto[@n]" pulsa el n-ésimo elemento (1 por defecto) con ese texto; "boton:nombre[@n]",
 // el n-ésimo botón con ese nombre exacto (su texto o su aria-label). --escribir "etiqueta[@n]=valor"
-// llena el n-ésimo campo con esa etiqueta (o aria-label). Se hacen en el orden dado.
+// llena el n-ésimo campo con esa etiqueta (o aria-label); --elegir "etiqueta[@n]=valor" elige en una
+// lista desplegable. --simular '{"tipo":"regalo",…}' mete un
+// evento como si viniera del LIVE (la conexión del panel). Se hacen en el orden dado.
+// --hora-fija: Date y new Date() devuelven siempre 2026-11-05 12:00 (los temporizadores siguen):
+// así la hora de cada evento y las fechas del catálogo no cambian entre corridas.
+// --comparar <parte>: compara también esa parte de "panel-live" (p. ej. conexion, preferencias,
+// regalos, cambiosDeCodigo, widgets.ruleta); las claves se comparan por su huella, nunca se muestran.
 // Además del texto, compara los ajustes del widget guardados en "panel-live" (widgets[<vista>])
 // y la última configuración subida a Supabase (interceptada), con las horas normalizadas.
 // Sale con código 1 si algo difiere o hay errores solo en la versión nueva. Capturas en
 // pruebas/salida/panel-<vista>/.
 // =============================================================================
 
+import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { chromium } from 'playwright-core';
 
@@ -43,7 +50,9 @@ const pruebas = opcion('--probar');
 // (p. ej. "Personalizar" para comparar también el desplegable, o el texto de una casilla).
 const clics = opcion('--clic');
 // --clic y --escribir "etiqueta=valor" (llena el campo con esa etiqueta o aria-label), en el orden dados.
-const acciones = args.flatMap((a, i) => (a === '--clic' || a === '--escribir' ? [{ tipo: a, valor: args[i + 1] }] : []));
+const acciones = args.flatMap((a, i) => (['--clic', '--escribir', '--elegir', '--simular'].includes(a) ? [{ tipo: a, valor: args[i + 1] }] : []));
+const horaFija = args.includes('--hora-fija');
+const partes = opcion('--comparar');
 const salida = `pruebas/salida/panel-${vista}`;
 mkdirSync(salida, { recursive: true });
 
@@ -77,18 +86,30 @@ async function correr(navegador, version) {
     return ruta.fulfill({ status: 200, contentType: 'application/json', body: 'null' });
   });
   await contexto.route('**/realtime/**', (ruta) => ruta.abort());
+  // Euler Stream: ninguna prueba abre una conexión real (se cierra como "clave inválida", 4401).
+  await contexto.routeWebSocket(/eulerstream\.com/, (ws) => ws.close({ code: 4401, reason: 'prueba' }));
   const pagina = await contexto.newPage();
   const errores = [];
   pagina.on('pageerror', (e) => errores.push(String(e)));
   pagina.on('console', (m) => { if (m.type() === 'error' && !/realtime|websocket|ERR_FAILED|404/i.test(m.text())) errores.push(m.text()); });
+  if (horaFija) await pagina.clock.setFixedTime(new Date('2026-11-05T12:00:00-05:00'));
 
   await pagina.goto(`${VERSIONES[version]}#/${vista}`, { waitUntil: 'load' });
   await esperar(2500); // la vista previa carga a los 400 ms
   for (const { tipo, valor } of acciones) {
-    if (tipo === '--escribir') {
+    if (tipo === '--simular') {
+      // La versión nueva lo expone en liveTools; en la vieja, el módulo envivo.js es el mismo que usa el panel.
+      await pagina.evaluate(async (evento) => {
+        if (window.liveTools?.simular) window.liveTools.simular(evento);
+        else (await import('/js/panel/envivo.js')).simular(evento);
+      }, JSON.parse(valor));
+    } else if (tipo === '--escribir' || tipo === '--elegir') {
       const [campo, ...resto] = valor.split('=');
       const [, etiqueta, n] = campo.match(/^(.*?)(?:@(\d+))?$/);
-      await pagina.getByLabel(etiqueta, { exact: true }).nth(Number(n || 1) - 1).fill(resto.join('='));
+      // Una lista dentro de su etiqueta se llama "etiqueta + opción elegida": ahí no se pide exacto.
+      const control = pagina.getByLabel(etiqueta, { exact: tipo === '--escribir' }).nth(Number(n || 1) - 1);
+      if (tipo === '--elegir') await control.selectOption(resto.join('='));
+      else await control.fill(resto.join('='));
     } else {
       const [, boton, nombre, n] = valor.match(/^(boton:)?(.*?)(?:@(\d+))?$/);
       const elementos = boton
@@ -100,10 +121,15 @@ async function correr(navegador, version) {
   }
   if (acciones.length) await esperar(1500); // lo que se guarda o se sube con espera
   const texto = await pagina.evaluate(() => document.querySelector('main')?.innerText.replace(/\s+/g, ' ').trim() || '');
-  const { ajustes, idNube } = await pagina.evaluate((id) => {
+  const { ajustes, idNube, otras } = await pagina.evaluate(([id, nombres]) => {
     const guardado = JSON.parse(localStorage.getItem('panel-live') || '{}');
-    return { ajustes: guardado.widgets?.[id] ?? null, idNube: guardado.nube?.ids?.[id] ?? '' };
-  }, vista);
+    return {
+      ajustes: guardado.widgets?.[id] ?? null,
+      idNube: guardado.nube?.ids?.[id] ?? '',
+      // "widgets.ruleta-premium": se puede pedir una parte de una parte.
+      otras: Object.fromEntries(nombres.map((n) => [n, n.split('.').reduce((o, k) => o?.[k], guardado) ?? null])),
+    };
+  }, [vista, partes]);
   // La última subida DEL WIDGET DE ESTA VISTA (su id de nube): otras pueden subir en otro orden.
   const subida = llamadas.filter((l) => l.funcion === 'guardar_widget' && JSON.parse(l.cuerpo || '{}').p_id === idNube).at(-1);
   await pagina.screenshot({ path: `${salida}/vista-${version}.png`, fullPage: true });
@@ -120,8 +146,11 @@ async function correr(navegador, version) {
   }
   if (pruebas.length) await pagina.locator('.escenario').first().screenshot({ path: `${salida}/previa-${version}.png` });
   await contexto.close();
-  return { texto, previas, errores, llamadas, ajustes, config: subida ? JSON.parse(subida.cuerpo).p_config : null };
+  return { texto, previas, errores, llamadas, ajustes, otras, config: subida ? JSON.parse(subida.cuerpo).p_config : null };
 }
+
+/** Una clave nunca se muestra: se compara por su huella (sha256, 8 caracteres). */
+const tapar = (v) => (v ? `<huella ${createHash('sha256').update(String(v)).digest('hex').slice(0, 8)}>` : '');
 
 /**
  * Para comparar: claves en orden, las horas (Date.now(): _v, ronda…) como "<hora>" y la clave de
@@ -131,7 +160,7 @@ function normalizar(valor) {
   if (Array.isArray(valor)) return valor.map(normalizar);
   if (valor && typeof valor === 'object') {
     return Object.fromEntries(Object.keys(valor).filter((k) => !(k === 'tx' && valor[k] === 0)).sort()
-      .map((k) => [k, k === 'k' ? '<clave>' : normalizar(valor[k])]));
+      .map((k) => [k, ['k', 'clave', 'secreto'].includes(k) ? tapar(valor[k]) : normalizar(valor[k])]));
   }
   return typeof valor === 'number' && valor > 1e12 ? '<hora>' : valor;
 }
@@ -152,11 +181,16 @@ const textoIgual = viejo.texto === nuevo.texto;
 if (!textoIgual) diferencias++;
 informe.push(`■ Texto de la vista: ${textoIgual ? 'IGUAL' : 'DISTINTO'}`);
 if (!textoIgual) informe.push(`    legado: ${viejo.texto}\n    nuevo:  ${nuevo.texto}`);
-for (const [clave, titulo] of [['ajustes', `Ajustes guardados (panel-live → widgets.${vista})`], ['config', 'Última configuración subida']]) {
-  const v = JSON.stringify(normalizar(viejo[clave]));
-  const n = JSON.stringify(normalizar(nuevo[clave]));
+const comparaciones = [
+  [(r) => r.ajustes, `Ajustes guardados (panel-live → widgets.${vista})`],
+  [(r) => r.config, 'Última configuración subida'],
+  ...partes.map((p) => [(r) => r.otras[p], `panel-live → ${p}`]),
+];
+for (const [leer, titulo] of comparaciones) {
+  const v = JSON.stringify(normalizar(leer(viejo)));
+  const n = JSON.stringify(normalizar(leer(nuevo)));
   if (v !== n) diferencias++;
-  informe.push(`■ ${titulo}: ${v === n ? 'IGUAL' : 'DISTINTO'}${viejo[clave] === null && nuevo[clave] === null ? ' (no hay)' : ''}`);
+  informe.push(`■ ${titulo}: ${v === n ? 'IGUAL' : 'DISTINTO'}${leer(viejo) === null && leer(nuevo) === null ? ' (no hay)' : ''}`);
   if (v !== n) informe.push(`    legado: ${v}\n    nuevo:  ${n}`);
 }
 viejo.previas.forEach((p, i) => {

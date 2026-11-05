@@ -1,4 +1,10 @@
-// Vista provisional: se reemplaza al portar legado/js/panel/vistas/actividad.js (ver vistas/tipos.ts).
-import { vistaEnMigracion } from '../EnMigracion';
+// Actividad → En vivo → Eventos en vivo (#/actividad). Ver VistaActividad.tsx.
+import type { DefinicionVista } from '../tipos';
+import { VistaActividad } from './VistaActividad';
 
-export const actividad = vistaEnMigracion('actividad', 'Eventos en vivo', 'Conecta el panel a tu LIVE para ver los eventos en tiempo real, contar estadísticas y descubrir el ID de cada regalo.');
+export const actividad: DefinicionVista = {
+  id: 'actividad',
+  titulo: 'Eventos en vivo',
+  descripcion: 'Conecta el panel a tu LIVE para ver los eventos en tiempo real, contar estadísticas y descubrir el ID de cada regalo.',
+  Componente: VistaActividad,
+};
