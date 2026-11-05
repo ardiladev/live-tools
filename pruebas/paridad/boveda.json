@@ -1,0 +1,175 @@
+{
+ "pagina": "boveda",
+ "consulta": "",
+ "ancho": 1200,
+ "alto": 400,
+ "config": {
+  "ti": "Bóveda dorada",
+  "pi": "Premio secreto",
+  "sec": "Baile K-pop",
+  "o": 500,
+  "v": 5,
+  "ro": 1,
+  "ab": 0,
+  "s": 0
+ },
+ "pasos": [
+  {
+   "captura": "cerrada"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 100,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 4,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 1000
+  },
+  {
+   "captura": "con-progreso"
+  },
+  {
+   "recargar": true
+  },
+  {
+   "captura": "recarga-conserva"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 400,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 1000
+  },
+  {
+   "captura": "abierta-por-meta"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 50,
+    "imagen": ""
+   }
+  },
+  {
+   "captura": "abierta-no-suma"
+  },
+  {
+   "config": {
+    "ti": "Otro título",
+    "pi": "Premio secreto",
+    "sec": "Baile K-pop",
+    "o": 500,
+    "v": 5,
+    "ro": 1,
+    "ab": 0,
+    "s": 0
+   }
+  },
+  {
+   "captura": "config-abierta"
+  },
+  {
+   "config": {
+    "ti": "Bóveda dorada",
+    "pi": "Premio secreto",
+    "sec": "Baile K-pop",
+    "o": 500,
+    "v": 5,
+    "ro": 2,
+    "ab": 0,
+    "s": 0
+   }
+  },
+  {
+   "captura": "cerrada-y-en-cero"
+  },
+  {
+   "config": {
+    "ti": "Bóveda dorada",
+    "pi": "Premio secreto",
+    "sec": "Baile K-pop",
+    "o": 500,
+    "v": 5,
+    "ro": 2,
+    "ab": 1,
+    "s": 0
+   }
+  },
+  {
+   "esperar": 500
+  },
+  {
+   "captura": "abrir-ahora"
+  },
+  {
+   "config": {
+    "ti": "Bóveda dorada",
+    "pi": "Premio secreto",
+    "sec": "Baile K-pop",
+    "o": 20,
+    "v": 5,
+    "ro": 3,
+    "ab": 0,
+    "s": 0
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 10,
+    "imagen": ""
+   }
+  },
+  {
+   "captura": "meta-baja"
+  },
+  {
+   "config": {
+    "ti": "Bóveda dorada",
+    "pi": "Premio secreto",
+    "sec": "Baile K-pop",
+    "o": 5,
+    "v": 5,
+    "ro": 3,
+    "ab": 0,
+    "s": 0
+   }
+  },
+  {
+   "captura": "meta-bajo-a-lo-juntado"
+  }
+ ]
+}
