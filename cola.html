@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  cola.html — Widget "Cola de retos" para OBS / TikTok LIVE Studio (recomendado 600 × 900, a un
+  costado de la escena). Muestra el reto que se está haciendo ("Ahora") y los que siguen, en el
+  orden en que llegaron. Los retos salen de la ruleta, el tragamonedas, los "retos por regalo" de
+  este mismo widget y los que se agregan a mano en el panel; el equipo los marca como hechos en
+  el panel y la lista avanza sola.
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget
+  (que también es el de la cola en Supabase).
+  Código (React + TypeScript): src/widgets/cola/ · se compila con Vite (ver vite.config.ts).
+  Esta página solo carga el widget: la URL (y su #c=) es la misma de siempre en OBS / LIVE Studio.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cola de retos — overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+</head>
+<body>
+  <div id="raiz"></div>
+  <script type="module" src="/src/widgets/cola/main.tsx"></script>
+</body>
+</html>

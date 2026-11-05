@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  jefe.html — Widget "Jefe del LIVE" (boss raid) para OBS / TikTok LIVE Studio (recomendado
+  1920 × 300, arriba de la escena). El chat ataca entre todos a un jefe: los likes y los regalos le
+  quitan vida, y hay que dejarlo en 0 antes de que se acabe el tiempo.
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración (vida, reloj) llega en vivo desde Supabase.
+  Código (React + TypeScript): src/widgets/jefe/ · se compila con Vite (ver vite.config.ts).
+  Esta página solo carga el widget: la URL (y su #c=) es la misma de siempre en OBS / LIVE Studio.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jefe del LIVE — overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+</head>
+<body>
+  <div id="raiz"></div>
+  <script type="module" src="/src/widgets/jefe/main.tsx"></script>
+</body>
+</html>

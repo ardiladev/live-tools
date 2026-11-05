@@ -1,0 +1,20 @@
+<!doctype html>
+<!--
+  index.html — Panel principal (es la página que publica GitHub Pages).
+  Aquí solo está la raíz: el panel lo arma React (src/panel/main.tsx → App.tsx) a partir del
+  mapa src/panel/rutas.ts. Estilos: Tailwind CSS con los tokens ÁUREA (src/estilos/).
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Live Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Montserrat:wght@300;500;600;700&display=swap">
+</head>
+<body>
+  <div id="raiz"></div>
+  <noscript>Este panel necesita JavaScript.</noscript>
+  <script type="module" src="/src/panel/main.tsx"></script>
+</body>
+</html>

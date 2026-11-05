@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  subathon.html — Widget "Subathon" para OBS / TikTok LIVE Studio (recomendado 900 × 300).
+  Un reloj que cuenta hacia atrás y al que el público le suma tiempo con likes y regalos,
+  hasta un tope. El panel lo inicia, pausa, le suma 5 minutos y lo reinicia en vivo.
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración (reloj, tasas) llega en vivo desde Supabase.
+  Código (React + TypeScript): src/widgets/subathon/ · se compila con Vite (ver vite.config.ts).
+  Esta página solo carga el widget: la URL (y su #c=) es la misma de siempre en OBS / LIVE Studio.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Subathon — overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+</head>
+<body>
+  <div id="raiz"></div>
+  <script type="module" src="/src/widgets/subathon/main.tsx"></script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+/* ==========================================================================
+   widget.css — Base común de todos los widgets que van en OBS / LIVE Studio.
+   Cada widget añade su propio CSS (src/widgets/<pagina>/<pagina>.css), portado tal cual
+   del diseño original para que en el LIVE se vean idénticos.
+
+   Tailwind se carga SIN preflight: el reinicio de estilos de Tailwind cambiaría márgenes,
+   imágenes y botones de los widgets, y el fondo tiene que seguir transparente para OBS.
+   Quedan disponibles los tokens (@theme) y las utilidades (bg-carbon, text-oro…).
+
+   Secciones: 1. Capas y Tailwind · 2. Lienzo · 3. Cristal · 4. Píldora de estado
+   ========================================================================== */
+
+
+/* ---------- 1. Capas y Tailwind (sin preflight) ---------- */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "../widgets";
+@source "../componentes";
+@import "./aurea.css";
+@import "./textura.css";
+
+
+/* ---------- 2. Lienzo ---------- */
+/* Fondo transparente: OBS dibuja el widget encima de la cámara. */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  color: var(--texto-sec);
+  font-family: var(--fuente);
+  overflow: hidden;
+}
+
+/* La raíz de React no genera caja: el widget se comporta como si estuviera directo en <body>. */
+#raiz { display: contents; }
+
+/* Solo en la vista previa del panel (?fondo=1): manchas de color que imitan una
+   transmisión, para ver la transparencia del cristal. En OBS no se usa. */
+body.vista-previa {
+  background:
+    radial-gradient(circle at 22% 28%, #6d8196 0, transparent 42%),
+    radial-gradient(circle at 78% 64%, #9a6f5c 0, transparent 46%),
+    radial-gradient(circle at 40% 88%, #4d6b5a 0, transparent 38%),
+    linear-gradient(160deg, #2c3540, #463c38);
+}
+
+/* El atributo hidden siempre gana, aunque una clase ponga display. */
+[hidden] { display: none !important; }
+
+
+/* ---------- 3. Cristal ---------- */
+/* Placa de cristal esmerilado: fondo traslúcido con desenfoque, filo de oro de 1px
+   y un resplandor dorado muy fino. Se usa con className="cristal" (o el componente <Cristal>).
+   El filo es un ::before con máscara: así el degradado respeta las esquinas
+   redondeadas y no se ve a través del fondo traslúcido. */
+.cristal {
+  position: relative;
+  border-radius: var(--radio-grande);
+  background: var(--cristal-oscuro);
+  -webkit-backdrop-filter: var(--desenfoque);
+  backdrop-filter: var(--desenfoque);
+  box-shadow: var(--resplandor);
+  text-shadow: var(--sombra-texto);
+}
+.cristal::before,
+.filo-oro::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: var(--borde-ancho);
+  border-radius: inherit;
+  background: var(--filo-oro);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  pointer-events: none;
+}
+
+
+/* ---------- 4. Píldora de estado de la conexión ---------- */
+/* La pinta <PildoraEstado> (src/componentes). Solo se ve en la vista previa, nunca en OBS. */
+.pildora-estado {
+  position: fixed;
+  left: 12px;
+  bottom: 12px;
+  z-index: 50;
+  max-width: calc(100vw - 24px);
+  padding: .35em .8em;
+  border: var(--linea);
+  border-radius: var(--radio);
+  font: 500 12px/1.3 var(--fuente);
+  letter-spacing: var(--espaciado-sub);
+  color: var(--nitido);
+  background: var(--cristal-oscuro);
+  -webkit-backdrop-filter: var(--desenfoque);
+  backdrop-filter: var(--desenfoque);
+}
+.pildora-estado::before { content: "●"; margin-right: .4em; color: var(--mal); }
+.pildora-estado.ok::before { color: var(--ok); }

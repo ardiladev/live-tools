@@ -1,0 +1,78 @@
+/* ==========================================================================
+   textura.css — TEXTURA ESTÁTICA (patrón inmóvil, al estilo de la serie Chowder)
+
+   Un contenedor con esta textura actúa como una VENTANA: muestra un patrón geométrico que
+   está fijo respecto a la pantalla. Si la página se desplaza o el contenedor se mueve o
+   cambia de tamaño, el patrón NO se mueve con él: solo cambia la parte que se ve.
+
+   Patrón de prueba: cuadros morados y rosados (plaid). Para cambiarlo, basta con tocar las
+   variables --textura-* (colores, tamaño o el patrón entero).
+
+   Cómo se usa:
+     - Panel: clase de Tailwind `textura-estatica` en los contenedores de la estructura
+       (riel, menú, barra superior y fondo detrás de las tarjetas).
+     - Widgets: casilla «Textura estática» en Personalizar → Estilo visual (clave est.tx).
+       aplicarTema pone la clase `con-textura` en <html> y las placas de cristal
+       (.cristal) muestran la textura en vez del cristal esmerilado.
+
+   Comprobado en Chrome (el motor de OBS y de TikTok LIVE Studio):
+     - background-attachment: fixed queda inmóvil al desplazar y al mover el contenedor;
+     - NO funciona si el MISMO elemento tiene transform o backdrop-filter. Por eso, con la
+       textura, las placas de cristal pierden el desenfoque (se reemplaza por el patrón), y
+       la variante `textura-ventana` (clip-path + capa fija) sirve dentro de contenedores
+       con su propio desplazamiento.
+   ========================================================================== */
+
+:root {
+  --textura-morado: #4B1D6E;
+  --textura-morado-oscuro: #2E0F47;
+  --textura-rosado: rgba(255, 105, 180, .55);
+  --textura-rosado-fino: rgba(255, 182, 220, .45);
+  --textura-tamano: 56px;
+  /* Plaid: dos franjas anchas (vertical y horizontal) que se cruzan + líneas finas. */
+  --textura-patron:
+    linear-gradient(90deg, transparent 0 22%, var(--textura-rosado) 22% 42%, transparent 42% 100%),
+    linear-gradient(0deg, transparent 0 22%, var(--textura-rosado) 22% 42%, transparent 42% 100%),
+    linear-gradient(90deg, transparent 0 70%, var(--textura-rosado-fino) 70% 74%, transparent 74% 100%),
+    linear-gradient(0deg, transparent 0 70%, var(--textura-rosado-fino) 70% 74%, transparent 74% 100%),
+    linear-gradient(45deg, var(--textura-morado-oscuro) 0 25%, transparent 25% 75%, var(--textura-morado-oscuro) 75% 100%);
+}
+
+/* La ventana más sencilla: el fondo del propio elemento, fijo a la pantalla. */
+@utility textura-estatica {
+  background-color: var(--textura-morado);
+  background-image: var(--textura-patron);
+  background-size: var(--textura-tamano) var(--textura-tamano);
+  background-position: 0 0;
+  background-attachment: fixed;
+}
+
+/* Variante para contenedores con desplazamiento propio: una capa fija recortada por el
+   contenedor (clip-path recorta también a los descendientes con position: fixed). */
+@utility textura-ventana {
+  position: relative;
+  isolation: isolate;
+  clip-path: inset(0);
+  &::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--textura-morado);
+    background-image: var(--textura-patron);
+    background-size: var(--textura-tamano) var(--textura-tamano);
+    pointer-events: none;
+  }
+}
+
+/* Widgets con la casilla activada: las placas de cristal se vuelven ventanas a la textura.
+   (Sin desenfoque: el backdrop-filter rompería el fondo fijo.) */
+.con-textura .cristal {
+  background-color: var(--textura-morado);
+  background-image: var(--textura-patron);
+  background-size: var(--textura-tamano) var(--textura-tamano);
+  background-position: 0 0;
+  background-attachment: fixed;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}

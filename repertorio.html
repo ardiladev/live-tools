@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  repertorio.html — Widget "Repertorio" (playlist / menú de bailes) para OBS / TikTok LIVE Studio
+  (recomendado 600 × 900, a un costado de la escena). Una lista vertical de canciones o bailes; los
+  regalos llenan la barra de la canción activa y, al llegar a su meta, se desbloquea ("Sonando").
+  El panel elige la activa, marca las hechas y reinicia la lista.
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración llega en vivo desde Supabase.
+  Código (React + TypeScript): src/widgets/repertorio/ · se compila con Vite (ver vite.config.ts).
+  Esta página solo carga el widget: la URL (y su #c=) es la misma de siempre en OBS / LIVE Studio.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Repertorio — overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+</head>
+<body>
+  <div id="raiz"></div>
+  <script type="module" src="/src/widgets/repertorio/main.tsx"></script>
+</body>
+</html>

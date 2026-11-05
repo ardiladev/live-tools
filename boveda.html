@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  boveda.html — Widget "Bóveda dorada" para OBS / TikTok LIVE Studio (recomendado 1200 × 400).
+  Una caja sorpresa: los regalos llenan una barra hacia una meta de monedas y, al llegar, el
+  candado se abre y aparece el texto secreto. El panel puede cerrarla de nuevo o abrirla a la fuerza.
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración llega en vivo desde Supabase.
+  Código (React + TypeScript): src/widgets/boveda/ · se compila con Vite (ver vite.config.ts).
+  Esta página solo carga el widget: la URL (y su #c=) es la misma de siempre en OBS / LIVE Studio.
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bóveda dorada — overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+</head>
+<body>
+  <div id="raiz"></div>
+  <script type="module" src="/src/widgets/boveda/main.tsx"></script>
+</body>
+</html>

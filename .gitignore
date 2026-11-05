@@ -1,3 +1,6 @@
 node_modules/
+dist/
 *.zip
 config.json
+*.tsbuildinfo
+pruebas/salida/
