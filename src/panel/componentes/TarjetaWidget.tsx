@@ -108,7 +108,12 @@ export function TarjetaWidget({
     temporizador.current = setTimeout(() => setSrc(urlPrevia(archivo, configActual.current)), RETRASO_VISTA_PREVIA_MS);
   }, [textoConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => () => clearTimeout(temporizador.current), []);
+  // Al desmontar se cancela la recarga pendiente y se olvida la última configuración cargada:
+  // si la tarjeta se vuelve a montar (StrictMode en desarrollo), vuelve a programar la vista previa.
+  useEffect(() => () => {
+    clearTimeout(temporizador.current);
+    ultimaPrevia.current = '';
+  }, []);
 
   // Estado que reporta el widget de la vista previa (useWidget → avisarPadre).
   useEffect(() => {

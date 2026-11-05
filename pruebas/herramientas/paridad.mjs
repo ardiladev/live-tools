@@ -45,6 +45,15 @@ async function correr(navegador, version, escenario, salida) {
   const contexto = await navegador.newContext({
     viewport: { width: escenario.ancho || 1280, height: escenario.alto || 720 },
   });
+  // Azar con semilla fija: las dos versiones sacan los mismos números (premios, rodillos…)
+  // siempre que llamen a Math.random en el mismo orden.
+  await contexto.addInitScript(() => {
+    let semilla = 20261105;
+    Math.random = () => {
+      semilla = (semilla * 1103515245 + 12345) % 2147483648;
+      return semilla / 2147483648;
+    };
+  });
   const pagina = await contexto.newPage();
   const errores = [];
   pagina.on('pageerror', (e) => errores.push(String(e)));

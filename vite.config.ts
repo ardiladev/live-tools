@@ -43,6 +43,14 @@ export default defineConfig({
     },
   },
   server: { port: 5173 },
+  // En desarrollo, Vite pre-empaqueta las dependencias de TODAS las páginas al arrancar. Si
+  // las descubriera una por una (al abrir el panel y luego el iframe de la vista previa),
+  // re-empaquetaría a mitad de camino y la vista previa cargaría dos copias de React.
+  optimizeDeps: {
+    entries: PAGINAS.map((p) => `${p}.html`),
+    include: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime', 'zustand', 'immer'],
+  },
+  resolve: { dedupe: ['react', 'react-dom'] },
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'pruebas/unidad/**/*.test.ts'],

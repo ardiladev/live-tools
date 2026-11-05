@@ -48,6 +48,14 @@ async function correr(navegador, version) {
       }
     }, estado);
   }
+  // Azar con semilla fija (botones de prueba «al azar»): las dos versiones eligen lo mismo.
+  await contexto.addInitScript(() => {
+    let semilla = 20261105;
+    Math.random = () => {
+      semilla = (semilla * 1103515245 + 12345) % 2147483648;
+      return semilla / 2147483648;
+    };
+  });
   // Supabase: se responde "guardado" sin tocar la base real.
   const llamadas = [];
   await contexto.route('**/rest/v1/rpc/**', (ruta) => {
