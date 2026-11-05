@@ -70,6 +70,8 @@ const suscribirAlmacen = (fn: () => void): (() => void) => usarAlmacen.subscribe
 
 export function VistaRegalos() {
   const estado = useAcompasado(suscribirAlmacen, obtener, INTERVALO_REPINTADO_MS);
+  // La casilla lee el almacén directo (no la foto acompasada): si no, rebotaría un instante al marcarla.
+  const autoConectar = usarAlmacen((e) => e.preferencias.autoConectar);
   const { conectado, mensaje, activa } = useConexionEnVivo();
   const [aviso, avisar] = useAviso(4000);
   const [busqueda, setBusqueda] = useState(busquedaGuardada);
@@ -134,7 +136,7 @@ export function VistaRegalos() {
           <button className={activa ? '' : 'principal'} onClick={() => (activa ? desconectar() : conectar())}>{activa ? 'Desconectar' : 'Conectar al LIVE'}</button>
           <div className="estado"><span className={conectado ? 'punto ok' : 'punto'} /><span>{mensaje}</span></div>
         </div>
-        <Casilla texto="Conectar automáticamente cada vez que abra el panel" marcada={estado.preferencias.autoConectar} alCambiar={cambiarAutoConectar} />
+        <Casilla texto="Conectar automáticamente cada vez que abra el panel" marcada={autoConectar} alCambiar={cambiarAutoConectar} />
         <AvisosCodigo estado={estado} />
         <div className="campos separado-abajo">
           <Campo
