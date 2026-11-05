@@ -409,7 +409,7 @@ Los mensajes solo se aceptan si vienen del mismo origen.
 | Archivo | Responsabilidad |
 |---|---|
 | `src/panel/main.tsx` | Arranque: carga lo guardado, importa URLs viejas de la ruleta, inicia los cambios en vivo y la conexión automática, y monta `<App>` |
-| `src/panel/App.tsx`, `src/panel/layout/` | Riel, menú desplegable y barra superior (con la textura estática) y la vista actual |
+| `src/panel/App.tsx`, `src/panel/layout/` | Riel, menú desplegable (en celular, cajón con las categorías arriba), barra superior (con la textura estática) y la vista actual con su cabecera |
 | `src/panel/rutas.ts` + `useRuta.ts` | **Mapa del panel** (categorías → grupos → vistas) y navegación por `#/id-de-vista`. Agregar una función empieza aquí |
 | `src/panel/estado/almacen.ts` | El estado del panel (Zustand + Immer), guardado en el navegador con **la misma clave y la misma forma de antes** (`localStorage`, `panel-live`): conexión, ajustes de cada widget, catálogo de regalos, estilos, identificadores y secreto de Supabase. Une lo que guardan otras pestañas |
 | `src/panel/estado/sincronizar.ts` | Cambios en vivo: cada vista registra al cargarse la configuración de su widget (una función **pura** del estado); al cambiar algo, la sube a Supabase 0,6 s después del último cambio; las órdenes de juego (`subir`) van de inmediato; si falla, reintenta (5 s → 1 min) |
@@ -436,11 +436,28 @@ obsidiana, escala φ, tipografía) están en `src/estilos/aurea.css` como variab
 (`@theme`: `bg-carbon`, `text-oro`, `bg-cristal-obsidiana`, `rounded-aurea`…). El CSS propio de cada widget se
 conservó tal cual, junto a su componente.
 
-**Textura estática (de prueba).** Un patrón de cuadros morados y rosados que **no se mueve** aunque el contenido
-se desplace (`background-attachment: fixed`; utilidades `textura-estatica` y `textura-ventana` en
-`src/estilos/textura.css`). El panel la usa en el riel, el menú, la barra superior y el fondo de detrás de las
-tarjetas. En cada widget se activa con la casilla «Textura estática» de *Personalizar* (clave `est.tx`, apagada
-por defecto): las placas de cristal se vuelven ventanas al patrón.
+**Diseño del panel: «Estudio Áureo».** El panel (solo el panel: los widgets conservan su CSS) es una consola
+de transmisión de lujo con aire Art Déco, hecha con los mismos tokens ÁUREA:
+- **Fondo:** un enrejado dorado fijo (la textura estática, ver abajo) con luz cálida desde arriba; la barra, el
+  riel y el menú muestran el mismo enrejado con más velo (clases `marco` / `marco-hondo`), como vidrios ahumados.
+- **Tarjetas** de cristal oscuro con un filo de oro que se desvanece; títulos con rombo y línea fina.
+- **Cabecera de cada vista:** ceja «Categoría · Grupo», título en oro claro y un sol naciente Art Déco.
+- **Tarjeta de widget:** la URL en una bandeja tipo barra de direcciones (Copy URL en oro), la vista previa en un
+  **monitor** con esquinas de visor de cámara y su proporción (9 : 16, 16 : 5, 16 : 9), y la consola de pruebas.
+- **Controles:** casillas como interruptores dorados, deslizadores con perilla de oro, segmentados en bandeja,
+  campos hundidos con anillo dorado al enfocar; URLs e IDs en JetBrains Mono.
+- **Movimiento** discreto (entrada de las tarjetas, latido del punto LIVE), apagado si el sistema pide reducirlo.
+
+Todo vive en `src/estilos/panel.css` con **las mismas clases de siempre** (las vistas no cambiaron). Regla: el
+texto que se agrega solo por diseño va en `content` de CSS (la ceja sale de `data-ceja`; «Vista previa» y
+«Consola de pruebas», del CSS), así el texto de las vistas sigue siendo el mismo.
+
+**Textura estática.** Un patrón que **no se mueve** aunque el contenido se desplace (`background-attachment:
+fixed`; utilidades `textura-estatica` y `textura-ventana` en `src/estilos/textura.css`). El panel la usa en el
+riel, el menú, la barra superior y el fondo de detrás de las tarjetas, con su propio dibujo: el enrejado Art Déco
+(variables `--textura-*` en la sección 2 de `panel.css`; si se borran, vuelven los cuadros de prueba). En cada
+widget se activa con la casilla «Textura estática» de *Personalizar* (clave `est.tx`, apagada por defecto): las
+placas de cristal se vuelven ventanas a un patrón de cuadros morados y rosados (de prueba).
 
 **Textos seguros.** React inserta los textos como texto (no se usa `dangerouslySetInnerHTML` en ningún lado):
 es seguro mostrar nombres y mensajes del chat que vienen de TikTok.
@@ -499,7 +516,7 @@ live-tools/
 │   │   ├── aurea.css                sistema de diseño ÁUREA NETWORK: variables + tema de Tailwind (@theme)
 │   │   ├── textura.css              textura estática (utilidades textura-estatica / textura-ventana)
 │   │   ├── widget.css               base de los widgets (transparencia, .cristal, .filo-oro, píldora de estado)
-│   │   └── panel.css                estilos del panel (Tailwind + las clases del panel)
+│   │   └── panel.css                estilos del panel: diseño «Estudio Áureo» (Tailwind + las clases del panel)
 │   ├── widgets/<widget>/            uno por widget (ruleta, meta, alertas, carrera, batalla, activacion,
 │   │   │                            jefe, subathon (+ extensible), boveda, trono, marcador, repertorio,
 │   │   │                            cola, destacado, tragamonedas):
@@ -737,7 +754,9 @@ Hace falta **Node.js 24** (con npm). Una vez: `npm ci`.
    - **Paridad de punta a punta:** en una terminal `npm run legado` (la versión original en
      `http://localhost:8080`), en otra `npm run dev`, y `npm run e2e`: abre los 16 widgets y las 23 vistas en las
      dos versiones con Chrome, hace lo mismo en ambas (eventos, órdenes, recargas, con un reloj simulado) y compara
-     textos, clases, lo guardado en el navegador y lo que se subiría a Supabase. Para probar el build:
+     textos, clases, lo guardado en el navegador y lo que se subiría a Supabase. En las vistas del panel el texto
+     se compara sin mayúsculas ni espacios (el diseño nuevo cambió el `text-transform`): mismas palabras, mismo
+     orden. Para probar el build:
      `npm run build`, `node pruebas/herramientas/servir.mjs dist 4173` y `E2E_NUEVO=http://localhost:4173 npm run e2e`.
 3. **Eventos simulados en Actividad:** en la consola del navegador del panel:
    ```js

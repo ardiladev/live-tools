@@ -3,7 +3,8 @@
 //
 // Campos propios arriba, fila de URL (Copy URL / Test / Personalizar), estado de los cambios
 // en vivo y la VISTA PREVIA: un <iframe> con el widget real en ?fondo=1&prueba=1 (nunca se
-// conecta al LIVE) al que se le mandan eventos de prueba por postMessage (mismo origen).
+// conecta al LIVE), dentro de un «monitor» (div.monitor), al que se le mandan eventos de
+// prueba por postMessage (mismo origen).
 //
 //   id            el del widget, ya registrado en sincronizar (de ahí salen config y validar)
 //   titulo        texto de la tarjeta · archivo: 'meta.html'
@@ -162,9 +163,9 @@ export function TarjetaWidget({
       {campos ? <div className="campos">{campos}</div> : null}
       <div className="fila-url">
         <input ref={campoUrl} readOnly aria-label={`URL de ${titulo}`} value={url} />
-        <button onClick={() => { void copiar(); }}><Icono nombre="enlace" />Copy URL</button>
+        <button className="copiar" onClick={() => { void copiar(); }}><Icono nombre="enlace" />Copy URL</button>
         <button onClick={() => { if (pruebas[0]) probar(pruebas[0]); }} title="Lanza una prueba en la vista previa">
-          <Icono nombre="flecha" />Test
+          <Icono nombre="probar" />Test
         </button>
         <button aria-expanded={abierto} onClick={() => setAbierto((a) => !a)}><Icono nombre="engrane" />Personalizar</button>
       </div>
@@ -172,7 +173,10 @@ export function TarjetaWidget({
       <div className={`estado-nube ${nube.tipo}`} role="status" hidden={!nubeActiva()}>{nube.mensaje || TEXTO_NUBE}</div>
       <Aviso aviso={aviso} />
       <div className={`escenario ${forma}`}>
-        <iframe ref={iframe} title={`Vista previa de ${titulo}`} src={src || undefined} />
+        {/* El monitor: marco con esquinas de visor (los rótulos «Vista previa» y la proporción los pone el CSS). */}
+        <div className="monitor">
+          <iframe ref={iframe} title={`Vista previa de ${titulo}`} src={src || undefined} />
+        </div>
         <div className="pruebas">
           <div className="estado">
             <span className={estadoPrevia.ok ? 'punto ok' : 'punto'} />

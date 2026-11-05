@@ -5,8 +5,10 @@
    está fijo respecto a la pantalla. Si la página se desplaza o el contenedor se mueve o
    cambia de tamaño, el patrón NO se mueve con él: solo cambia la parte que se ve.
 
-   Patrón de prueba: cuadros morados y rosados (plaid). Para cambiarlo, basta con tocar las
-   variables --textura-* (colores, tamaño o el patrón entero).
+   Patrón de los widgets (casilla «Textura estática»): cuadros morados y rosados (plaid), de
+   prueba. Para cambiarlo, basta con tocar las variables --textura-* (colores, tamaño o el
+   patrón entero). El panel cambia esas mismas variables en panel.css (sección 2) por un
+   enrejado Art Déco dorado: misma ventana fija, otro dibujo.
 
    Cómo se usa:
      - Panel: clase de Tailwind `textura-estatica` en los contenedores de la estructura
@@ -29,6 +31,7 @@
   --textura-rosado: rgba(255, 105, 180, .55);
   --textura-rosado-fino: rgba(255, 182, 220, .45);
   --textura-tamano: 56px;
+  --textura-fondo: var(--textura-morado);   /* color debajo del patrón */
   /* Plaid: dos franjas anchas (vertical y horizontal) que se cruzan + líneas finas. */
   --textura-patron:
     linear-gradient(90deg, transparent 0 22%, var(--textura-rosado) 22% 42%, transparent 42% 100%),
@@ -41,7 +44,7 @@
 /* La ventana más sencilla: el fondo del propio elemento, fijo a la pantalla.
    --textura-velo (opcional) oscurece el patrón para que el texto encima se lea; también es fijo. */
 @utility textura-estatica {
-  background-color: var(--textura-morado);
+  background-color: var(--textura-fondo);
   background-image: linear-gradient(var(--textura-velo, transparent), var(--textura-velo, transparent)), var(--textura-patron);
   background-size: var(--textura-tamano) var(--textura-tamano);
   background-position: 0 0;
@@ -59,7 +62,7 @@
     position: fixed;
     inset: 0;
     z-index: -1;
-    background-color: var(--textura-morado);
+    background-color: var(--textura-fondo);
     background-image: var(--textura-patron);
     background-size: var(--textura-tamano) var(--textura-tamano);
     pointer-events: none;

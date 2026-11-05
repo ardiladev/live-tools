@@ -26,6 +26,9 @@ const ICONOS = {
   // Dado: un cuadrado redondeado con cinco puntos (círculos pequeños).
   juegos: 'M6 3h12a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3zM7.5 8.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0M14.5 8.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0M11 12a1 1 0 1 0 2 0a1 1 0 1 0-2 0M7.5 15.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0M14.5 15.5a1 1 0 1 0 2 0a1 1 0 1 0-2 0',
   ajustes: 'M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M18 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0M12 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0M20 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0',
+  menu: 'M4 7h16M4 12h16M4 17h10',
+  // Triángulo de «reproducir» (botón Test).
+  probar: 'M8 5.5v13a.6.6 0 0 0 .9.5l10.2-6.5a.6.6 0 0 0 0-1L8.9 5a.6.6 0 0 0-.9.5z',
 } as const;
 
 export type NombreIcono = keyof typeof ICONOS;

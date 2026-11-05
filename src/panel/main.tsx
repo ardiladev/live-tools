@@ -23,7 +23,8 @@ cargar();
 importarUrlVieja();
 sincronizar.iniciar(); // cambios en vivo con Supabase (si está configurado)
 
-// Fondo detrás de las tarjetas: ventana a la textura estática de prueba.
+// Fondo detrás de las tarjetas: ventana a la textura estática (en el panel, el enrejado Art Déco
+// dorado de panel.css; la barra, el riel y el menú la muestran con más velo).
 document.body.classList.add('textura-estatica');
 
 const raiz = document.getElementById('raiz');

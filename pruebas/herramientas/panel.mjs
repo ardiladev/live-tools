@@ -180,14 +180,18 @@ const viejo = await correr(navegador, 'legado');
 const nuevo = await correr(navegador, 'nuevo');
 await navegador.close();
 
+// El texto se compara sin mayúsculas ni espacios: el diseño del panel cambió (rediseño «Estudio
+// Áureo», 2026-11-05) y con él el text-transform (títulos y segmentados ya no van en MAYÚSCULAS)
+// y la disposición en bloques, que innerText refleja. Lo que se exige es lo que importa: las
+// mismas palabras, en el mismo orden.
+const comparable = (texto) => texto.toLocaleLowerCase('es').replace(/\s+/g, '');
 // Agregado a propósito en la versión nueva (casilla de la textura estática en el editor de estilo):
 // no cuenta como diferencia.
-const TEXTURA = ' TEXTURA Textura estática (cuadros fijos, de prueba) Las placas se vuelven ventanas a un patrón de cuadros morados y rosados que queda quieto aunque el contenido se mueva. Apágala para volver al cristal.';
-nuevo.texto = nuevo.texto.split(TEXTURA).join('');
+const TEXTURA = comparable('TEXTURA Textura estática (cuadros fijos, de prueba) Las placas se vuelven ventanas a un patrón de cuadros morados y rosados que queda quieto aunque el contenido se mueva. Apágala para volver al cristal.');
 
 let diferencias = 0;
 const informe = [];
-const textoIgual = viejo.texto === nuevo.texto;
+const textoIgual = comparable(viejo.texto) === comparable(nuevo.texto).split(TEXTURA).join('');
 if (!textoIgual) diferencias++;
 informe.push(`■ Texto de la vista: ${textoIgual ? 'IGUAL' : 'DISTINTO'}`);
 if (!textoIgual) informe.push(`    legado: ${viejo.texto}\n    nuevo:  ${nuevo.texto}`);

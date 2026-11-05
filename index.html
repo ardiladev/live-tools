@@ -3,14 +3,19 @@
   index.html — Panel principal (es la página que publica GitHub Pages).
   Aquí solo está la raíz: el panel lo arma React (src/panel/main.tsx → App.tsx) a partir del
   mapa src/panel/rutas.ts. Estilos: Tailwind CSS con los tokens ÁUREA (src/estilos/).
+  Fuentes: Montserrat (títulos, botones, cifras), Inter (texto) y JetBrains Mono (URLs e IDs).
 -->
 <html lang="es">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0A0A0D">
   <title>Live Tools</title>
+  <!-- Ícono de la pestaña: el monograma «L» en oro metálico (SVG en línea, sin archivo aparte). -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='o' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23F3DFA2'/%3E%3Cstop offset='.5' stop-color='%23D4AF37'/%3E%3Cstop offset='1' stop-color='%23AA771C'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='2' y='2' width='60' height='60' rx='16' fill='%230F0F12'/%3E%3Crect x='3.5' y='3.5' width='57' height='57' rx='14.5' fill='none' stroke='url(%23o)' stroke-width='3'/%3E%3Cpath d='M22 15h8v27h14v7H22z' fill='url(%23o)'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Montserrat:wght@300;500;600;700&display=swap">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Montserrat:wght@300;500;600;700;800&display=swap">
 </head>
 <body>
   <div id="raiz"></div>
