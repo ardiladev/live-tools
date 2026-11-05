@@ -126,7 +126,7 @@ function Equipo({ estado, motor, lado, gana }: { estado: EstadoBatalla; motor: M
   const e = estado.equipos[lado];
   const golpes = estado.golpes[lado];
   useReiniciarAnimacion(nodo, 'golpe', golpes);
-  const mostrado = useCifraAnimada(estado.puntos[lado], { ms: CONTEO_MS, animar: estado.animarPuntos });
+  const mostrado = useCifraAnimada(estado.puntos[lado], { ms: CONTEO_MS, animar: estado.animarPuntos, pintada: estado.pintadas });
   const foto = e.avatar || e.imagen;
   // Con foto, el regalo va de insignia en la esquina del avatar.
   const insignia = e.avatar ? e.imagen : '';

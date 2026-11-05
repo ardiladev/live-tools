@@ -5,14 +5,20 @@
 // requestAnimationFrame (en OBS siempre corre). Como allí:
 //   - la animación nueva arranca desde el valor ANTERIOR pedido;
 //   - con `animar: false` (p. ej. al cambiar la configuración o al reiniciar la ronda) el número
-//     salta directo, y si había una animación a medias, se corta y queda en el valor final.
+//     salta directo, y si había una animación a medias, se corta y queda en el valor final;
+//   - `pintada` (opcional) cuenta las veces que el widget original volvía a pintar ESTA cifra
+//     aunque no cambiara: cada vez, una animación a medias se corta y queda en el valor final
+//     (p. ej. en la batalla, un regalo a un equipo corta la cuenta que seguía en el otro).
 //
-//   const mostrado = useCifraAnimada(puntos, { ms: 700, animar: causa === 'regalo' });
+//   const mostrado = useCifraAnimada(puntos, { ms: 700, animar: causa === 'regalo', pintada });
 // =============================================================================
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-export function useCifraAnimada(valor: number, { ms = 700, animar = true }: { ms?: number; animar?: boolean } = {}): number {
+export function useCifraAnimada(
+  valor: number,
+  { ms = 700, animar = true, pintada = 0 }: { ms?: number; animar?: boolean; pintada?: number } = {},
+): number {
   const [mostrado, setMostrado] = useState(valor);
   const objetivo = useRef(valor);
   const animacion = useRef(0);
@@ -23,8 +29,9 @@ export function useCifraAnimada(valor: number, { ms = 700, animar = true }: { ms
   useLayoutEffect(() => {
     const desde = objetivo.current;
     if (desde === valor) {
-      // Mismo valor sin animar (llegó una configuración): una animación a medias salta al final.
-      if (!animar && enCurso.current) {
+      // Se volvió a pintar sin cambio (configuración, otro equipo…): una animación a medias salta
+      // al final, como en animarCifra.
+      if (enCurso.current) {
         cancelAnimationFrame(animacion.current);
         enCurso.current = false;
         setMostrado(valor);
@@ -47,7 +54,7 @@ export function useCifraAnimada(valor: number, { ms = 700, animar = true }: { ms
       else enCurso.current = false;
     };
     animacion.current = requestAnimationFrame(paso);
-  }, [valor, animar]);
+  }, [valor, animar, pintada]);
 
   useEffect(() => () => cancelAnimationFrame(animacion.current), []);
   return mostrado;

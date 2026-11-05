@@ -59,7 +59,7 @@ export function Marcador() {
 function TarjetaIntegrante({ j, estado, lider }: { j: IntegranteMarcador; estado: EstadoMarcador; lider: boolean }) {
   const nodo = useRef<HTMLElement>(null);
   const golpes = estado.golpes[j.id] || 0;
-  const mostrado = useCifraAnimada(estado.puntos[j.id] || 0, { ms: CONTEO_MS, animar: estado.animarPuntos });
+  const mostrado = useCifraAnimada(estado.puntos[j.id] || 0, { ms: CONTEO_MS, animar: estado.animarPuntos, pintada: estado.pintadas });
   useReiniciarAnimacion(nodo, 'golpe', golpes);
   const imagen = j.imagen || estado.imagenesAprendidas[j.id] || '';
   const clases = ['integrante', 'cristal', 'filo-oro', lider && 'lider', golpes > 0 && 'golpe'].filter(Boolean).join(' ');

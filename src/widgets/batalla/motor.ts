@@ -46,6 +46,9 @@ export interface EstadoBatalla {
   puntos: [number, number];
   resultados: ResultadoRonda[];
   animarPuntos: boolean;
+  /** Sube con cada repintado completo del original (configuración, regalo, cambio de estado del
+   *  reloj): corta la cuenta que siguiera a medias en el otro equipo. */
+  pintadas: number;
   sumas: SumaFlotante[];
   /** Por equipo: cuántas veces recibió un regalo (reinicia el "golpe" del avatar). */
   golpes: [number, number];
@@ -81,7 +84,7 @@ export function crearMotorBatalla(): MotorBatalla {
   const estado = crearEstadoObservable<EstadoBatalla>({
     equipos: [normalizarEquipo(undefined, 0), normalizarEquipo(undefined, 1)],
     sonido: true, conReloj: false, reloj: { e: 'listo', d: 180 }, ronda: null, rondaVictorias: null,
-    puntos: [0, 0], resultados: [], animarPuntos: false, sumas: [], golpes: [0, 0], estrenas: [0, 0],
+    puntos: [0, 0], resultados: [], animarPuntos: false, pintadas: 0, sumas: [], golpes: [0, 0], estrenas: [0, 0],
   });
   let claveGuardado = '';
   let claveVictorias = '';
@@ -136,6 +139,7 @@ export function crearMotorBatalla(): MotorBatalla {
         rondaVictorias: victoriasNuevas ? nuevasVictorias : e.rondaVictorias,
         resultados: victoriasNuevas ? restaurarVictorias(nuevasVictorias) : e.resultados,
         animarPuntos: false,
+        pintadas: e.pintadas + 1,
       };
     });
   }
@@ -165,7 +169,7 @@ export function crearMotorBatalla(): MotorBatalla {
     const golpes: [number, number] = [...e.golpes];
     golpes[lado] += 1;
     estado.fijar({
-      ...e, equipos, puntos, animarPuntos: true, golpes,
+      ...e, equipos, puntos, animarPuntos: true, pintadas: e.pintadas + 1, golpes,
       sumas: [...e.sumas, { id: siguienteSuma++, lado, suma }],
     });
     // Sonido solo cuando cambia quién va ganando (una lluvia de rosas no debe sonar cada vez).
@@ -211,6 +215,10 @@ export function crearMotorBatalla(): MotorBatalla {
         sonar({ frecuencia: 990, duracion: 0.08, volumen: 0.08, subida: 1 });
       }
       if (sonido && estadoReloj === 'fin' && estadoAnterior === 'corre') sonar({ frecuencia: 523, duracion: 0.9, subida: 2 });
+      // Al cambiar de estado, el original repinta todo sin animar (el aviso dice "Ganó…" al terminar).
+      if (estadoReloj !== estadoAnterior && estadoAnterior !== null) {
+        estado.fijar((e) => ({ ...e, animarPuntos: false, pintadas: e.pintadas + 1 }));
+      }
       estadoAnterior = estadoReloj;
       cerrarRonda();
     },

@@ -32,6 +32,9 @@ export interface EstadoMarcador {
   imagenesAprendidas: Record<string, string>;
   /** false = el último cambio de puntos vino de la configuración (los números saltan). */
   animarPuntos: boolean;
+  /** Sube con cada repintado de todas las tarjetas (configuración, imagen aprendida): corta las
+   *  cuentas que siguieran a medias, como en el original. */
+  pintadas: number;
   /** id → cuántas veces sumó (reinicia la animación "golpe"). */
   golpes: Record<string, number>;
 }
@@ -45,7 +48,7 @@ export interface MotorMarcador extends Observable<EstadoMarcador> {
 export function crearMotorMarcador(): MotorMarcador {
   const estado = crearEstadoObservable<EstadoMarcador>({
     titulo: '', integrantes: [], reloj: { e: 'listo', d: 300 }, soloConReloj: false, sonido: true,
-    ronda: null, puntos: {}, imagenesAprendidas: {}, animarPuntos: false, golpes: {},
+    ronda: null, puntos: {}, imagenesAprendidas: {}, animarPuntos: false, pintadas: 0, golpes: {},
   });
   let claveGuardado = '';
   let estadoAnterior: LecturaReloj['estado'] | null = null;
@@ -73,6 +76,7 @@ export function crearMotorMarcador(): MotorMarcador {
         ronda: rondaNueva ? nuevaRonda : e.ronda,
         puntos: rondaNueva ? restaurarPuntos(nuevaRonda) : e.puntos,
         animarPuntos: false,
+        pintadas: e.pintadas + 1,
       };
     });
   }
@@ -95,6 +99,8 @@ export function crearMotorMarcador(): MotorMarcador {
     escribirGuardado(claveGuardado, { ro: e.ronda, p: puntos });
     estado.fijar({
       ...e, puntos, imagenesAprendidas, animarPuntos: true,
+      // Con una imagen nueva, el original repinta todas las tarjetas.
+      pintadas: imagenesAprendidas !== e.imagenesAprendidas ? e.pintadas + 1 : e.pintadas,
       golpes: { ...e.golpes, [j.id]: (e.golpes[j.id] || 0) + 1 },
     });
   }

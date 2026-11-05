@@ -1,0 +1,99 @@
+{
+ "pagina": "batalla",
+ "ancho": 1600,
+ "alto": 300,
+ "config": {
+  "a": {
+   "n": "Leones",
+   "g": "5655",
+   "v": 1,
+   "c": "#D4AF37",
+   "av": "",
+   "img": ""
+  },
+  "b": {
+   "n": "Tigres",
+   "g": "5487",
+   "v": 5,
+   "c": "#4FC3F7",
+   "av": "",
+   "img": "https://p16.tiktokcdn.com/x.png"
+  },
+  "ro": 1,
+  "s": 0
+ },
+ "atributos": ".puntos",
+ "pasos": [
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "5655",
+    "nombre": "Rose",
+    "cantidad": 1,
+    "diamantes": 1000,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 100
+  },
+  {
+   "captura": "a-contando"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "5487",
+    "nombre": "Finger Heart",
+    "cantidad": 300,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 100
+  },
+  {
+   "captura": "b-corta-a"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "5487",
+    "nombre": "Finger Heart",
+    "cantidad": 300,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 120
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "5487",
+    "nombre": "Finger Heart",
+    "cantidad": 300,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 60
+  },
+  {
+   "captura": "b-sobre-b"
+  },
+  {
+   "esperar": 800
+  },
+  {
+   "captura": "final"
+  }
+ ]
+}

@@ -53,6 +53,9 @@ export interface EstadoCarrera {
   imagenesAprendidas: Record<string, string>;
   /** false = el último cambio de puntos vino de la configuración (los números saltan, sin animar). */
   animarPuntos: boolean;
+  /** Sube con cada repintado de todas las tarjetas (configuración, imagen aprendida): corta las
+   *  cuentas que siguieran a medias, como en el original. */
+  pintadas: number;
   sumas: SumaFlotante[];
   /** id → cuántas veces recibió un regalo (reinicia la animación "golpe"). */
   golpes: Record<string, number>;
@@ -77,6 +80,7 @@ const ESTADO_INICIAL: EstadoCarrera = {
   puntos: {},
   imagenesAprendidas: {},
   animarPuntos: false,
+  pintadas: 0,
   sumas: [],
   golpes: {},
 };
@@ -113,6 +117,7 @@ export function crearMotorCarrera(): MotorCarrera {
         ronda: rondaNueva ? nuevaRonda : e.ronda,
         puntos: rondaNueva ? restaurarPuntos(nuevaRonda) : e.puntos,
         animarPuntos: false,
+        pintadas: e.pintadas + 1,
       };
     });
   }
@@ -143,6 +148,8 @@ export function crearMotorCarrera(): MotorCarrera {
       puntos,
       imagenesAprendidas,
       animarPuntos: true,
+      // Con una imagen nueva, el original repinta todas las tarjetas.
+      pintadas: imagenesAprendidas !== e.imagenesAprendidas ? e.pintadas + 1 : e.pintadas,
       sumas: [...e.sumas, { id: siguienteSuma++, integrante: j.id, suma }],
       golpes: { ...e.golpes, [j.id]: (e.golpes[j.id] || 0) + 1 },
     });

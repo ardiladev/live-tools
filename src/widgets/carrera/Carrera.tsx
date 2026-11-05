@@ -96,7 +96,7 @@ function TarjetaIntegrante({ integrante: j, estado, motor, lider, atenuado }: Pr
   const nodo = useRef<HTMLElement>(null);
   const valor = estado.puntos[j.id] || 0;
   const golpes = estado.golpes[j.id] || 0;
-  const mostrado = useCifraAnimada(valor, { ms: CONTEO_MS, animar: estado.animarPuntos });
+  const mostrado = useCifraAnimada(valor, { ms: CONTEO_MS, animar: estado.animarPuntos, pintada: estado.pintadas });
   useReiniciarAnimacion(nodo, 'golpe', golpes);
 
   const porcentaje = Math.min(100, Math.floor((valor / j.meta) * 100));
