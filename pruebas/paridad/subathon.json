@@ -1,0 +1,251 @@
+{
+ "pagina": "subathon",
+ "consulta": "",
+ "ancho": 900,
+ "alto": 300,
+ "config": {
+  "ti": "Subathon",
+  "t": {
+   "e": "listo",
+   "d": 600,
+   "fin": 0,
+   "r": 0
+  },
+  "ro": 1,
+  "ex": 0,
+  "cap": 900,
+  "sl": 5,
+  "sd": 10,
+  "v": 1,
+  "s": 0
+ },
+ "pasos": [
+  {
+   "captura": "listo"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 5,
+    "imagen": ""
+   }
+  },
+  {
+   "captura": "listo-no-suma"
+  },
+  {
+   "config": {
+    "ti": "Subathon",
+    "t": {
+     "e": "corre",
+     "d": 600,
+     "fin": 1793898600150,
+     "r": 0
+    },
+    "ro": 1,
+    "ex": 0,
+    "cap": 900,
+    "sl": 5,
+    "sd": 10,
+    "v": 1,
+    "s": 0
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 1,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "like",
+    "usuario": "Ana",
+    "cantidad": 250,
+    "total": 0,
+    "propios": 250
+   }
+  },
+  {
+   "esperar": 500
+  },
+  {
+   "captura": "suma-regalo-y-likes"
+  },
+  {
+   "esperar": 3000
+  },
+  {
+   "evento": {
+    "tipo": "like",
+    "usuario": "Ana",
+    "cantidad": 10,
+    "total": 0,
+    "propios": 10
+   }
+  },
+  {
+   "esperar": 300
+  },
+  {
+   "captura": "likes-chicos-juntan"
+  },
+  {
+   "config": {
+    "ti": "Subathon",
+    "t": {
+     "e": "corre",
+     "d": 600,
+     "fin": 1793898600150,
+     "r": 0
+    },
+    "ro": 1,
+    "ex": 300000,
+    "cap": 900,
+    "sl": 5,
+    "sd": 10,
+    "v": 1,
+    "s": 0
+   }
+  },
+  {
+   "esperar": 300
+  },
+  {
+   "captura": "mas-cinco-min-tope"
+  },
+  {
+   "recargar": true
+  },
+  {
+   "captura": "recarga-conserva"
+  },
+  {
+   "config": {
+    "ti": "Subathon",
+    "t": {
+     "e": "pausa",
+     "d": 600,
+     "fin": 0,
+     "r": 120000
+    },
+    "ro": 1,
+    "ex": 300000,
+    "cap": 900,
+    "sl": 5,
+    "sd": 10,
+    "v": 1,
+    "s": 0
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 3,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 300
+  },
+  {
+   "captura": "pausa-suma"
+  },
+  {
+   "config": {
+    "ti": "Subathon",
+    "t": {
+     "e": "corre",
+     "d": 600,
+     "fin": 1793898001000,
+     "r": 0
+    },
+    "ro": 1,
+    "ex": 300000,
+    "cap": 60,
+    "sl": 5,
+    "sd": 10,
+    "v": 1,
+    "s": 0
+   }
+  },
+  {
+   "esperar": 400000
+  },
+  {
+   "captura": "termino"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 5,
+    "imagen": ""
+   }
+  },
+  {
+   "captura": "terminado-no-suma"
+  },
+  {
+   "config": {
+    "ti": "Subathon",
+    "t": {
+     "e": "corre",
+     "d": 600,
+     "fin": 1793898001000,
+     "r": 0
+    },
+    "ro": 1,
+    "ex": 600000,
+    "cap": 900,
+    "sl": 5,
+    "sd": 10,
+    "v": 1,
+    "s": 0
+   }
+  },
+  {
+   "esperar": 300
+  },
+  {
+   "captura": "cinco-min-revive"
+  },
+  {
+   "config": {
+    "ti": "Subathon",
+    "t": {
+     "e": "listo",
+     "d": 600,
+     "fin": 0,
+     "r": 0
+    },
+    "ro": 2,
+    "ex": 0,
+    "cap": 900,
+    "sl": 5,
+    "sd": 10,
+    "v": 1,
+    "s": 0
+   }
+  },
+  {
+   "captura": "reiniciado"
+  }
+ ]
+}

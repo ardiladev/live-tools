@@ -1,4 +1,5 @@
-// Provisional: se reemplaza al portar legado/subathon.html (modelo: src/widgets/carrera).
+// subathon.html → widget "Subathon" (ver Subathon.tsx y motor.ts).
 import { montarWidget } from '../../componentes/montarWidget';
+import { Subathon } from './Subathon';
 
-montarWidget(null);
+montarWidget(<Subathon />);

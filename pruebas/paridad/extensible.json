@@ -1,0 +1,147 @@
+{
+ "pagina": "extensible",
+ "consulta": "",
+ "ancho": 900,
+ "alto": 400,
+ "config": {
+  "ti": "Extensible",
+  "t": {
+   "e": "corre",
+   "d": 600,
+   "fin": 1793898600150,
+   "r": 0
+  },
+  "ro": 1,
+  "ex": 0,
+  "cap": 900,
+  "sl": 5,
+  "sd": 10,
+  "v": 1,
+  "s": 0,
+  "mt": 100
+ },
+ "pasos": [
+  {
+   "captura": "meta-en-cero"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 3,
+    "diamantes": 30,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "like",
+    "usuario": "Ana",
+    "cantidad": 500,
+    "total": 0,
+    "propios": 500
+   }
+  },
+  {
+   "esperar": 300
+  },
+  {
+   "captura": "juntando-meta"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 30,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 300
+  },
+  {
+   "captura": "cruza-meta-excedente"
+  },
+  {
+   "evento": {
+    "tipo": "like",
+    "usuario": "Ana",
+    "cantidad": 200,
+    "total": 0,
+    "propios": 200
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Beto",
+    "giftId": "0",
+    "nombre": "",
+    "cantidad": 1,
+    "diamantes": 2,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 300
+  },
+  {
+   "captura": "despues-de-meta"
+  },
+  {
+   "recargar": true
+  },
+  {
+   "captura": "recarga-conserva-meta"
+  },
+  {
+   "config": {
+    "ti": "Extensible",
+    "t": {
+     "e": "corre",
+     "d": 600,
+     "fin": 1793898600150,
+     "r": 0
+    },
+    "ro": 2,
+    "ex": 0,
+    "cap": 900,
+    "sl": 5,
+    "sd": 10,
+    "v": 1,
+    "s": 0,
+    "mt": 100
+   }
+  },
+  {
+   "captura": "reinicio-meta"
+  },
+  {
+   "config": {
+    "ti": "Extensible",
+    "t": {
+     "e": "corre",
+     "d": 600,
+     "fin": 1793898600150,
+     "r": 0
+    },
+    "ro": 2,
+    "ex": 0,
+    "cap": 900,
+    "sl": 5,
+    "sd": 10,
+    "v": 1,
+    "s": 0,
+    "mt": 0
+   }
+  },
+  {
+   "captura": "sin-meta"
+  }
+ ]
+}
