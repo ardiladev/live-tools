@@ -1,4 +1,11 @@
-// Vista provisional: se reemplaza al portar legado/js/panel/vistas/alertas.js (ver vistas/tipos.ts).
-import { vistaEnMigracion } from '../EnMigracion';
+// Superposiciones → Alertas → Alertas de eventos (#/alertas). Ver config.ts y VistaAlertas.tsx.
+import type { DefinicionVista } from '../tipos';
+import './config';
+import { VistaAlertas } from './VistaAlertas';
 
-export const alertas = vistaEnMigracion('alertas', 'Alertas de eventos', 'Un aviso animado en pantalla cuando alguien te sigue, comparte el LIVE o envía un regalo.');
+export const alertas: DefinicionVista = {
+  id: 'alertas',
+  titulo: 'Alertas de eventos',
+  descripcion: 'Un aviso animado en pantalla cuando alguien te sigue, comparte el LIVE o envía un regalo.',
+  Componente: VistaAlertas,
+};

@@ -1,0 +1,67 @@
+/* ==========================================================================
+   alertas.css — Widget "Alertas de eventos" (alertas.html → src/widgets/alertas/Alertas.tsx)
+   Portado tal cual del diseño original (legado/css/widgets/alertas.css).
+   Una placa de cristal (clase .cristal de widget.css) con el ícono en una gema
+   dorada traslúcida, quién (oro claro) y qué hizo (blanco). Entra y sale con un
+   desvanecido; al aparecer el resplandor dorado se intensifica un poco.
+   ========================================================================== */
+
+/* ---------- Escena ---------- */
+.escena {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 4vmin;
+  box-sizing: border-box;
+}
+
+/* ---------- Placa de la alerta ---------- */
+.alerta {
+  display: flex;
+  align-items: center;
+  gap: 3.7vmin;                                  /* 6vmin / φ */
+  max-width: 92vw;
+  padding: 2.3vmin 6vmin 2.3vmin 2.3vmin;
+  color: var(--texto-sec);
+  opacity: 0;
+  transform: translateY(12%);
+  transition: opacity .35s ease, transform .45s cubic-bezier(.2, .9, .3, 1), box-shadow .45s ease;
+}
+.alerta.visible { opacity: 1; transform: none; box-shadow: var(--resplandor-activo); }
+
+/* ---------- Ícono (emoji o imagen del regalo) ---------- */
+.icono {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: clamp(48px, 13vmin, 150px);
+  aspect-ratio: 1;
+  border: 1px solid var(--insignia-borde);
+  border-radius: var(--radio-grande);
+  background: var(--insignia-fondo);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18);
+  font-size: clamp(28px, 8vmin, 90px);
+}
+.icono img { width: 80%; height: 80%; object-fit: contain; }
+
+/* ---------- Textos ---------- */
+.quien {
+  font-weight: 600;
+  font-size: clamp(20px, 5.5vmin, 64px);
+  line-height: 1.1;
+  text-transform: var(--mayus);
+  letter-spacing: var(--espaciado-widget);
+  color: var(--oro-texto);
+}
+.que {
+  margin-top: .35em;
+  font-weight: 500;
+  font-size: clamp(13px, 3.4vmin, 40px);       /* 5.5vmin / φ */
+  text-transform: var(--mayus);
+  letter-spacing: var(--espaciado-widget);
+  color: var(--texto-sec);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alerta { transform: none; transition: opacity .2s; }
+}
