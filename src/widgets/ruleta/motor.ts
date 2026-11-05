@@ -1,0 +1,580 @@
+// =============================================================================
+// widgets/ruleta/motor.ts — Lógica de la "Ruleta de regalos": dibujo, giro, cola y sorteo
+//
+// Port línea por línea de legado/js/widgets/ruleta.js. La ruleta es un canvas animado con
+// requestAnimationFrame, una cola de giros con esperas y animaciones CSS que se reinician con
+// clases: por eso este motor trabaja directo sobre los elementos que pinta Ruleta.tsx (que
+// React crea una vez y no vuelve a tocar), igual que el widget original. Así gira, frena,
+// anuncia y suena exactamente igual.
+//
+// Secciones: 1. Opciones y estado · 2. Dibujo · 3. Giro y cola · 4. Configuración y regalos
+//            5. Arranque y cierre
+// =============================================================================
+
+import { mandarReto } from '../../nucleo/juego';
+import { esperar, sonar } from '../../nucleo/sonido';
+import { EVENTO_TEMA, fuenteLista, paletaRuleta, type PaletaRuleta } from '../../nucleo/tema';
+import type { EventoLive } from '../../tipos/eventos';
+import type { Tema } from '../../tipos/tema';
+import type { ConfigRuleta } from './config';
+
+/** Los elementos del widget (los crea Ruleta.tsx). */
+export interface ElementosRuleta {
+  escena: HTMLElement;
+  aviso: HTMLElement;
+  resultado: HTMLElement;
+  cola: HTMLElement;
+  puntero: SVGSVGElement;
+  lienzo: HTMLCanvasElement;
+}
+
+export interface MotorRuleta {
+  aplicarConfig(cfg: ConfigRuleta): void;
+  alEvento(evento: EventoLive): void;
+  /** Suelta los oyentes (al desmontar). */
+  detener(): void;
+}
+
+interface Premio {
+  texto: string;
+  peso: number;
+  aCola: boolean;
+}
+
+interface Giro {
+  usuario: string;
+  indice: number;
+  premio: string;
+  aCola: boolean;
+  cantidad: number;
+  regalo: string;
+  imagen: string;
+}
+
+export const DURACION_GIRO_MS = 5200;
+export const DURACION_GIRO_REDUCIDO_MS = 1200;
+export const PAUSA_RESULTADO_MS = 2800;
+const VUELTA = Math.PI * 2;
+const PHI = 1.618;
+const LADO = 1000;        // los dibujos usan unidades de un lienzo de 1000 × 1000
+const MAX_PIXELES = 4096; // tope por memoria y rendimiento
+
+// Sectores, en orden: 'base' (cristal del modo), 'acento' (degradado traslúcido) y 'alterno'
+// (el tono contrario, muy tenue). El texto de cada uno se elige para que contraste.
+const COLORES = [
+  { fondo: 'base', texto: 'texto' },
+  { fondo: 'acento', texto: 'textoSec' },
+  { fondo: 'alterno', texto: 'texto' },
+  { fondo: 'acento', texto: 'textoSec' },
+] as const;
+
+export function crearMotorRuleta(el: ElementosRuleta): MotorRuleta {
+  // ---------------------------------------------------------------------------
+  // 1. Opciones y estado
+  // ---------------------------------------------------------------------------
+  const params = new URLSearchParams(location.search);
+  const MOVIMIENTO_REDUCIDO = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DURACION = MOVIMIENTO_REDUCIDO ? DURACION_GIRO_REDUCIDO_MS : DURACION_GIRO_MS;
+  const { lienzo, escena, aviso, resultado, cola, puntero } = el;
+  const ctx = lienzo.getContext('2d') as CanvasRenderingContext2D;
+
+  // Colores, líneas y letra: salen del estilo del widget (paletaRuleta), que se actualiza con
+  // cada configuración. Los sectores son traslúcidos: detrás hay un disco con desenfoque (CSS).
+  let paleta: PaletaRuleta = paletaRuleta();
+
+  // Ajustes vigentes (los reemplaza aplicarConfig cada vez que llega una configuración).
+  const ajustes = {
+    giftId: '5655',
+    textoRegalo: 'una rosa 🌹',
+    imagen: '',              // miniatura del regalo que se muestra en el aviso
+    girosPorRegalo: 1,
+    unGiroPorCombo: false,   // uc: un combo = un giro, con el premio ×N
+    maxGiros: 20,
+    ocultar: params.get('ocultar') === '1',
+    sonido: params.get('sonido') !== '0',
+    indicar: true,
+    cola: '',                // id de la Cola de retos (rc); vacío = los premios no van a la cola
+    origen: 'Ruleta',
+  };
+
+  let premios: Premio[] = [];
+  let premiosNuevos: Premio[] | null = null; // llegaron en medio de un giro: se aplican al terminar
+  let rotacion = 0;                          // ángulo actual de la rueda, en radianes
+  let girando = false;
+  let detenido = false;
+  const pendientes: Giro[] = [];              // giros esperando turno
+  let imagenAprendida = { giftId: '', imagen: '' }; // la que llegó con un regalo (si el panel no la tenía)
+
+
+  // ---------------------------------------------------------------------------
+  // 2. Dibujo de la rueda (en unidades de un lienzo de 1000 × 1000)
+  // ---------------------------------------------------------------------------
+  // Nitidez: el canvas tiene tantos píxeles como se ven en pantalla (tamaño × densidad), así
+  // no se ve borroso en pantalla completa o en 4K. `escala` lleva las unidades a píxeles reales.
+  // Las sombras (shadowBlur) no siguen la escala del canvas: se multiplican a mano.
+  let escala = 1;
+
+  function ajustarResolucion(): void {
+    const ancho = lienzo.clientWidth; // tamaño de diseño: no cambia con la animación de ocultar (scale)
+    if (!ancho) return; // escena oculta o sin medir todavía
+    const pixeles = Math.min(MAX_PIXELES, Math.round(ancho * (devicePixelRatio || 1)));
+    if (pixeles === lienzo.width) return;
+    lienzo.width = pixeles;  // cambiar el tamaño borra el canvas: se redibuja enseguida
+    lienzo.height = pixeles;
+    escala = pixeles / LADO;
+    dibujar();
+  }
+
+  /** Color del sector `i` de `n`, evitando que el primero y el último queden iguales. */
+  function colorDe(i: number, n: number): (typeof COLORES)[number] {
+    let c = i % COLORES.length;
+    if (i === n - 1 && n > 1 && c === 0) c = 2;
+    return COLORES[c] ?? COLORES[0];
+  }
+
+  /** Parte un texto en máximo 2 líneas que quepan en `maxAncho` píxeles. */
+  function partirTexto(texto: string, maxAncho: number): string[] {
+    const lineas: string[] = [];
+    let linea = '';
+    for (const palabra of texto.split(' ')) {
+      const prueba = linea ? `${linea} ${palabra}` : palabra;
+      if (ctx.measureText(prueba).width > maxAncho && linea) {
+        lineas.push(linea);
+        linea = palabra;
+      } else {
+        linea = prueba;
+      }
+    }
+    if (linea) lineas.push(linea);
+    return lineas.slice(0, 2);
+  }
+
+  /** Filo metálico (135°) del color del borde, del tamaño del círculo de radio `radio`. */
+  function filo(radio: number): CanvasGradient {
+    const g = ctx.createLinearGradient(-radio, -radio, radio, radio);
+    g.addColorStop(0, paleta.filo[0]);
+    g.addColorStop(0.45, paleta.filo[1]);
+    g.addColorStop(1, paleta.filo[2]);
+    return g;
+  }
+
+  /** Relleno de los sectores de acento: más tenue cerca del centro, más marcado en el borde. */
+  function acentoCristal(radio: number): CanvasGradient {
+    const g = ctx.createRadialGradient(0, 0, radio * 0.12, 0, 0, radio);
+    g.addColorStop(0, paleta.acento[0]);
+    g.addColorStop(1, paleta.acento[1]);
+    return g;
+  }
+
+  function dibujarSectores(radio: number, sector: number): void {
+    const acento = acentoCristal(radio);
+    premios.forEach((premio, i) => {
+      const inicio = -Math.PI / 2 + i * sector;
+      const { fondo, texto } = colorDe(i, premios.length);
+
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, radio, inicio, inicio + sector);
+      ctx.closePath();
+      ctx.fillStyle = fondo === 'acento' ? acento : paleta[fondo];
+      ctx.fill();
+
+      // Texto radial con la letra, el espaciado y las mayúsculas del estilo, y una sombra suave
+      // para leerse sobre la transmisión aunque la rueda esté girando.
+      ctx.save();
+      ctx.rotate(inicio + sector / 2);
+      ctx.fillStyle = paleta[texto];
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = paleta.sombra;
+      ctx.shadowBlur = 10 * escala;
+      ctx.shadowOffsetY = 1 * escala;
+      const tamano = premios.length > 10 ? 26 : 32;
+      ctx.font = `600 ${tamano}px "${paleta.fuente}", "Montserrat", "Segoe UI", sans-serif`;
+      ctx.letterSpacing = `${Math.round(tamano * paleta.espaciado)}px`; // navegadores sin soporte lo ignoran
+      const lineas = partirTexto(paleta.transformar(premio.texto), radio * 0.56);
+      lineas.forEach((l, k) => ctx.fillText(l, radio - 56, (k - (lineas.length - 1) / 2) * tamano * 1.15));
+      ctx.restore();
+    });
+  }
+
+  /** Divisiones, aro con resplandor y una pequeña gema en cada división (grosor 0 = sin líneas). */
+  function dibujarAro(radio: number, sector: number): void {
+    if (paleta.grosor <= 0) return;
+    const metal = filo(radio);
+
+    // Divisiones: líneas finas del centro al borde.
+    ctx.strokeStyle = metal;
+    ctx.lineWidth = paleta.grosor * 1.5;
+    for (let i = 0; i < premios.length; i++) {
+      const a = -Math.PI / 2 + i * sector;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(a) * radio, Math.sin(a) * radio);
+      ctx.stroke();
+    }
+
+    // Aro exterior con el resplandor del estilo.
+    ctx.save();
+    ctx.shadowColor = paleta.colorResplandor;
+    ctx.shadowBlur = paleta.resplandor * escala;
+    ctx.strokeStyle = metal;
+    ctx.lineWidth = paleta.grosor * 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, radio, 0, VUELTA);
+    ctx.stroke();
+    ctx.restore();
+
+    // Línea interior muy fina: el "canto" del cristal.
+    ctx.strokeStyle = paleta.tenue;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, radio - 16, 0, VUELTA);
+    ctx.stroke();
+
+    // Gema pequeña (rombo en proporción áurea) en cada división, sobre el aro.
+    for (let i = 0; i < premios.length; i++) {
+      const a = -Math.PI / 2 + i * sector;
+      ctx.save();
+      ctx.translate(Math.cos(a) * radio, Math.sin(a) * radio);
+      ctx.rotate(a);
+      const g = ctx.createLinearGradient(-7, -4, 7, 4);
+      g.addColorStop(0, paleta.gema[0] ?? paleta.filo[0]);
+      g.addColorStop(0.5, paleta.filo[0]);
+      g.addColorStop(1, paleta.filo[2]);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(-7, 0); ctx.lineTo(0, -7 / PHI); ctx.lineTo(7, 0); ctx.lineTo(0, 7 / PHI);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  /**
+   * Centro que no gira: un disco de cristal con filo metálico, un anillo a r/φ y una gema
+   * octogonal de facetas (del color del borde) con un punto de luz en el eje.
+   */
+  function dibujarCentro(): void {
+    const r = 46;
+
+    // Halo: anillo muy fino a r × φ.
+    ctx.strokeStyle = paleta.tenue;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, r * PHI, 0, VUELTA);
+    ctx.stroke();
+
+    // Disco de cristal con filo y resplandor.
+    ctx.save();
+    ctx.shadowColor = paleta.colorResplandor;
+    ctx.shadowBlur = Math.min(paleta.resplandor, 12) * escala;
+    ctx.fillStyle = paleta.centro;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, VUELTA);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = filo(r);
+    ctx.lineWidth = Math.max(1, paleta.grosor * 1.5);
+    ctx.stroke();
+
+    ctx.strokeStyle = paleta.tenue;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(0, 0, r / PHI, 0, VUELTA);
+    ctx.stroke();
+
+    // Gema: ocho facetas triangulares alternando tonos claros y bruñidos.
+    const rg = r / (PHI * PHI);
+    for (let k = 0; k < 8; k++) {
+      const a1 = -Math.PI / 2 + (k * VUELTA) / 8 - VUELTA / 16;
+      const a2 = a1 + VUELTA / 8;
+      ctx.fillStyle = paleta.gema[k] ?? paleta.filo[0];
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.lineTo(Math.cos(a1) * rg, Math.sin(a1) * rg);
+      ctx.lineTo(Math.cos(a2) * rg, Math.sin(a2) * rg);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // Aristas de la gema.
+    ctx.strokeStyle = 'rgba(255, 255, 255, .55)';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    for (let k = 0; k <= 8; k++) {
+      const a = -Math.PI / 2 + (k * VUELTA) / 8 - VUELTA / 16;
+      const x = Math.cos(a) * rg;
+      const y = Math.sin(a) * rg;
+      if (k === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+
+    // Punto de luz en el eje.
+    const luz = ctx.createRadialGradient(0, 0, 0, 0, 0, rg * 0.75);
+    luz.addColorStop(0, 'rgba(255, 255, 255, .95)');
+    luz.addColorStop(0.35, 'rgba(255, 248, 220, .6)');
+    luz.addColorStop(1, 'rgba(255, 248, 220, 0)');
+    ctx.fillStyle = luz;
+    ctx.beginPath();
+    ctx.arc(0, 0, rg * 0.75, 0, VUELTA);
+    ctx.fill();
+  }
+
+  function dibujar(): void {
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, lienzo.width, lienzo.height);
+    if (!premios.length) return; // sin premios no hay sectores (y se evita dividir por cero)
+
+    // Todo se dibuja en unidades de un lienzo de 1000 × 1000; la escala lo lleva a los píxeles reales.
+    ctx.setTransform(escala, 0, 0, escala, 0, 0);
+    const centro = LADO / 2;
+    const radio = centro - 14;
+    const sector = VUELTA / premios.length;
+
+    ctx.save();
+    ctx.translate(centro, centro);
+    ctx.rotate(rotacion);
+    dibujarSectores(radio, sector);
+    dibujarAro(radio, sector);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(centro, centro);
+    dibujarCentro();
+    ctx.restore();
+  }
+
+
+  // ---------------------------------------------------------------------------
+  // 3. Giro y cola
+  // ---------------------------------------------------------------------------
+
+  /** Al pasar por cada división: clic y "golpe" del puntero. */
+  function clic(): void {
+    if (ajustes.sonido) sonar({ frecuencia: 1400, duracion: 0.06, volumen: 0.12, onda: 'triangle', subida: 1 });
+    puntero.classList.remove('golpe');
+    // Como en el original: `offsetWidth` no existe en un <svg>, así que no fuerza el reflujo y el
+    // "golpe" del puntero solo se ve la primera vez. Se conserva igual para que la ruleta se vea
+    // idéntica en el LIVE (cambiarlo haría temblar el puntero en cada división).
+    void (puntero as unknown as { offsetWidth?: number }).offsetWidth;
+    puntero.classList.add('golpe');
+  }
+
+  const suavizar = (t: number): number => 1 - Math.pow(1 - t, 4); // arranca rápido y frena suave
+
+  /** Anima la rueda hasta que el puntero quede sobre el premio `indice`. */
+  function girarHacia(indice: number): Promise<void> {
+    return new Promise((resolver) => {
+      const sector = VUELTA / premios.length;
+      const variacion = (Math.random() - 0.5) * sector * 0.7; // que no caiga siempre en el centro
+      const objetivo = -((indice + 0.5) * sector) + variacion;
+      const actual = ((rotacion % VUELTA) + VUELTA) % VUELTA;
+      const delta = (((objetivo - actual) % VUELTA) + VUELTA) % VUELTA;
+      const vueltas = MOVIMIENTO_REDUCIDO ? 1 : 5 + Math.floor(Math.random() * 2);
+      const desde = rotacion;
+      const hasta = rotacion + delta + vueltas * VUELTA;
+      const inicio = performance.now();
+      let ultimoSector = Math.floor(desde / sector);
+
+      function paso(ahora: number): void {
+        if (detenido) return;
+        const t = Math.min((ahora - inicio) / DURACION, 1);
+        rotacion = desde + (hasta - desde) * suavizar(t);
+        const sectorActual = Math.floor(rotacion / sector);
+        if (sectorActual !== ultimoSector) {
+          ultimoSector = sectorActual;
+          clic();
+        }
+        dibujar();
+        if (t < 1) requestAnimationFrame(paso);
+        else resolver();
+      }
+      requestAnimationFrame(paso);
+    });
+  }
+
+  function actualizarCola(): void {
+    cola.textContent = pendientes.length ? `+${pendientes.length} en espera` : '';
+    cola.classList.toggle('visible', pendientes.length > 0);
+  }
+
+  const miniatura = Object.assign(new Image(), { className: 'miniatura', alt: '' });
+
+  /** La miniatura del regalo: la del panel o, si no la tenía, la que mandó TikTok. */
+  const imagenRegalo = (): string => ajustes.imagen || (imagenAprendida.giftId === ajustes.giftId ? imagenAprendida.imagen : '');
+
+  /** En reposo el aviso se vuelve letrero: con qué regalo se gira (o nada, si está apagado). */
+  function mostrarIndicacion(): void {
+    const imagen = imagenRegalo();
+    aviso.classList.toggle('indicando', ajustes.indicar);
+    if (!ajustes.indicar) {
+      aviso.classList.remove('visible');
+      return;
+    }
+    const texto = `Envía ${ajustes.textoRegalo} para girar`;
+    // Si ya dice lo mismo, no se repite la animación de entrada (llegan configuraciones en vivo).
+    const igual = aviso.classList.contains('visible') && aviso.textContent === texto
+      && (aviso.querySelector('img')?.getAttribute('src') || '') === imagen;
+    if (!igual) mostrarAviso(texto, imagen);
+  }
+
+  function mostrarAviso(texto: string, imagen: string): void {
+    if (imagen) {
+      if (miniatura.getAttribute('src') !== imagen) miniatura.src = imagen;
+      aviso.replaceChildren(miniatura, texto);
+    } else {
+      aviso.textContent = texto;
+    }
+    aviso.classList.remove('visible');
+    void aviso.offsetWidth; // reinicia la animación de entrada
+    aviso.classList.add('visible');
+  }
+
+  /** Ejecuta los giros pendientes uno por uno. Solo corre una instancia a la vez. */
+  async function procesar(): Promise<void> {
+    if (girando || !pendientes.length) return;
+    girando = true;
+    escena.classList.remove('oculta');
+
+    while (pendientes.length && !detenido) {
+      const giro = pendientes.shift() as Giro;
+      actualizarCola();
+      aviso.classList.remove('indicando');
+      const veces = giro.cantidad > 1 ? ` ×${giro.cantidad}` : '';
+      mostrarAviso(`${giro.usuario} envió ${giro.regalo || 'una rosa 🌹'}${veces}`, giro.imagen);
+      resultado.classList.remove('visible');
+
+      await girarHacia(giro.indice);
+
+      resultado.textContent = `${premios[giro.indice]?.texto ?? giro.premio}${veces}`;
+      resultado.classList.add('visible');
+      // Ya anunciado en pantalla, el premio pasa a la Cola de retos (si está activada).
+      if (ajustes.cola && giro.aCola) {
+        void mandarReto(ajustes.cola, { texto: giro.premio, usuario: giro.usuario, origen: ajustes.origen, imagen: giro.imagen, cantidad: giro.cantidad });
+      }
+      await esperar(PAUSA_RESULTADO_MS);
+    }
+
+    girando = false;
+    mostrarIndicacion();
+    resultado.classList.remove('visible');
+    if (premiosNuevos) {
+      premios = premiosNuevos;
+      premiosNuevos = null;
+      dibujar();
+    }
+    if (ajustes.ocultar) escena.classList.add('oculta');
+  }
+
+  function encolar(giro: Giro): void {
+    pendientes.push(giro);
+    actualizarCola();
+    void procesar();
+  }
+
+
+  // ---------------------------------------------------------------------------
+  // 4. Configuración y regalos
+  // ---------------------------------------------------------------------------
+
+  /** Índice de un premio al azar, respetando los pesos. */
+  function elegirPremio(): number {
+    const total = premios.reduce((suma, p) => suma + p.peso, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < premios.length; i++) {
+      r -= premios[i]?.peso ?? 0;
+      if (r < 0) return i;
+    }
+    return premios.length - 1;
+  }
+
+  const hayPremiosValidos = (): boolean => premios.length >= 2 && premios.some((p) => p.peso > 0);
+
+  /**
+   * Aplica una configuración. Puede llegar en cualquier momento (cambios en vivo): si la
+   * ruleta está girando, los premios nuevos esperan a que termine la cola, para que el
+   * premio anunciado sea el mismo sobre el que se detuvo la rueda.
+   */
+  function aplicarConfig(cfg: ConfigRuleta): void {
+    const nuevos: Premio[] = (Array.isArray(cfg.p) ? cfg.p : [])
+      .map(([texto, peso, aCola]) => ({ texto: String(texto || ''), peso: Math.max(0, Number(peso) || 0), aCola: aCola !== 0 }))
+      .filter((p) => p.texto);
+
+    Object.assign(ajustes, {
+      giftId: String(cfg.g || '5655'),
+      textoRegalo: String(cfg.r || 'una rosa 🌹'),
+      imagen: String(cfg.img || ''),
+      girosPorRegalo: Math.max(1, Number(cfg.gpr) || 1),
+      unGiroPorCombo: cfg.uc === 1,
+      maxGiros: Math.max(1, Number(cfg.max) || 20),
+      cola: String(cfg.rc || ''),
+      origen: String(cfg.rcn || 'Ruleta').slice(0, 40),
+    });
+    if (cfg.oc !== undefined) ajustes.ocultar = Boolean(cfg.oc);
+    if (cfg.so !== undefined) ajustes.sonido = Boolean(cfg.so);
+    if (cfg.in !== undefined) ajustes.indicar = Boolean(cfg.in);
+
+    if (girando) {
+      premiosNuevos = nuevos;
+    } else {
+      premios = nuevos;
+      dibujar();
+      escena.classList.toggle('oculta', ajustes.ocultar);
+      mostrarIndicacion();
+    }
+  }
+
+  function alEvento(evento: EventoLive): void {
+    if (evento.tipo !== 'regalo' || evento.giftId !== ajustes.giftId || !hayPremiosValidos()) return;
+    // Un combo de 50 rosas no puede dejar la pantalla ocupada media hora: hay un tope.
+    const giros = Math.min(evento.cantidad * ajustes.girosPorRegalo, ajustes.maxGiros);
+    // Si el panel no tenía la miniatura del regalo y TikTok la manda, se usa desde ya.
+    if (evento.imagen && !ajustes.imagen) imagenAprendida = { giftId: ajustes.giftId, imagen: evento.imagen };
+    const imagen = imagenRegalo();
+    // Con "un solo giro por combo", todo el combo es un giro y el premio sale ×N.
+    const [vueltas, cantidad] = ajustes.unGiroPorCombo ? [1, giros] : [giros, 1];
+    for (let i = 0; i < vueltas; i++) {
+      const indice = elegirPremio();
+      const premio = premios[indice];
+      if (!premio) continue;
+      encolar({ usuario: evento.usuario, indice, premio: premio.texto, aCola: premio.aCola, cantidad, regalo: ajustes.textoRegalo, imagen });
+    }
+  }
+
+
+  // ---------------------------------------------------------------------------
+  // 5. Arranque y cierre
+  // ---------------------------------------------------------------------------
+
+  // Estilo nuevo (con la configuración o desde la vista previa del panel): se toma la paleta y
+  // se redibuja; si cambió la fuente, otra vez cuando termine de cargar. Durante un giro no hace
+  // falta: el siguiente cuadro de la animación ya usa la paleta nueva.
+  const alTema = (ev: Event): void => {
+    const detalle = (ev as CustomEvent<Tema>).detail;
+    paleta = paletaRuleta(detalle);
+    if (!girando) dibujar();
+    void fuenteLista(detalle.fu).then(() => { if (!girando && !detenido) dibujar(); });
+  };
+  addEventListener(EVENTO_TEMA, alTema);
+
+  // La fuente llega después del primer dibujo: se redibuja para que el texto la use.
+  void document.fonts.ready.then(() => { if (!girando && !detenido) dibujar(); });
+
+  // Resolución del canvas: al arrancar, al cambiar el tamaño de la fuente en OBS (o de la
+  // ventana) y al cambiar el zoom o la pantalla (cambia devicePixelRatio, y con él 'resize').
+  const observador = new ResizeObserver(ajustarResolucion);
+  observador.observe(lienzo);
+  addEventListener('resize', ajustarResolucion);
+  ajustarResolucion(); // ya, sin esperar al observador (que no corre con la página en segundo plano)
+
+  return {
+    aplicarConfig,
+    alEvento,
+    detener() {
+      detenido = true;
+      observador.disconnect();
+      removeEventListener('resize', ajustarResolucion);
+      removeEventListener(EVENTO_TEMA, alTema);
+    },
+  };
+}

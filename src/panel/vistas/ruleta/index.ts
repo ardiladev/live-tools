@@ -1,5 +1,14 @@
-// Vista provisional: se reemplaza al portar legado/js/panel/vistas/ruleta.js (ver vistas/tipos.ts).
-import { vistaEnMigracion } from '../EnMigracion';
+// Juegos → Sorteos → Ruleta de regalos (#/ruleta) y Ruleta premium (#/ruleta-premium).
+// Las dos salen de la misma fábrica (config.ts y VistaRuleta.tsx) y usan el mismo ruleta.html.
+import { createElement } from 'react';
+import type { DefinicionVista } from '../tipos';
+import { TIPOS, type TipoRuleta } from './config';
+import { VistaRuleta } from './VistaRuleta';
 
-export const ruletaNormal = vistaEnMigracion('ruleta', 'Ruleta de regalos', 'Cada vez que alguien envía el regalo configurado, la ruleta gira en tu transmisión y sortea un premio.');
-export const ruletaPremium = vistaEnMigracion('ruleta-premium', 'Ruleta premium', 'Una segunda ruleta, con su propio regalo (uno más caro) y premios más grandes. Va en otra fuente de OBS y gira sola, aparte de la normal.');
+function crearVista(tipo: TipoRuleta): DefinicionVista {
+  const { id, titulo, descripcion } = TIPOS[tipo];
+  return { id, titulo, descripcion, Componente: () => createElement(VistaRuleta, { tipo }) };
+}
+
+export const ruletaNormal = crearVista('normal');
+export const ruletaPremium = crearVista('premium');

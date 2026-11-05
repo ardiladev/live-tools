@@ -33,6 +33,9 @@ if (!vista) {
 const opcion = (nombre) => args.flatMap((a, i) => (a === nombre ? [args[i + 1]] : []));
 const estado = opcion('--estado')[0] ? readFileSync(opcion('--estado')[0], 'utf8') : null;
 const pruebas = opcion('--probar');
+// --clic "texto": pulsa (en orden) el primer elemento con ese texto antes de comparar
+// (p. ej. "Personalizar" para comparar también el desplegable, o el texto de una casilla).
+const clics = opcion('--clic');
 const salida = `pruebas/salida/panel-${vista}`;
 mkdirSync(salida, { recursive: true });
 
@@ -73,12 +76,17 @@ async function correr(navegador, version) {
 
   await pagina.goto(`${VERSIONES[version]}#/${vista}`, { waitUntil: 'load' });
   await esperar(2500); // la vista previa carga a los 400 ms
+  for (const objetivo of clics) {
+    await pagina.getByText(objetivo, { exact: false }).first().click();
+    await esperar(400);
+  }
   const texto = await pagina.evaluate(() => document.querySelector('main')?.innerText.replace(/\s+/g, ' ').trim() || '');
   await pagina.screenshot({ path: `${salida}/vista-${version}.png`, fullPage: true });
 
   const previas = [];
   for (const boton of pruebas) {
-    await pagina.evaluate(() => window.__reiniciarAzar?.());
+    // La semilla se reinicia en el panel y en el iframe de la vista previa (cada uno tiene su azar).
+    for (const marco of pagina.frames()) await marco.evaluate(() => window.__reiniciarAzar?.()).catch(() => {});
     await pagina.locator('.pruebas button', { hasText: boton }).first().click();
     await esperar(1500);
     const marco = pagina.frameLocator('.escenario iframe').first();
@@ -94,6 +102,11 @@ const navegador = await chromium.launch({ channel: 'chrome', headless: true });
 const viejo = await correr(navegador, 'legado');
 const nuevo = await correr(navegador, 'nuevo');
 await navegador.close();
+
+// Agregado a propósito en la versión nueva (casilla de la textura estática en el editor de estilo):
+// no cuenta como diferencia.
+const TEXTURA = ' TEXTURA Textura estática (cuadros fijos, de prueba) Las placas se vuelven ventanas a un patrón de cuadros morados y rosados que queda quieto aunque el contenido se mueva. Apágala para volver al cristal.';
+nuevo.texto = nuevo.texto.split(TEXTURA).join('');
 
 let diferencias = 0;
 const informe = [];

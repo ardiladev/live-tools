@@ -1,4 +1,5 @@
-// Provisional: se reemplaza al portar legado/ruleta.html (modelo: src/widgets/carrera).
+// ruleta.html → widget "Ruleta de regalos" (ruleta normal y premium; ver Ruleta.tsx y motor.ts).
 import { montarWidget } from '../../componentes/montarWidget';
+import { Ruleta } from './Ruleta';
 
-montarWidget(null);
+montarWidget(<Ruleta />);
