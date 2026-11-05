@@ -47,8 +47,11 @@ async function correr(navegador, version, escenario, salida) {
   });
   // Azar con semilla fija: las dos versiones sacan los mismos números (premios, rodillos…)
   // siempre que llamen a Math.random en el mismo orden.
+  // React también usa Math.random al cargar: por eso la semilla se reinicia justo antes de
+  // cada prueba (window.__reiniciarAzar), y las dos versiones parten del mismo punto.
   await contexto.addInitScript(() => {
     let semilla = 20261105;
+    window.__reiniciarAzar = () => { semilla = 20261105; };
     Math.random = () => {
       semilla = (semilla * 1103515245 + 12345) % 2147483648;
       return semilla / 2147483648;
@@ -66,6 +69,7 @@ async function correr(navegador, version, escenario, salida) {
   const capturas = {};
   const mandar = (datos) => pagina.evaluate((d) => window.postMessage(d, location.origin), datos);
   for (const paso of escenario.pasos || []) {
+    if (paso.evento || paso.config) await pagina.evaluate(() => window.__reiniciarAzar?.());
     if (paso.evento) await mandar({ tipo: 'simular', evento: paso.evento });
     if (paso.config) await mandar({ tipo: 'config', config: paso.config });
     if (paso.tema) await mandar({ tipo: 'tema', est: paso.tema });

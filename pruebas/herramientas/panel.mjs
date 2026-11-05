@@ -49,8 +49,11 @@ async function correr(navegador, version) {
     }, estado);
   }
   // Azar con semilla fija (botones de prueba «al azar»): las dos versiones eligen lo mismo.
+  // React también usa Math.random al cargar: por eso la semilla se reinicia justo antes de
+  // cada prueba (window.__reiniciarAzar), y las dos versiones parten del mismo punto.
   await contexto.addInitScript(() => {
     let semilla = 20261105;
+    window.__reiniciarAzar = () => { semilla = 20261105; };
     Math.random = () => {
       semilla = (semilla * 1103515245 + 12345) % 2147483648;
       return semilla / 2147483648;
@@ -75,6 +78,7 @@ async function correr(navegador, version) {
 
   const previas = [];
   for (const boton of pruebas) {
+    await pagina.evaluate(() => window.__reiniciarAzar?.());
     await pagina.locator('.pruebas button', { hasText: boton }).first().click();
     await esperar(1500);
     const marco = pagina.frameLocator('.escenario iframe').first();
