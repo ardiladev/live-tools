@@ -529,6 +529,10 @@ live-tools/
 Las pruebas unitarias del núcleo están junto a cada módulo (`src/nucleo/*.test.ts`). Cada archivo empieza con
 un encabezado que explica qué hace y lista sus secciones; cada sección está marcada con un separador.
 
+La versión original (HTML/CSS/JS sin compilar) ya no está en la carpeta, pero sigue en el historial de git.
+Los comentarios «Port de `legado/js/…`» señalan de qué archivo original sale cada pieza:
+`npm run legado:extraer` la copia a `pruebas/salida/legado` (ignorada por git) para consultarla o compararla.
+
 ---
 
 ## 6. Agregar una función nueva
