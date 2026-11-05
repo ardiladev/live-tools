@@ -17,6 +17,7 @@
 //     "config": { … },                          // va en #c= (codificada como lo hace el panel)
 //     "ancho": 1920, "alto": 400,               // tamaño de la ventana (opcional)
 //     "inicio": "2026-11-05T12:00:00-05:00",    // hora simulada al abrir (opcional)
+//     "atributos": ".cancion, .relleno",        // compara también clases, data-* y estilo (opcional)
 //     "pasos": [
 //       { "evento": { "tipo": "regalo", … } },   // postMessage { tipo: 'simular', evento }
 //       { "config": { … } },                     // postMessage { tipo: 'config', config }
@@ -90,11 +91,15 @@ async function correr(navegador, version, escenario, salida) {
     if (paso.recargar) { await pagina.reload({ waitUntil: 'load' }); await pagina.clock.runFor(300); }
     if (paso.evento || paso.config || paso.tema) await pagina.clock.runFor(50);
     if (paso.captura) {
-      const datos = await pagina.evaluate(() => ({
+      const datos = await pagina.evaluate((selector) => ({
         texto: document.body.innerText.replace(/\s+/g, ' ').trim(),
         guardado: Object.fromEntries(Object.keys(localStorage).filter((k) => k.startsWith('live-tools:') && !k.startsWith('live-tools:widget:'))
           .sort().map((k) => [k, localStorage.getItem(k)])),
-      }));
+        // Clases (ordenadas), data-* y estilo en línea de los elementos pedidos ("atributos").
+        atributos: selector ? [...document.querySelectorAll(selector)].map((el) => (
+          `${[...el.classList].sort().join('.')} ${JSON.stringify({ ...el.dataset })} ${el.getAttribute('style') || ''}`.trim()
+        )) : [],
+      }), escenario.atributos || '');
       mkdirSync(salida, { recursive: true });
       await pagina.screenshot({ path: `${salida}/${paso.captura}-${version}.png`, animations: 'disabled' });
       capturas[paso.captura] = datos;
@@ -122,10 +127,13 @@ for (const [nombre, v] of Object.entries(viejo.capturas)) {
   const n = nuevo.capturas[nombre] || {};
   const textoIgual = v.texto === n.texto;
   const guardadoIgual = JSON.stringify(v.guardado) === JSON.stringify(n.guardado);
-  if (!textoIgual || !guardadoIgual) diferencias++;
-  informe.push(`■ ${nombre}: texto ${textoIgual ? 'IGUAL' : 'DISTINTO'} · localStorage ${guardadoIgual ? 'IGUAL' : 'DISTINTO'}`);
+  const atributosIguales = JSON.stringify(v.atributos) === JSON.stringify(n.atributos);
+  if (!textoIgual || !guardadoIgual || !atributosIguales) diferencias++;
+  informe.push(`■ ${nombre}: texto ${textoIgual ? 'IGUAL' : 'DISTINTO'} · localStorage ${guardadoIgual ? 'IGUAL' : 'DISTINTO'}`
+    + (escenario.atributos ? ` · atributos ${atributosIguales ? 'IGUALES' : 'DISTINTOS'}` : ''));
   if (!textoIgual) informe.push(`    legado: ${v.texto}\n    nuevo:  ${n.texto}`);
   if (!guardadoIgual) informe.push(`    legado: ${JSON.stringify(v.guardado)}\n    nuevo:  ${JSON.stringify(n.guardado)}`);
+  if (!atributosIguales) informe.push(`    legado: ${JSON.stringify(v.atributos)}\n    nuevo:  ${JSON.stringify(n.atributos)}`);
   informe.push(`    capturas: ${salida}/${nombre}-legado.png · ${salida}/${nombre}-nuevo.png`);
 }
 // Solo cuentan los errores que la versión vieja no tenía (p. ej. el 404 del favicon sale en las dos).

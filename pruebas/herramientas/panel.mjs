@@ -11,8 +11,14 @@
 //
 //   node pruebas/herramientas/panel.mjs carrera
 //   node pruebas/herramientas/panel.mjs carrera --estado pruebas/panel/estado.json --probar "Regalo al azar" --probar "Combo ×10 al azar"
+//   node pruebas/herramientas/panel.mjs repertorio --clic "boton:Activar@3" --clic "boton:Hecha y siguiente"
 //
-// Sale con código 1 si el texto difiere o hay errores solo en la versión nueva. Capturas en
+// --clic "texto[@n]" pulsa el n-ésimo elemento (1 por defecto) con ese texto; "boton:nombre[@n]",
+// el n-ésimo botón con ese nombre exacto (su texto o su aria-label). --escribir "etiqueta=valor"
+// llena el campo con esa etiqueta (o aria-label). Se hacen en el orden dado.
+// Además del texto, compara los ajustes del widget guardados en "panel-live" (widgets[<vista>])
+// y la última configuración subida a Supabase (interceptada), con las horas normalizadas.
+// Sale con código 1 si algo difiere o hay errores solo en la versión nueva. Capturas en
 // pruebas/salida/panel-<vista>/.
 // =============================================================================
 
@@ -36,6 +42,8 @@ const pruebas = opcion('--probar');
 // --clic "texto": pulsa (en orden) el primer elemento con ese texto antes de comparar
 // (p. ej. "Personalizar" para comparar también el desplegable, o el texto de una casilla).
 const clics = opcion('--clic');
+// --clic y --escribir "etiqueta=valor" (llena el campo con esa etiqueta o aria-label), en el orden dados.
+const acciones = args.flatMap((a, i) => (a === '--clic' || a === '--escribir' ? [{ tipo: a, valor: args[i + 1] }] : []));
 const salida = `pruebas/salida/panel-${vista}`;
 mkdirSync(salida, { recursive: true });
 
@@ -76,11 +84,23 @@ async function correr(navegador, version) {
 
   await pagina.goto(`${VERSIONES[version]}#/${vista}`, { waitUntil: 'load' });
   await esperar(2500); // la vista previa carga a los 400 ms
-  for (const objetivo of clics) {
-    await pagina.getByText(objetivo, { exact: false }).first().click();
+  for (const { tipo, valor } of acciones) {
+    if (tipo === '--escribir') {
+      const [etiqueta, ...resto] = valor.split('=');
+      await pagina.getByLabel(etiqueta, { exact: true }).first().fill(resto.join('='));
+    } else {
+      const [, boton, nombre, n] = valor.match(/^(boton:)?(.*?)(?:@(\d+))?$/);
+      const elementos = boton
+        ? pagina.getByRole('button', { name: nombre, exact: true })
+        : pagina.getByText(nombre, { exact: false });
+      await elementos.nth(Number(n || 1) - 1).click();
+    }
     await esperar(400);
   }
+  if (acciones.length) await esperar(1500); // lo que se guarda o se sube con espera
   const texto = await pagina.evaluate(() => document.querySelector('main')?.innerText.replace(/\s+/g, ' ').trim() || '');
+  const ajustes = await pagina.evaluate((id) => JSON.parse(localStorage.getItem('panel-live') || '{}').widgets?.[id] ?? null, vista);
+  const subida = llamadas.filter((l) => l.funcion === 'guardar_widget').at(-1);
   await pagina.screenshot({ path: `${salida}/vista-${version}.png`, fullPage: true });
 
   const previas = [];
@@ -95,7 +115,20 @@ async function correr(navegador, version) {
   }
   if (pruebas.length) await pagina.locator('.escenario').first().screenshot({ path: `${salida}/previa-${version}.png` });
   await contexto.close();
-  return { texto, previas, errores, llamadas };
+  return { texto, previas, errores, llamadas, ajustes, config: subida ? JSON.parse(subida.cuerpo).p_config : null };
+}
+
+/**
+ * Para comparar: claves en orden, las horas (Date.now(): _v, ronda…) como "<hora>" y la clave de
+ * Euler (k) tapada. `tx: 0` (textura estática apagada, agregada a propósito en la versión nueva) no cuenta.
+ */
+function normalizar(valor) {
+  if (Array.isArray(valor)) return valor.map(normalizar);
+  if (valor && typeof valor === 'object') {
+    return Object.fromEntries(Object.keys(valor).filter((k) => !(k === 'tx' && valor[k] === 0)).sort()
+      .map((k) => [k, k === 'k' ? '<clave>' : normalizar(valor[k])]));
+  }
+  return typeof valor === 'number' && valor > 1e12 ? '<hora>' : valor;
 }
 
 const navegador = await chromium.launch({ channel: 'chrome', headless: true });
@@ -114,6 +147,13 @@ const textoIgual = viejo.texto === nuevo.texto;
 if (!textoIgual) diferencias++;
 informe.push(`■ Texto de la vista: ${textoIgual ? 'IGUAL' : 'DISTINTO'}`);
 if (!textoIgual) informe.push(`    legado: ${viejo.texto}\n    nuevo:  ${nuevo.texto}`);
+for (const [clave, titulo] of [['ajustes', `Ajustes guardados (panel-live → widgets.${vista})`], ['config', 'Última configuración subida']]) {
+  const v = JSON.stringify(normalizar(viejo[clave]));
+  const n = JSON.stringify(normalizar(nuevo[clave]));
+  if (v !== n) diferencias++;
+  informe.push(`■ ${titulo}: ${v === n ? 'IGUAL' : 'DISTINTO'}${viejo[clave] === null && nuevo[clave] === null ? ' (no hay)' : ''}`);
+  if (v !== n) informe.push(`    legado: ${v}\n    nuevo:  ${n}`);
+}
 viejo.previas.forEach((p, i) => {
   const n = nuevo.previas[i];
   const igual = p.texto === n?.texto;

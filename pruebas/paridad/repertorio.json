@@ -1,0 +1,730 @@
+{
+ "pagina": "repertorio",
+ "consulta": "",
+ "ancho": 600,
+ "alto": 900,
+ "atributos": ".lista, .cancion, .relleno",
+ "config": {
+  "ti": "Repertorio",
+  "c": [
+   {
+    "i": "c1",
+    "n": "Baile K-pop",
+    "m": 500
+   },
+   {
+    "i": "c2",
+    "n": "Salsa choke",
+    "m": 500
+   },
+   {
+    "i": "c3",
+    "n": "Reto viral",
+    "m": 800
+   },
+   {
+    "i": "c4",
+    "n": "Champeta",
+    "m": 800
+   },
+   {
+    "i": "c5",
+    "n": "Freestyle",
+    "m": 1000
+   },
+   {
+    "i": "c6",
+    "n": "Gran final",
+    "m": 1000
+   }
+  ],
+  "a": "c1",
+  "h": [],
+  "mx": 4,
+  "v": 2,
+  "ro": 1,
+  "s": 0
+ },
+ "pasos": [
+  {
+   "captura": "inicio"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 100,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 250
+  },
+  {
+   "captura": "contando"
+  },
+  {
+   "esperar": 400
+  },
+  {
+   "captura": "cien"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 10,
+    "diamantes": 1,
+    "imagen": ""
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 3,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "rosas-y-sin-precio"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 500,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 2000
+  },
+  {
+   "captura": "desbloqueada"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 100,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "sonando-sigue-sumando"
+  },
+  {
+   "recargar": true
+  },
+  {
+   "captura": "recarga-conserva"
+  },
+  {
+   "config": {
+    "ti": "Repertorio",
+    "c": [
+     {
+      "i": "c1",
+      "n": "Baile K-pop",
+      "m": 500
+     },
+     {
+      "i": "c2",
+      "n": "Salsa choke",
+      "m": 500
+     },
+     {
+      "i": "c3",
+      "n": "Reto viral",
+      "m": 800
+     },
+     {
+      "i": "c4",
+      "n": "Champeta",
+      "m": 800
+     },
+     {
+      "i": "c5",
+      "n": "Freestyle",
+      "m": 1000
+     },
+     {
+      "i": "c6",
+      "n": "Gran final",
+      "m": 1000
+     }
+    ],
+    "a": "c2",
+    "h": [
+     "c1"
+    ],
+    "mx": 4,
+    "v": 2,
+    "ro": 1,
+    "s": 0
+   }
+  },
+  {
+   "captura": "siguiente"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 300,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 100
+  },
+  {
+   "config": {
+    "ti": "Bailes",
+    "c": [
+     {
+      "i": "c1",
+      "n": "Baile K-pop",
+      "m": 500
+     },
+     {
+      "i": "c2",
+      "n": "Salsa choke",
+      "m": 500
+     },
+     {
+      "i": "c3",
+      "n": "Reto viral",
+      "m": 800
+     },
+     {
+      "i": "c4",
+      "n": "Champeta",
+      "m": 800
+     },
+     {
+      "i": "c5",
+      "n": "Freestyle",
+      "m": 1000
+     },
+     {
+      "i": "c6",
+      "n": "Gran final",
+      "m": 1000
+     }
+    ],
+    "a": "c2",
+    "h": [
+     "c1"
+    ],
+    "mx": 4,
+    "v": 2,
+    "ro": 1,
+    "s": 0
+   }
+  },
+  {
+   "captura": "config-corta-animacion"
+  },
+  {
+   "config": {
+    "ti": "Repertorio",
+    "c": [
+     {
+      "i": "c1",
+      "n": "Baile K-pop",
+      "m": 500
+     },
+     {
+      "i": "c2",
+      "n": "Salsa choke",
+      "m": 500
+     },
+     {
+      "i": "c3",
+      "n": "Reto viral",
+      "m": 800
+     },
+     {
+      "i": "c4",
+      "n": "Champeta",
+      "m": 800
+     },
+     {
+      "i": "c5",
+      "n": "Freestyle",
+      "m": 1000
+     },
+     {
+      "i": "c6",
+      "n": "Gran final",
+      "m": 1000
+     }
+    ],
+    "a": "c6",
+    "h": [
+     "c1",
+     "c2"
+    ],
+    "mx": 4,
+    "v": 2,
+    "ro": 1,
+    "s": 0
+   }
+  },
+  {
+   "captura": "ultima-activa"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 1000,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "ultima-sonando"
+  },
+  {
+   "config": {
+    "ti": "Repertorio",
+    "c": [
+     {
+      "i": "c1",
+      "n": "Baile K-pop",
+      "m": 500
+     },
+     {
+      "i": "c2",
+      "n": "Salsa choke",
+      "m": 500
+     },
+     {
+      "i": "c3",
+      "n": "Reto viral",
+      "m": 800
+     },
+     {
+      "i": "c4",
+      "n": "Champeta",
+      "m": 800
+     },
+     {
+      "i": "c5",
+      "n": "Freestyle",
+      "m": 1000
+     },
+     {
+      "i": "c6",
+      "n": "Gran final",
+      "m": 1000
+     }
+    ],
+    "a": "c6",
+    "h": [
+     "c1",
+     "c2",
+     "c6"
+    ],
+    "mx": 4,
+    "v": 2,
+    "ro": 1,
+    "s": 0
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 50,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "hecha-no-suma"
+  },
+  {
+   "config": {
+    "ti": "Repertorio",
+    "c": [
+     {
+      "i": "c1",
+      "n": "Baile K-pop",
+      "m": 500
+     },
+     {
+      "i": "c2",
+      "n": "Salsa choke",
+      "m": 500
+     },
+     {
+      "i": "c3",
+      "n": "Reto viral",
+      "m": 800
+     },
+     {
+      "i": "c4",
+      "n": "Champeta",
+      "m": 800
+     },
+     {
+      "i": "c5",
+      "n": "Freestyle",
+      "m": 1000
+     },
+     {
+      "i": "c6",
+      "n": "Gran final",
+      "m": 1000
+     }
+    ],
+    "a": "nada",
+    "h": [
+     "c1",
+     "c2",
+     "c6"
+    ],
+    "mx": 4,
+    "v": 2,
+    "ro": 1,
+    "s": 0
+   }
+  },
+  {
+   "captura": "activa-inexistente"
+  },
+  {
+   "config": {
+    "ti": "Repertorio",
+    "c": [
+     {
+      "i": "c1",
+      "n": "Baile K-pop",
+      "m": 500
+     },
+     {
+      "i": "c2",
+      "n": "Salsa choke",
+      "m": 500
+     },
+     {
+      "i": "c3",
+      "n": "Reto viral",
+      "m": 800
+     },
+     {
+      "i": "c4",
+      "n": "Champeta",
+      "m": 800
+     },
+     {
+      "i": "c5",
+      "n": "Freestyle",
+      "m": 1000
+     },
+     {
+      "i": "c6",
+      "n": "Gran final",
+      "m": 1000
+     }
+    ],
+    "a": "c3",
+    "h": [
+     "c1",
+     "c2",
+     "c6"
+    ],
+    "mx": 4,
+    "v": 0,
+    "ro": 1,
+    "s": 0
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 2,
+    "diamantes": 0,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "v-cero-cuenta-uno"
+  },
+  {
+   "config": {
+    "ti": "",
+    "c": [
+     {
+      "i": "c1",
+      "n": "Baile K-pop",
+      "m": 500
+     },
+     {
+      "i": "c2",
+      "n": "Salsa choke",
+      "m": 500
+     },
+     {
+      "i": "c3",
+      "n": "Reto viral",
+      "m": 800
+     },
+     {
+      "i": "c4",
+      "n": "Champeta",
+      "m": 800
+     },
+     {
+      "i": "c5",
+      "n": "Freestyle",
+      "m": 1000
+     },
+     {
+      "i": "c6",
+      "n": "Gran final",
+      "m": 1000
+     }
+    ],
+    "a": "c3",
+    "h": [],
+    "mx": 3,
+    "v": 2,
+    "ro": 1,
+    "s": 0
+   }
+  },
+  {
+   "captura": "tres-sin-titulo"
+  },
+  {
+   "config": {
+    "ti": "Repertorio",
+    "c": [
+     {
+      "i": "c1",
+      "n": "Baile K-pop",
+      "m": 500
+     },
+     {
+      "i": "c2",
+      "n": "Salsa choke",
+      "m": 500
+     },
+     {
+      "i": "c3",
+      "n": "Reto viral",
+      "m": 800
+     },
+     {
+      "i": "c4",
+      "n": "Champeta",
+      "m": 800
+     },
+     {
+      "i": "c5",
+      "n": "Freestyle",
+      "m": 1000
+     },
+     {
+      "i": "c6",
+      "n": "Gran final",
+      "m": 1000
+     }
+    ],
+    "a": "c3",
+    "h": [],
+    "mx": 3,
+    "v": 2,
+    "ro": 2,
+    "s": 0
+   }
+  },
+  {
+   "captura": "reiniciado"
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 800,
+    "imagen": ""
+   }
+  },
+  {
+   "esperar": 300
+  },
+  {
+   "config": {
+    "ti": "Repertorio",
+    "c": [
+     {
+      "i": "c1",
+      "n": "Baile K-pop",
+      "m": 500
+     },
+     {
+      "i": "c2",
+      "n": "Salsa choke",
+      "m": 500
+     },
+     {
+      "i": "c3",
+      "n": "Reto viral",
+      "m": 800
+     },
+     {
+      "i": "c4",
+      "n": "Champeta",
+      "m": 800
+     },
+     {
+      "i": "c5",
+      "n": "Freestyle",
+      "m": 1000
+     },
+     {
+      "i": "c6",
+      "n": "Gran final",
+      "m": 1000
+     }
+    ],
+    "a": "c4",
+    "h": [
+     "c3"
+    ],
+    "mx": 3,
+    "v": 2,
+    "ro": 2,
+    "s": 0
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "c3-sale-y-vuelve"
+  },
+  {
+   "config": {
+    "ti": "Repertorio",
+    "c": [
+     {
+      "i": "c1",
+      "n": "Baile K-pop",
+      "m": 500
+     },
+     {
+      "i": "c2",
+      "n": "Salsa choke",
+      "m": 500
+     },
+     {
+      "i": "c3",
+      "n": "Reto viral",
+      "m": 800
+     },
+     {
+      "i": "c4",
+      "n": "Champeta",
+      "m": 800
+     },
+     {
+      "i": "c5",
+      "n": "Freestyle",
+      "m": 1000
+     },
+     {
+      "i": "c6",
+      "n": "Gran final",
+      "m": 1000
+     }
+    ],
+    "a": "c3",
+    "h": [],
+    "mx": 3,
+    "v": 2,
+    "ro": 2,
+    "s": 0
+   }
+  },
+  {
+   "esperar": 600
+  },
+  {
+   "captura": "c3-vuelve-sin-destello"
+  },
+  {
+   "config": {
+    "ti": "Repertorio",
+    "c": [],
+    "a": "",
+    "h": [],
+    "mx": 4,
+    "v": 2,
+    "ro": 1,
+    "s": 0
+   }
+  },
+  {
+   "evento": {
+    "tipo": "regalo",
+    "usuario": "Ana",
+    "giftId": "0",
+    "nombre": "Regalo",
+    "cantidad": 1,
+    "diamantes": 100,
+    "imagen": ""
+   }
+  },
+  {
+   "captura": "vacia"
+  }
+ ]
+}
