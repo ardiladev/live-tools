@@ -161,13 +161,15 @@ const tapar = (v) => (v ? `<huella ${createHash('sha256').update(String(v)).dige
 
 /**
  * Para comparar: claves en orden, las horas (Date.now(): _v, ronda…) como "<hora>", las claves por su
- * huella, los ids aleatorios de la cola (cl, rc) como "<id de nube>". `tx: 0` (textura estática apagada,
- * agregada a propósito en la versión nueva) no cuenta.
+ * huella, los ids aleatorios de la cola (cl, rc) como "<id de nube>". Las claves agregadas a propósito en
+ * la versión nueva, con su valor por defecto, no cuentan: `tx: 0` (textura estática apagada) y
+ * `forma: 'franja'` (forma de la fuente del jefe, solo para su vista previa).
  */
+const NUEVAS_POR_DEFECTO = { tx: 0, forma: 'franja' };
 function normalizar(valor) {
   if (Array.isArray(valor)) return valor.map(normalizar);
   if (valor && typeof valor === 'object') {
-    return Object.fromEntries(Object.keys(valor).filter((k) => !(k === 'tx' && valor[k] === 0)).sort()
+    return Object.fromEntries(Object.keys(valor).filter((k) => !(Object.hasOwn(NUEVAS_POR_DEFECTO, k) && valor[k] === NUEVAS_POR_DEFECTO[k])).sort()
       .map((k) => [k, ['k', 'clave', 'secreto'].includes(k) ? tapar(valor[k])
         : ['cl', 'rc'].includes(k) ? (valor[k] ? '<id de nube>' : '') // ids aleatorios de la cola (crypto)
           : normalizar(valor[k])]));
@@ -185,13 +187,19 @@ await navegador.close();
 // y la disposición en bloques, que innerText refleja. Lo que se exige es lo que importa: las
 // mismas palabras, en el mismo orden.
 const comparable = (texto) => texto.toLocaleLowerCase('es').replace(/\s+/g, '');
-// Agregado a propósito en la versión nueva (casilla de la textura estática en el editor de estilo):
-// no cuenta como diferencia.
-const TEXTURA = comparable('TEXTURA Textura estática (cuadros fijos, de prueba) Las placas se vuelven ventanas a un patrón de cuadros morados y rosados que queda quieto aunque el contenido se mueva. Apágala para volver al cristal.');
+// Agregados a propósito en la versión nueva: no cuentan como diferencia.
+//   - en todas las vistas: la casilla de la textura estática del editor de estilo;
+//   - por vista: lo que se sumó después de la migración (el monstruo del jefe, 2026-11-05).
+const AGREGADOS = {
+  todas: ['TEXTURA Textura estática (cuadros fijos, de prueba) Las placas se vuelven ventanas a un patrón de cuadros morados y rosados que queda quieto aunque el contenido se mueva. Apágala para volver al cristal.'],
+  jefe: ['Forma de la fuente en OBS Franja Escenario'],
+};
+const sinAgregados = [...AGREGADOS.todas, ...(AGREGADOS[vista] || [])]
+  .reduce((texto, agregado) => texto.split(comparable(agregado)).join(''), comparable(nuevo.texto));
 
 let diferencias = 0;
 const informe = [];
-const textoIgual = comparable(viejo.texto) === comparable(nuevo.texto).split(TEXTURA).join('');
+const textoIgual = comparable(viejo.texto) === sinAgregados;
 if (!textoIgual) diferencias++;
 informe.push(`■ Texto de la vista: ${textoIgual ? 'IGUAL' : 'DISTINTO'}`);
 if (!textoIgual) informe.push(`    legado: ${viejo.texto}\n    nuevo:  ${nuevo.texto}`);

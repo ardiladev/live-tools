@@ -47,8 +47,10 @@ export interface EstadoJefe {
   /** false = el último cambio de vida vino de la configuración (la cifra salta, sin animar). */
   animarVida: boolean;
   danos: DanoFlotante[];
-  /** Cuántos golpes (reinicia la animación "sacudida"). */
+  /** Cuántos golpes (reinicia la animación "sacudida" y el golpe del monstruo). */
   sacudidas: number;
+  /** El último golpe fue un regalo: el monstruo retrocede más (Monstruo.tsx). */
+  golpeFuerte: boolean;
 }
 
 export interface MotorJefe extends Observable<EstadoJefe> {
@@ -67,6 +69,7 @@ export function crearMotorJefe(): MotorJefe {
   const estado = crearEstadoObservable<EstadoJefe>({
     nombre: '', vidaTotal: 10000, reloj: { e: 'listo', d: 300 }, textoVictoria: 'Reto desbloqueado',
     ronda: null, dano: 0, restanteVictoria: null, ultimoGolpe: '', animarVida: false, danos: [], sacudidas: 0,
+    golpeFuerte: false,
   });
   let danoLike = 1;
   let danoRegalo = 10;
@@ -148,6 +151,7 @@ export function crearMotorJefe(): MotorJefe {
       restanteVictoria,
       animarVida: true,
       sacudidas: e.sacudidas + 1,
+      golpeFuerte: evento.tipo === 'regalo',
       ultimoGolpe: `Último golpe: ${usuario || 'Alguien'} −${formato.format(quitado)}`,
       danos: [...e.danos, {
         id: siguienteDano++, texto: `−${formato.format(quitado)}`, fuerte: evento.tipo === 'regalo',

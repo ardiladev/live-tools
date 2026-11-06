@@ -944,6 +944,7 @@
   }
   .escenario.horizontal { grid-template-columns: 1fr; }
   .escenario.horizontal iframe { aspect-ratio: 16 / 5; }
+  .escenario.cuadrado { grid-template-columns: minmax(0, 480px) minmax(0, 1fr); }
   .escenario.cuadrado iframe { aspect-ratio: 16 / 9; }
 
   /* Consola de pruebas: estado en una pastilla, nombre y botones. */

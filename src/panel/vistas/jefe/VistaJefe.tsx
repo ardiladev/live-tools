@@ -3,16 +3,18 @@
 //
 // Configura el widget jefe.html: nombre, vida, tiempo límite, texto de victoria y daño por like
 // y por moneda, con la raid (Iniciar / Pausar / Reiniciar) que llega a OBS al instante.
+// El widget muestra un monstruo que se rompe a medida que baja la vida y se acomoda solo a la
+// forma de la fuente; «Forma de la fuente en OBS» solo cambia la vista previa y el tamaño sugerido.
 // (Port de la sección 3 de legado/js/panel/vistas/jefe.js.)
 // =============================================================================
 
 import { EditorEstilo } from '../../componentes/EditorEstilo';
 import { BotonesReloj, PanelReloj, useRelojDeRonda } from '../../componentes/piezasJuego';
 import { TarjetaWidget, type PruebaWidget } from '../../componentes/TarjetaWidget';
-import { Campo, Casilla, Nota, numero, Tarjeta } from '../../componentes/ui';
+import { Campo, Casilla, Nota, numero, Segmentado, Tarjeta } from '../../componentes/ui';
 import { useAjustesWidget } from '../../estado/almacen';
 import type { TextosReloj } from '../../piezas';
-import { ID, MINUTOS_MAX, MINUTOS_MIN, minutosDe, POR_DEFECTO } from './config';
+import { ID, MINUTOS_MAX, MINUTOS_MIN, minutosDe, POR_DEFECTO, type FormaJefe } from './config';
 
 // Desde "Tiempo agotado", iniciar es empezar una raid nueva (vida llena).
 const TEXTOS: TextosReloj = {
@@ -29,9 +31,12 @@ const PRUEBAS: PruebaWidget[] = [
   { texto: 'Golpe final (1.000 monedas)', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '0', nombre: 'Regalo', cantidad: 1, diamantes: 1000, imagen: '' }) },
 ];
 
+const FORMAS = [['franja', 'Franja'], ['escenario', 'Escenario']] as const satisfies ReadonlyArray<readonly [FormaJefe, string]>;
+
 export function VistaJefe() {
   const [cfg, cambiarCfg] = useAjustesWidget(ID, POR_DEFECTO);
   const reloj = useRelojDeRonda({ id: ID, ajustes: cfg, cambiarAjustes: cambiarCfg, duracionS: Math.round(minutosDe(cfg) * 60), textos: TEXTOS });
+  const escenario = cfg.forma === 'escenario';
 
   // Cuánto hace falta para vencer al jefe, para calibrar la vida con el público que suele haber.
   const vida = Math.max(1, Number(cfg.vida) || 1);
@@ -50,7 +55,7 @@ export function VistaJefe() {
         id={ID}
         titulo="Jefe del LIVE"
         archivo="jefe.html"
-        forma="horizontal"
+        forma={escenario ? 'cuadrado' : 'horizontal'}
         // El reloj y la ronda cambian sin reiniciar la vista previa (no se pierde el daño de prueba).
         sinRecargar={['t', 'ro']}
         campos={(
@@ -59,6 +64,7 @@ export function VistaJefe() {
             <Campo etiqueta="Vida total:" tipo="number" valor={cfg.vida} min={1} step={1000} alCambiar={(v) => cambiarCfg((a) => { a.vida = v; })} />
             <Campo etiqueta="Tiempo límite (minutos):" tipo="number" valor={cfg.minutos} min={MINUTOS_MIN} max={MINUTOS_MAX} step={0.5} alCambiar={(v) => cambiarCfg((a) => { a.minutos = v; })} />
             <Campo etiqueta="Texto de victoria:" valor={cfg.textoVictoria} maxLength={40} alCambiar={(v) => cambiarCfg((a) => { a.textoVictoria = v; })} />
+            <Segmentado etiqueta="Forma de la fuente en OBS" opciones={FORMAS} valor={escenario ? 'escenario' : 'franja'} alCambiar={(v) => cambiarCfg((a) => { a.forma = v; })} />
           </>
         )}
         personalizar={(
@@ -97,7 +103,9 @@ export function VistaJefe() {
         </Nota>
       </Tarjeta>
 
-      <Nota>Tamaño recomendado de la fuente en OBS: 1920 × 300, arriba de la escena. El daño de la raid se conserva si OBS recarga la fuente.</Nota>
+      {escenario
+        ? <Nota>Tamaño recomendado de la fuente en OBS: 1280 × 720 o 1080 × 1080, con el monstruo en grande arriba de la barra. El widget se acomoda solo a la forma de la fuente. El daño de la raid se conserva si OBS recarga la fuente.</Nota>
+        : <Nota>Tamaño recomendado de la fuente en OBS: 1920 × 300, arriba de la escena. El daño de la raid se conserva si OBS recarga la fuente.</Nota>}
     </>
   );
 }

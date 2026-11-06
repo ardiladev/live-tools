@@ -1,9 +1,12 @@
 // =============================================================================
-// widgets/jefe/Jefe.tsx — Widget "Jefe del LIVE" (jefe.html, 1920 × 300)
+// widgets/jefe/Jefe.tsx — Widget "Jefe del LIVE" (jefe.html)
 //
-// Una placa con el nombre del jefe y su estado, la barra de vida (el rastro claro se queda atrás
-// un momento al recibir daño) con la cifra "7.450 / 10.000", el reloj y el último golpe.
-// Reglas en motor.ts; estilos en jefe.css (portado tal cual).
+// El MONSTRUO (Monstruo.tsx), que se va rompiendo a medida que baja la vida, y una placa con el
+// nombre del jefe y su estado, la barra de vida (el rastro claro se queda atrás un momento al
+// recibir daño) con la cifra "7.450 / 10.000", el reloj y el último golpe.
+// La escena se acomoda sola a la forma de la fuente (jefe.css): ancha y baja (1920 × 300) =
+// franja con el monstruo a un lado; más cuadrada (1280 × 720, 1080 × 1080) = el monstruo en
+// grande arriba de la barra. Reglas en motor.ts.
 // =============================================================================
 
 import { useEffect, useRef } from 'react';
@@ -15,6 +18,7 @@ import { useRondaReloj } from '../../hooks/useRondaReloj';
 import { useWidget } from '../../hooks/useWidget';
 import { formatoReloj } from '../../nucleo/reloj';
 import type { FaseJefe } from './config';
+import { Monstruo, etapaDe } from './Monstruo';
 import { crearMotorJefe, vidaDe } from './motor';
 import './jefe.css';
 
@@ -47,6 +51,7 @@ export function Jefe() {
   return (
     <>
       <main className="escena">
+        <Monstruo etapa={etapaDe(vida / estado.vidaTotal)} fase={fase} golpes={estado.sacudidas} fuerte={estado.golpeFuerte} />
         <div className={clases} id="jefe" data-fase={fase} ref={placa}>
           {/* Nombre del jefe y estado (vivo, vencido, escapó) */}
           <div className="cabecera">

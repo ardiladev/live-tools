@@ -1,11 +1,18 @@
 /* ==========================================================================
    jefe.css — Widget "Jefe del LIVE" (jefe.html → src/widgets/jefe/Jefe.tsx)
-   Portado tal cual del diseño original (legado/css/widgets/jefe.css).
-   Una placa de cristal arriba de la escena: nombre del jefe y estado, una barra
-   de vida grande (relleno de oro con degradado, el acento del estilo) con la
-   cifra encima, y abajo el reloj y el último golpe. El estado llega en
+   Basado en el diseño original (legado/css/widgets/jefe.css), más el MONSTRUO
+   (Monstruo.tsx + monstruo.css). Una placa de cristal: nombre del jefe y estado,
+   una barra de vida grande (relleno de oro con degradado, el acento del estilo)
+   con la cifra encima, y abajo el reloj y el último golpe. El estado llega en
    data-fase: listo | corre | pausa | escapo | vencido (motor.ts).
-   Las medidas van en vw: el widget depende solo del ancho de la fuente de OBS.
+
+   La escena se acomoda sola a la forma de la fuente de OBS:
+     - FRANJA (ancha y baja, p. ej. 1920 × 300): el monstruo a la izquierda, de alto
+       completo, con los pies sobre la línea de la placa. Medidas en --u = 1vw, como
+       siempre: la placa se ve igual que antes.
+     - ESCENARIO (proporción menor que 5:2, p. ej. 1280 × 720 o 1080 × 1080): el
+       monstruo en grande arriba y la placa debajo. --u = el menor entre el ancho y
+       el alto, así todo cabe.
 
    Secciones: 1. Escena · 2. Cabecera · 3. Barra de vida · 4. Pie y reloj
               5. Fases (victoria, tiempo agotado) · 6. Animaciones
@@ -13,20 +20,50 @@
 
 
 /* ---------- 1. Escena ---------- */
+:root { --u: 1vw; }
+html, body { height: 100%; }
+/* Franja: [monstruo | placa], los dos apoyados abajo. */
 .escena {
-  display: flex;
-  justify-content: center;
-  padding: 1.2vw 2vw;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  height: 100%;
+  padding: 0 calc(2 * var(--u)) calc(1.2 * var(--u));
   box-sizing: border-box;
+}
+/* Del alto de la fuente, con tope: en una fuente más alta que 1920 × 300 no se come la placa. */
+.monstruo {
+  height: min(100vh - 1.2 * var(--u), 15 * var(--u));
+  aspect-ratio: 1;
+  margin-right: calc(-1.2 * var(--u));   /* un poco encima del borde de la placa */
 }
 .jefe {
   display: flex;
   flex-direction: column;
-  gap: .8vw;
+  gap: calc(.8 * var(--u));
   width: 100%;
-  padding: 1.1vw 1.6vw 1vw;
+  padding: calc(1.1 * var(--u)) calc(1.6 * var(--u)) calc(1 * var(--u));
   box-sizing: border-box;
   transition: box-shadow .6s ease;
+}
+/* Escenario: el monstruo en grande arriba (ocupa lo que sobre) y la placa abajo. */
+@media (max-aspect-ratio: 5/2) {
+  :root { --u: min(1.45vw, 2.8vh); }
+  .escena {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: calc(1.5 * var(--u));
+  }
+  .monstruo {
+    flex: 1 1 0;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    aspect-ratio: auto;
+    margin: 0 0 calc(-1 * var(--u));       /* los pies, apenas sobre el borde de la placa */
+  }
+  .jefe { max-width: calc(120 * var(--u)); }
 }
 
 
@@ -35,14 +72,14 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 1vw;
+  gap: calc(1 * var(--u));
   min-width: 0;
 }
 .nombre {
   overflow: hidden;
   color: var(--oro-texto);
   font-weight: 800;
-  font-size: 1.5vw;
+  font-size: calc(1.5 * var(--u));
   letter-spacing: var(--espaciado-widget);
   text-overflow: ellipsis;
   text-transform: var(--mayus);
@@ -52,7 +89,7 @@
   flex: none;
   color: var(--texto-sec);
   font-weight: 600;
-  font-size: .85vw;
+  font-size: calc(.85 * var(--u));
   letter-spacing: var(--espaciado-widget);
   text-transform: var(--mayus);
   opacity: .8;
@@ -62,7 +99,7 @@
 /* ---------- 3. Barra de vida ---------- */
 .barra {
   position: relative;
-  height: 3.6vw;
+  height: calc(3.6 * var(--u));
   overflow: hidden;
   border-radius: var(--radio);
   background: var(--cristal-oscuro);
@@ -102,7 +139,7 @@
   place-items: center;
   color: var(--blanco);
   font-weight: 800;
-  font-size: 2vw;
+  font-size: calc(2 * var(--u));
   letter-spacing: .04em;
   font-variant-numeric: tabular-nums;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .85), 0 0 14px rgba(0, 0, 0, .6);
@@ -114,24 +151,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1vw;
+  gap: calc(1 * var(--u));
   min-width: 0;
 }
 .reloj {
-  padding: .2vw 1vw;
+  padding: calc(.2 * var(--u)) calc(1 * var(--u));
   border: 1px solid var(--insignia-borde);
   border-radius: var(--radio);
   background: var(--insignia-fondo);
   color: var(--texto-sec);
   font-weight: 800;
-  font-size: 1.3vw;
+  font-size: calc(1.3 * var(--u));
   font-variant-numeric: tabular-nums;
 }
 .golpe {
   overflow: hidden;
   color: var(--texto-sec);
   font-weight: 500;
-  font-size: .85vw;
+  font-size: calc(.85 * var(--u));
   letter-spacing: .04em;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -151,7 +188,7 @@
 .jefe[data-fase="vencido"] .estado {
   color: var(--activo);
   font-weight: 800;
-  font-size: 1.4vw;
+  font-size: calc(1.4 * var(--u));
   opacity: 1;
   text-shadow: 0 0 12px var(--activo), 0 0 28px var(--borde-color);
   animation: victoria 1.6s ease-in-out infinite;
@@ -165,21 +202,21 @@
 .dano {
   position: absolute;
   top: 0;
-  left: 50%;                 /* js/widgets/jefe.js lo pone junto al borde de la vida */
+  left: 50%;                 /* Jefe.tsx lo pone junto al borde de la vida */
   z-index: 4;
   color: var(--blanco);
   font-weight: 800;
-  font-size: 1.4vw;
+  font-size: calc(1.4 * var(--u));
   text-shadow: 0 0 10px var(--mal), 0 1px 2px rgba(0, 0, 0, .8);
   pointer-events: none;
   animation: caer 1s ease-out forwards;
 }
-.dano.fuerte { color: var(--activo); font-size: 1.9vw; }
+.dano.fuerte { color: var(--activo); font-size: calc(1.9 * var(--u)); }
 .sacudida .barra { animation: sacudida .3s ease-out; }
 
 @keyframes destello { from { background-position: -60% 0; } to { background-position: 160% 0; } }
-@keyframes caer { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(2.4vw); } }
-@keyframes sacudida { 25% { transform: translateX(-.25vw); } 50% { transform: translateX(.25vw); } 75% { transform: translateX(-.1vw); } }
+@keyframes caer { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(calc(2.4 * var(--u))); } }
+@keyframes sacudida { 25% { transform: translateX(calc(-.25 * var(--u))); } 50% { transform: translateX(calc(.25 * var(--u))); } 75% { transform: translateX(calc(-.1 * var(--u))); } }
 @keyframes parpadeo { 50% { opacity: .35; } }
 @keyframes latido { 50% { transform: scale(1.08); } }
 @keyframes victoria { 50% { text-shadow: 0 0 20px var(--activo), 0 0 44px var(--borde-color); } }

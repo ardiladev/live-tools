@@ -33,7 +33,12 @@ export type AjustesJefe = {
   reloj: RelojRonda;
   /** Cambia al reiniciar: el jefe vuelve con la vida llena. */
   ronda: number;
+  /** Forma de la fuente en OBS, solo para la vista previa y el tamaño sugerido: el widget se
+   *  acomoda solo (franja = monstruo a un lado; escenario = monstruo en grande). No va al widget. */
+  forma: FormaJefe;
 };
+
+export type FormaJefe = 'franja' | 'escenario';
 
 export const POR_DEFECTO: AjustesJefe = {
   nombre: 'Jefe del LIVE',
@@ -47,6 +52,7 @@ export const POR_DEFECTO: AjustesJefe = {
   sonido: true,
   reloj: { e: 'listo', fin: 0, r: 0 },
   ronda: 0,
+  forma: 'franja',
 };
 
 export const minutosDe = (a: AjustesJefe): number => Math.min(MINUTOS_MAX, Math.max(MINUTOS_MIN, Number(a.minutos) || POR_DEFECTO.minutos));
