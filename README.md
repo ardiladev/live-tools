@@ -407,10 +407,10 @@ que uno real. Los cambios de estilo llegan con `{ tipo: 'tema', est }` y las ór
 responde con su estado (por ejemplo, “Modo prueba”), que el panel muestra junto al punto verde o naranja.
 Los mensajes solo se aceptan si vienen del mismo origen.
 
-> **Ojo: la vista previa es más permisiva que el LIVE.** En modo prueba, el subathon, la carrera, el marcador y el
-> jefe cuentan los eventos aunque el reloj esté detenido, y la vista previa nunca se conecta a TikTok. Que una prueba
-> funcione confirma la lógica del widget, pero no la conexión de la fuente en OBS / LIVE Studio (cuenta, clave,
-> versión cargada). Para eso, ver la [sección 12](#12-solución-de-problemas).
+> **Ojo: la vista previa es más permisiva que el LIVE.** En modo prueba, el subathon, la carrera, el marcador, la
+> batalla, la barra de activación y el jefe cuentan los eventos aunque el reloj esté detenido, y la vista previa nunca
+> se conecta a TikTok. Que una prueba funcione confirma la lógica del widget, pero no la conexión de la fuente en
+> OBS / LIVE Studio (cuenta, clave, versión cargada). Para eso, ver la [sección 12](#12-solución-de-problemas).
 
 ### 4.8 El panel por dentro
 
@@ -691,8 +691,9 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
 - **Plan gratuito de Supabase:** de sobra para esto (unas cuantas filas pequeñas y pocos mensajes). Un proyecto
   gratuito se **pausa tras una semana sin actividad**; se reactiva desde el dashboard. Mientras esté pausado,
   los widgets usan la última configuración que recibieron.
-- La librería `@supabase/supabase-js` se carga desde jsDelivr con versión fija (`2.117.2`), solo en los widgets.
-  El panel usa `fetch` directo a la API.
+- La librería `@supabase/supabase-js` (versión exacta `2.117.2`, instalada con npm) se descarga aparte
+  (import dinámico) solo en las páginas que escuchan Realtime: los widgets con cambios en vivo y, en el panel,
+  la vista de la cola de retos. Para leer y guardar, el panel usa `fetch` directo a la API.
 
 ---
 
@@ -710,7 +711,8 @@ Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard �
   Puedes poner el panel en OBS como **dock de navegador** para que esté abierto siempre que transmites.
   Ese dock tendrá su propia lista, separada de la de Chrome.
 - **Las metas empiezan en 0** cada vez que se abre o recarga la fuente en OBS. Los **juegos** (carrera, marcador,
-  batalla, jefe, subathon, bóveda, trono y repertorio), en cambio, guardan su progreso en el navegador de OBS
+  batalla, barra de activación, jefe, subathon y subathon extensible, bóveda, trono y repertorio), en cambio, guardan
+  su progreso en el navegador de OBS
   (`live-tools:<juego>:<w>`) y lo conservan al recargar, hasta que el panel los reinicia.
 - **El reloj de la carrera usa la hora del computador.** El panel guarda la hora en que termina la ronda; si el
   panel y OBS están en computadores distintos con la hora desajustada, los relojes no coinciden.
@@ -788,6 +790,10 @@ Hace falta **Node.js 24** (con npm). Una vez: `npm ci`.
    chat» y «2. Regalo VIP» (aparece a los ~2,5 s). **Tragamonedas**: «Probar giro» o *Probar en OBS*.
    **Cola de retos**: «Reto de prueba» y «Combo ×5» muestran retos de mentira en la vista previa (se van a los 15 s;
    la cola real no se toca). Para probar la cola real, usa *+ Agregar a la cola* y luego *Hecho* / *Deshacer*.
+   **Barra de activación**: «Unirme al siguiente equipo» une a la persona de prueba al primer equipo (al repetirlo, la
+   cambia al siguiente), «Mi regalo de 25» le suma a su equipo y «Otra persona se une» agrega gente; *Reiniciar ronda*
+   pone todo en 0. **Subathon extensible**: con la meta de 1.000, «Regalo de 500» dos veces la cumple; desde ahí,
+   «+100 likes» y los regalos suman tiempo.
 6. **Publicado:** después del `git push`, espera la publicación (pestaña *Actions* del repositorio) y
    recarga el panel en `https://ardiladev.github.io/live-tools/`.
 
@@ -804,6 +810,8 @@ válida». Quítalo al terminar (con `fondo=1` el fondo deja de ser transparente
 |---|---|---|
 | El reloj de un juego corre (Iniciar / Pausar funcionan) pero los regalos y likes no suman | La fuente está conectada a **otra cuenta**: su URL se copió con el usuario anterior y la fuente sigue abierta con código de antes del 2026-10-17 | Copia de nuevo la URL (**Copy URL**) y reemplázala en la fuente. El reloj llega por Supabase y los eventos por Euler: por eso uno funciona y el otro no |
 | El subathon no suma y bajo el reloj dice «Listo para empezar» o «Terminó» | El público solo suma con el reloj en marcha o en pausa (en la vista previa suma siempre) | Pulsa **Iniciar**; si llegó a 0, **+5 min** lo revive |
+| El subathon extensible no suma tiempo | Todavía no se cumple la meta (su barra no está llena) o el reloj no está iniciado | Es lo esperado: hasta cumplir la meta, ni regalos ni likes suman. Revisa la meta y pulsa **Iniciar** |
+| Un regalo no suma en la barra de activación | Quien lo envió no se ha unido a ningún equipo (primero hay que enviar un activador), el reloj no está en marcha o la ronda ya terminó | Envía el regalo activador de un equipo y pulsa **Iniciar** (o **Nueva ronda**) |
 | Pulso Iniciar y el widget no cambia | La URL se copió desde el panel de **otro navegador** (cada navegador tiene sus identificadores) | Copia la URL desde el panel que usas y reemplázala en la fuente |
 | Un widget cuenta los likes y otro no, en el mismo LIVE | Las dos fuentes no están conectadas igual (cuenta, clave o versión) | Revisa las dos con `?fondo=1` y vuelve a copiar la URL de la que falla |
 | La meta de likes va por detrás del contador de TikTok | La meta cuenta desde que se abrió la fuente (o la fuente tiene código de antes de la corrección de likes) | Abre o recarga la fuente al empezar el LIVE |
