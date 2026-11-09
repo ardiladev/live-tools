@@ -51,7 +51,7 @@ export function Jefe() {
   return (
     <>
       <main className="escena">
-        <Monstruo etapa={etapaDe(vida / estado.vidaTotal)} fase={fase} golpes={estado.sacudidas} fuerte={estado.golpeFuerte} />
+        <Monstruo tipo={estado.monstruo} etapa={etapaDe(vida / estado.vidaTotal)} fase={fase} golpes={estado.sacudidas} fuerte={estado.golpeFuerte} />
         <div className={clases} id="jefe" data-fase={fase} ref={placa}>
           {/* Nombre del jefe y estado (vivo, vencido, escapó) */}
           <div className="cabecera">

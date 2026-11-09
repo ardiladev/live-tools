@@ -1,7 +1,11 @@
 /* ==========================================================================
    monstruo.css — El monstruo del "Jefe del LIVE" (src/widgets/jefe/Monstruo.tsx)
+   Lo común a los cinco monstruos y, por ser el primero, lo propio de la bestia
+   (mj-piel, mj-panza, mj-cuerno-*, mj-punta-der/izq…: solo existen en Bestia.tsx).
+   Lo propio de los otros cuatro está en monstruos.css.
 
-   Qué se ve lo deciden tres atributos del <div class="monstruo">:
+   Qué se ve lo deciden cuatro atributos del <div class="monstruo">:
+     data-tipo   gelaton | bestia | golem | dragon | rey
      data-etapa  1 | 2 | 3 | 4   daño según la vida (4 también al vencerlo)
      data-cara   confiado | molesto | herido | mareado | ko | risa | dormido
      data-fase   listo | corre | pausa | escapo | vencido   (la de jefe.css)
@@ -11,7 +15,9 @@
    Los grupos que se animan no llevan atributo transform (el transform de CSS lo
    reemplazaría): los espejos y posiciones van en un grupo de afuera.
    Capas del cuerpo: .mj-figura (golpe, derrota) > .mj-tiembla (temblor, burla) >
-   .mj-respira (respiración).
+   .mj-respira (respiración) > .mj-forma (cambios de forma por etapa, en monstruos.css).
+   Los colores de tinta (contornos), hueco (bocas, cuencas) y lava (grietas) son
+   variables: cada monstruo pone los suyos.
 
    Secciones: 1. Caja · 2. Colores y trazos · 3. Qué se ve en cada etapa y cara
               4. Movimiento por fase · 5. Golpes · 6. Victoria · 7. Animaciones
@@ -19,15 +25,24 @@
 
 
 /* ---------- 1. Caja ---------- */
-.monstruo { position: relative; z-index: 3; pointer-events: none; }
+.monstruo {
+  --mj-tinta: #0B0612;
+  --mj-hueco: #12091F;
+  --mj-lava: #FFB547;
+  --mj-lava-claro: #FFE08A;
+  position: relative;
+  z-index: 3;
+  pointer-events: none;
+}
 .monstruo svg { display: block; width: 100%; height: 100%; overflow: visible; }
 /* Lo que gira o escala lo hace sobre su propio centro. */
-.monstruo :is(.mj-respira, .mj-tiembla, .mj-figura, .mj-brazo, .mj-halo, .mj-impacto, .mj-punta, .mj-zeta,
+.monstruo :is(.mj-respira, .mj-tiembla, .mj-figura, .mj-forma, .mj-brazo, .mj-halo, .mj-impacto, .mj-punta, .mj-zeta,
   .mj-humo circle, .mj-sudor, .mj-espiral, .mj-burbuja, .mj-estrellas, .mj-moneda, .mj-esquirla) {
   transform-box: fill-box;
   transform-origin: center;
 }
-.monstruo :is(.mj-figura, .mj-respira, .mj-tiembla) { transform-origin: 50% 100%; } /* desde los pies */
+.monstruo :is(.mj-figura, .mj-respira, .mj-tiembla, .mj-forma) { transform-origin: 50% 100%; } /* desde los pies */
+.mj-forma { transition: transform .7s cubic-bezier(.3, 1.5, .5, 1); }
 .monstruo .mj-brazo { transform-origin: 85% 12%; }                                  /* desde el hombro */
 
 
@@ -37,7 +52,9 @@
 .mj-oro-hondo { stop-color: var(--borde-color); }
 
 .mj-sombra { fill: #000; opacity: .45; }
-.mj-contorno { stroke: #0B0612; stroke-width: 2.6; stroke-linejoin: round; }
+.mj-contorno { stroke: var(--mj-tinta); stroke-width: 2.6; stroke-linejoin: round; }
+/* Trazo libre con la tinta del monstruo (el grosor va en el atributo stroke-width del SVG). */
+.mj-trazo { fill: none; stroke: var(--mj-tinta); stroke-linecap: round; stroke-linejoin: round; }
 .mj-piel { fill: url(#mj-piel); }
 .mj-garra { fill: #F3E3B5; stroke: #0B0612; stroke-width: 1.2; stroke-linejoin: round; }
 .mj-cuerno { fill: url(#mj-cuerno); }
@@ -57,22 +74,22 @@
 /* Grietas: borde oscuro y lava encendida por dentro; se dibujan al aparecer. */
 .mj-grieta-fondo,
 .mj-grieta { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; }
-.mj-grieta-fondo { stroke: #0B0612; stroke-width: 5.5; }
-.mj-grieta { stroke: #FFB547; stroke-width: 2.2; }
+.mj-grieta-fondo { stroke: var(--mj-tinta); stroke-width: 5.5; }
+.mj-grieta { stroke: var(--mj-lava); stroke-width: 2.2; }
 
 .mj-moreton { fill: #6B2F7E; opacity: .9; }
-.mj-cuenca { fill: #12091F; }
+.mj-cuenca { fill: var(--mj-hueco); }
 .mj-ojo { fill: url(#mj-ojo); }
-.mj-pupila, .mj-parpado { fill: #12091F; }
-.mj-ceja { fill: none; stroke: #0B0612; stroke-width: 7; stroke-linecap: round; }
-.mj-boca { fill: #12091F; stroke: #0B0612; stroke-width: 1.5; stroke-linejoin: round; }
-.mj-diente { fill: #FFF7E0; stroke: #0B0612; stroke-width: 1; stroke-linejoin: round; }
-.mj-dientes { fill: #FFF7E0; stroke: #12091F; stroke-width: 3; }
-.mj-linea-dientes { fill: none; stroke: #12091F; stroke-width: 1.6; }
+.mj-pupila, .mj-parpado { fill: var(--mj-hueco); }
+.mj-ceja { fill: none; stroke: var(--mj-tinta); stroke-width: 7; stroke-linecap: round; }
+.mj-boca { fill: var(--mj-hueco); stroke: var(--mj-tinta); stroke-width: 1.5; stroke-linejoin: round; }
+.mj-diente { fill: #FFF7E0; stroke: var(--mj-tinta); stroke-width: 1; stroke-linejoin: round; }
+.mj-dientes { fill: #FFF7E0; stroke: var(--mj-hueco); stroke-width: 3; }
+.mj-linea-dientes { fill: none; stroke: var(--mj-hueco); stroke-width: 1.6; }
 .mj-espiral { fill: none; stroke: var(--activo); stroke-width: 2.4; stroke-linecap: round; }
-.mj-lengua { fill: #E0607E; stroke: #0B0612; stroke-width: 1.4; }
+.mj-lengua { fill: #E0607E; stroke: var(--mj-tinta); stroke-width: 1.4; }
 .mj-equis { fill: none; stroke: var(--activo); stroke-width: 4.5; stroke-linecap: round; }
-.mj-boca-linea { fill: none; stroke: #0B0612; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.mj-boca-linea { fill: none; stroke: var(--mj-tinta); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
 .mj-ojo-linea { fill: none; stroke: var(--activo); stroke-width: 4.5; stroke-linecap: round; }
 .mj-burbuja { fill: #9FD8FF; opacity: .55; }
 .mj-curita { fill: #EBD9BF; stroke: #6B5235; stroke-width: 1; }
@@ -191,7 +208,7 @@
 @keyframes mj-pulso { 50% { opacity: .55; transform: scale(.88); } }
 @keyframes mj-falla { 0%, 100% { opacity: 1; } 8% { opacity: .35; } 12% { opacity: 1; } 55% { opacity: .5; } 58% { opacity: 1; } }
 @keyframes mj-trazar { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
-@keyframes mj-lava { 50% { stroke: #FFE08A; } }
+@keyframes mj-lava { 50% { stroke: var(--mj-lava-claro); } }
 @keyframes mj-girar { to { transform: rotate(360deg); } }
 @keyframes mj-temblor {
   25% { transform: translate(-1px, .5px); }
@@ -218,8 +235,8 @@
 @keyframes mj-punta-cae {
   0% { opacity: 1; transform: none; }
   15% { transform: translate(calc(4px * var(--lado)), -10px) rotate(calc(20deg * var(--lado))); }
-  70% { opacity: 1; transform: translate(calc(16px * var(--lado)), 148px) rotate(calc(140deg * var(--lado))); }
-  100% { opacity: 0; transform: translate(calc(18px * var(--lado)), 148px) rotate(calc(150deg * var(--lado))); }
+  70% { opacity: 1; transform: translate(calc(16px * var(--lado)), var(--caida, 148px)) rotate(calc(140deg * var(--lado))); }
+  100% { opacity: 0; transform: translate(calc(18px * var(--lado)), var(--caida, 148px)) rotate(calc(150deg * var(--lado))); }
 }
 @keyframes mj-retroceso {
   30% { transform: translate(7px, -2px) rotate(4deg); }

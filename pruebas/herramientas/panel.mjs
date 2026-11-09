@@ -163,9 +163,10 @@ const tapar = (v) => (v ? `<huella ${createHash('sha256').update(String(v)).dige
  * Para comparar: claves en orden, las horas (Date.now(): _v, ronda…) como "<hora>", las claves por su
  * huella, los ids aleatorios de la cola (cl, rc) como "<id de nube>". Las claves agregadas a propósito en
  * la versión nueva, con su valor por defecto, no cuentan: `tx: 0` (textura estática apagada) y
- * `forma: 'franja'` (forma de la fuente del jefe, solo para su vista previa).
+ * `forma: 'franja'` (forma de la fuente del jefe, solo para su vista previa) y `monstruo: 'bestia'` (el
+ * monstruo de siempre: con él, la configuración del jefe no lleva `mo`).
  */
-const NUEVAS_POR_DEFECTO = { tx: 0, forma: 'franja' };
+const NUEVAS_POR_DEFECTO = { tx: 0, forma: 'franja', monstruo: 'bestia' };
 function normalizar(valor) {
   if (Array.isArray(valor)) return valor.map(normalizar);
   if (valor && typeof valor === 'object') {
@@ -192,7 +193,10 @@ const comparable = (texto) => texto.toLocaleLowerCase('es').replace(/\s+/g, '');
 //   - por vista: lo que se sumó después de la migración (el monstruo del jefe, 2026-11-05).
 const AGREGADOS = {
   todas: ['TEXTURA Textura estática (cuadros fijos, de prueba) Las placas se vuelven ventanas a un patrón de cuadros morados y rosados que queda quieto aunque el contenido se mueva. Apágala para volver al cristal.'],
-  jefe: ['Forma de la fuente en OBS Franja Escenario'],
+  jefe: [
+    'Forma de la fuente en OBS Franja Escenario',
+    'MONSTRUO Gelatón TRAVIESO Bestia de obsidiana GRUÑÓN Gólem de piedra PELIGROSO Dragón de brasas TEMIBLE Rey del abismo LEGENDARIO Del menos al más amenazante. Todos se van rompiendo a medida que baja la vida, se duermen en pausa, se burlan si se acaba el tiempo y quedan K.O. al vencerlos. Solo cambia el dibujo: la vida y el daño siguen igual.',
+  ],
 };
 const sinAgregados = [...AGREGADOS.todas, ...(AGREGADOS[vista] || [])]
   .reduce((texto, agregado) => texto.split(comparable(agregado)).join(''), comparable(nuevo.texto));

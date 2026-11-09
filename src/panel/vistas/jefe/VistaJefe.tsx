@@ -5,14 +5,19 @@
 // y por moneda, con la raid (Iniciar / Pausar / Reiniciar) que llega a OBS al instante.
 // El widget muestra un monstruo que se rompe a medida que baja la vida y se acomoda solo a la
 // forma de la fuente; «Forma de la fuente en OBS» solo cambia la vista previa y el tamaño sugerido.
+// La tarjeta «Monstruo» elige cuál de los cinco (del menos al más amenazante); solo cambia el
+// dibujo, no las reglas.
 // (Port de la sección 3 de legado/js/panel/vistas/jefe.js.)
 // =============================================================================
 
+import type { CSSProperties } from 'react';
+import { Monstruo } from '../../../widgets/jefe/Monstruo';
+import { MONSTRUOS, tipoMonstruo, type TipoMonstruo } from '../../../widgets/jefe/monstruos/catalogo';
 import { EditorEstilo } from '../../componentes/EditorEstilo';
 import { BotonesReloj, PanelReloj, useRelojDeRonda } from '../../componentes/piezasJuego';
 import { TarjetaWidget, type PruebaWidget } from '../../componentes/TarjetaWidget';
 import { Campo, Casilla, Nota, numero, Segmentado, Tarjeta } from '../../componentes/ui';
-import { useAjustesWidget } from '../../estado/almacen';
+import { temaDe, useAjustesWidget, usarAlmacen } from '../../estado/almacen';
 import type { TextosReloj } from '../../piezas';
 import { ID, MINUTOS_MAX, MINUTOS_MIN, minutosDe, POR_DEFECTO, type FormaJefe } from './config';
 
@@ -30,6 +35,32 @@ const PRUEBAS: PruebaWidget[] = [
   { texto: 'Regalo de 100', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '0', nombre: 'Regalo', cantidad: 1, diamantes: 100, imagen: '' }) },
   { texto: 'Golpe final (1.000 monedas)', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '0', nombre: 'Regalo', cantidad: 1, diamantes: 1000, imagen: '' }) },
 ];
+
+const NIVELES = ['', 'Travieso', 'Gruñón', 'Peligroso', 'Temible', 'Legendario'] as const;
+
+/** Las cinco fichas de monstruo, con su dibujo en el color del estilo del widget. */
+function SelectorMonstruo({ valor, alCambiar }: { valor: TipoMonstruo; alCambiar: (v: TipoMonstruo) => void }) {
+  // Primitivos (no el objeto del tema): un selector que devuelve un objeto nuevo re-renderiza sin fin.
+  const activo = usarAlmacen((e) => temaDe(e, ID).ca);
+  const borde = usarAlmacen((e) => temaDe(e, ID).cb);
+  const colores = { '--activo': activo, '--borde-color': borde } as CSSProperties;
+  return (
+    <div className="selector-monstruo" role="group" aria-label="Monstruo" style={colores}>
+      {MONSTRUOS.map((m) => (
+        <button key={m.id} type="button" className="ficha-monstruo" aria-pressed={m.id === valor} onClick={() => alCambiar(m.id)} title={m.lema}>
+          <Monstruo tipo={m.id} etapa={1} fase="corre" golpes={0} fuerte={false} />
+          <span className="ficha-monstruo-nombre">{m.nombre}</span>
+          <span className="ficha-monstruo-amenaza" data-nivel={m.amenaza}>
+            <span className="ficha-monstruo-puntos" aria-hidden="true">
+              {[1, 2, 3, 4, 5].map((n) => <i key={n} className={n <= m.amenaza ? 'lleno' : undefined} />)}
+            </span>
+            {NIVELES[m.amenaza]}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
 
 const FORMAS = [['franja', 'Franja'], ['escenario', 'Escenario']] as const satisfies ReadonlyArray<readonly [FormaJefe, string]>;
 
@@ -56,8 +87,8 @@ export function VistaJefe() {
         titulo="Jefe del LIVE"
         archivo="jefe.html"
         forma={escenario ? 'cuadrado' : 'horizontal'}
-        // El reloj y la ronda cambian sin reiniciar la vista previa (no se pierde el daño de prueba).
-        sinRecargar={['t', 'ro']}
+        // El reloj, la ronda y el monstruo cambian sin reiniciar la vista previa (no se pierde el daño de prueba).
+        sinRecargar={['t', 'ro', 'mo']}
         campos={(
           <>
             <Campo etiqueta="Nombre del jefe:" valor={cfg.nombre} maxLength={40} alCambiar={(v) => cambiarCfg((a) => { a.nombre = v; })} />
@@ -76,6 +107,14 @@ export function VistaJefe() {
         )}
         pruebas={PRUEBAS}
       />
+
+      <Tarjeta titulo="Monstruo" ancha>
+        <SelectorMonstruo valor={tipoMonstruo(cfg.monstruo)} alCambiar={(v) => cambiarCfg((a) => { a.monstruo = v; })} />
+        <Nota>
+          Del menos al más amenazante. Todos se van rompiendo a medida que baja la vida, se duermen en pausa, se burlan si se{' '}
+          acaba el tiempo y quedan K.O. al vencerlos. Solo cambia el dibujo: la vida y el daño siguen igual.
+        </Nota>
+      </Tarjeta>
 
       <Tarjeta titulo="Raid" ancha>
         <PanelReloj reloj={reloj} />

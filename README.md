@@ -105,7 +105,7 @@ las URLs de OBS y lo guardado siguen igual.
 |  |  | Batalla de regalos | Tira y afloja entre dos equipos: cada uno tiene su regalo, monedas por regalo, color y foto opcional. La barra central empieza en 50 % y se corre hacia el equipo que lleva más monedas. Botón **Reiniciar batalla** que pone los puntos en 0 en OBS al instante. **Con cronómetro** (opción en *Personalizar*, encendida por defecto): los regalos solo suman con el reloj en marcha (Iniciar / Pausar / Nueva ronda, duración en segundos) y, al llegar a 0, el equipo con más monedas gana la ronda; arriba se ven las victorias de cada equipo y la racha («🔥 2 seguidas») cuando uno gana 2 o más rondas seguidas. Botón **Reiniciar victorias**. |
 |  |  | Barra de activación | Una sola barra repartida en 2, 3 o 4 cuadrantes (selector *Equipos*), uno por equipo; cada equipo tiene nombre, regalo activador, monedas del activador y color. Quien envía el activador de un equipo **se une** a él y desde ahí **cualquier** regalo suyo le suma; si envía el activador de otro, se cambia (lo sumado se queda donde estaba). Los regalos de quien no se ha unido no suman. Cada cuadrante ocupa de la barra el **porcentaje de monedas** de su equipo (al empezar, todos miden lo mismo). Reloj de la ronda (Iniciar / Pausar / Nueva ronda / **Reiniciar ronda**): unirse se puede antes de iniciar, pero las monedas solo suman con el reloj en marcha; al llegar a 0 gana el equipo con más monedas. Debajo de la barra, cada equipo muestra sus monedas, cuántas personas tiene (👥) y quién aportó más (⭐). |
 |  | Retos del público | Cola de retos | Fila de retos pendientes para hacerlos con calma cuando llegan muchos regalos seguidos. En OBS se ve el reto de **Ahora** y los siguientes («+N más en espera»). Los retos llegan de la **ruleta** y el **tragamonedas** (casilla *Mandar a la Cola de retos* en su *Personalizar*; en la ruleta se elige qué premios van), de los **retos por regalo** (regalo → reto fijo; un combo es un solo reto «×5») y **a mano**. El panel muestra la cola real: **Hecho**, **Deshacer**, **Vaciar la cola** (pide un segundo clic). Necesita Supabase. |
-|  |  | Jefe del LIVE | Reto cooperativo (boss raid): el chat le quita vida a un jefe con likes y regalos antes de que se acabe el tiempo. Un **monstruo** se va rompiendo a medida que baja la barra (grietas, cuernos rotos, ojo morado, ojos en espiral), retrocede con cada golpe y, al vencerlo, cae noqueado y su núcleo estalla en monedas; si se acaba el tiempo se burla y en pausa se duerme. Nombre, vida total, tiempo límite, texto de victoria y daño por like y por moneda. Raid con **Iniciar / Pausar / Reiniciar** que llegan a OBS al instante. En 0 muestra «Reto desbloqueado» con brillo dorado; si se acaba el tiempo, «Tiempo agotado». Se acomoda solo a la forma de la fuente: franja (monstruo a un lado) o escenario (monstruo en grande). |
+|  |  | Jefe del LIVE | Reto cooperativo (boss raid): el chat le quita vida a un jefe con likes y regalos antes de que se acabe el tiempo. Un **monstruo** se va rompiendo a medida que baja la barra (grietas, cuernos rotos, ojo morado, ojos en espiral), retrocede con cada golpe y, al vencerlo, cae noqueado y su núcleo estalla en monedas; si se acaba el tiempo se burla y en pausa se duerme. Nombre, vida total, tiempo límite, texto de victoria y daño por like y por moneda. Raid con **Iniciar / Pausar / Reiniciar** que llegan a OBS al instante. En 0 muestra «Reto desbloqueado» con brillo dorado; si se acaba el tiempo, «Tiempo agotado». Se acomoda solo a la forma de la fuente: franja (monstruo a un lado) o escenario (monstruo en grande). **Cinco monstruos para elegir**, del menos al más amenazante: Gelatón (travieso), Bestia de obsidiana (gruñón, el de siempre), Gólem de piedra (peligroso), Dragón de brasas (temible) y Rey del abismo (legendario); cada uno se rompe a su manera. |
 |  |  | Bóveda dorada | Caja sorpresa: los regalos llenan una barra hacia una meta de monedas; el premio queda oculto hasta llegar. Entonces el candado se abre y aparece el **texto secreto** en letras de oro. Meta, texto secreto, título y pista. **Cerrar y reiniciar** y **Abrir ahora** llegan a OBS al instante. |
 |  |  | Subathon | Reloj hacia atrás al que el público le suma tiempo: segundos por cada 100 likes y por cada moneda de regalo, con un **tope**. Tiempo inicial y tope en minutos. **Iniciar / Pausar / +5 min / Reiniciar** llegan a OBS al instante. Pulso dorado al sumarse tiempo y color de alerta con menos de 1 minuto. |
 |  |  | Repertorio | Playlist o menú de bailes: lista de canciones, cada una con meta de monedas. Los regalos llenan la **activa**; al llegar a su meta queda «Desbloqueada · Sonando». **Activar**, **Hecha y siguiente**, **Deshacer**, ordenar y **Reiniciar repertorio** en vivo. |
@@ -211,7 +211,7 @@ documenta, con su interfaz TypeScript, en `src/widgets/<widget>/config.ts`):
 | `alertas.html` | `ev` eventos `{regalo, follow, share}` · `min` monedas mínimas · `d` segundos · `s` sonido |
 | `batalla.html` | `a`, `b` equipos `{n nombre, g id del regalo, v monedas por regalo, c color, av foto (URL https), img imagen del regalo}` · `ro` ronda (al cambiar, puntos a 0) · `s` sonido · `cr` con cronómetro (1/0) · `t` reloj `{e, d, fin, r}` · `rv` ronda de victorias (al cambiar, victorias a 0) |
 | `activacion.html` | `eq` equipos (2 a 4) `[{n nombre, g id del regalo activador, v monedas del activador, c color, img imagen del regalo}]` · `pr` precios del Buscador `{giftId: monedas}` · `ro` ronda (al cambiar, monedas y equipos a 0) · `s` sonido · `t` reloj `{e, d, fin, r}` |
-| `jefe.html` | `ti` nombre del jefe · `hp` vida total · `t` reloj (como en la carrera) · `ro` ronda (al cambiar, vida llena) · `dl` vida por like · `dr` vida por moneda de regalo · `v` monedas de un regalo sin precio · `tv` texto de victoria · `sr` solo con el reloj en marcha · `s` sonido |
+| `jefe.html` | `ti` nombre del jefe · `hp` vida total · `t` reloj (como en la carrera) · `ro` ronda (al cambiar, vida llena) · `dl` vida por like · `dr` vida por moneda de regalo · `v` monedas de un regalo sin precio · `tv` texto de victoria · `sr` solo con el reloj en marcha · `s` sonido · `mo` monstruo (`gelaton`, `golem`, `dragon` o `rey`; sin `mo` = la bestia) |
 | `subathon.html` | `ti` título · `t` reloj base (como en la carrera) · `ro` ronda (al cambiar, se borra lo sumado) · `ex` ms agregados con «+5 min» · `cap` tope en segundos · `sl` segundos por 100 likes · `sd` segundos por moneda · `v` monedas de un regalo sin precio · `s` sonido |
 | `extensible.html` | Las mismas claves del subathon (usa el mismo componente, `src/widgets/subathon/`) más `mt` = monedas de la meta: hasta juntarlas, ni regalos ni likes suman tiempo; del regalo que la cruza cuenta solo lo que sobra |
 | `boveda.html` | `ti` título · `pi` pista (se ve con la bóveda cerrada) · `sec` texto secreto · `o` meta en monedas · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, se cierra y vuelve a 0) · `ab` 1 = abrir ahora · `s` sonido |
@@ -302,14 +302,24 @@ del original); el componente solo pinta lo que el motor publica:
   al llegar a 0 el jefe queda vencido, el reloj del widget se congela en lo que sobró y los ataques siguientes no
   cuentan. El daño se guarda en `live-tools:jefe:<w>` (una recarga de OBS no cura al jefe). El panel no ve la
   vida: si el chat gana antes, OBS muestra la victoria aunque en el panel el reloj siga.
-  **El monstruo** (`src/widgets/jefe/Monstruo.tsx` + `monstruo.css`, SVG de diseño propio, sin texto) solo dibuja:
-  no cambia ninguna regla. Etapa según la vida que queda: 1 (> 75 %) confiado, 2 (> 50 %) molesto con grietas,
-  3 (> 25 %) herido (cuerno roto, ojo morado, curita, sudor), 4 mareado (ojos en espiral, el otro cuerno, humo);
-  vencido = K.O. La cara la manda la fase (pausa = dormido, escapó = risa). Cada golpe reinicia su animación con
+  **El monstruo** (SVG de diseño propio, sin texto) solo dibuja: no cambia ninguna regla. Hay cinco
+  (`src/widgets/jefe/monstruos/catalogo.ts`, clave `mo`; sin `mo` sale la bestia, así la configuración de quien no
+  elige queda igual que antes): `Monstruo.tsx` + `monstruo.css` son el marco común (capas de movimiento, destello,
+  chispa, humo, zetas, monedas y estrellas) y cada monstruo es un `DibujoMonstruo` en `monstruos/<Nombre>.tsx`
+  (cuerpo con sus caras y su daño, piezas que caen, silueta y puntos de referencia; ver `monstruos/comun.tsx`) con
+  sus estilos en `monstruos.css` bajo `[data-tipo]`. Reglas de dibujo: cuerpo centrado en x = 100, suelo en
+  y ≈ 190 y el núcleo dorado siempre en (100, 140), de donde salen las monedas. Todos comparten etapas y caras.
+  Etapa según la vida que queda: 1 (> 75 %) confiado, 2 (> 50 %) molesto con grietas, 3 (> 25 %) herido,
+  4 mareado (ojos en espiral, humo); vencido = K.O. Lo propio: **Gelatón** se aplasta y deja un charco; **bestia**
+  pierde los cuernos (ojo morado, curita); **gólem** se parte el hombro y le caen piedritas, con runas en el color
+  del estilo; **dragón** echa humo y brasas, se le rasga el ala y se le parte un cuerno, y se ríe con fuego en la
+  garganta; **rey del abismo** flota con un aura de fuego oscuro, se le apaga un orbe, se le parte un cuerno y al
+  vencerlo se le cae la corona. La cara la manda la fase (pausa = dormido, escapó = risa). Cada golpe reinicia su animación con
   `sacudidas`; `golpeFuerte` (regalo) la hace más grande. El oro sigue al estilo del widget (`--activo`,
   `--borde-color`). La escena se acomoda a la forma de la fuente con `@media (max-aspect-ratio: 5/2)`: franja con
   `--u: 1vw` (la placa igual que antes) o escenario con `--u` = el menor entre ancho y alto. «Forma de la fuente
-  en OBS» del panel (ajuste `forma`, no va al widget) solo cambia la vista previa y el tamaño sugerido.
+  en OBS» del panel (ajuste `forma`, no va al widget) solo cambia la vista previa y el tamaño sugerido. La tarjeta
+  «Monstruo» del panel (ajuste `monstruo`) muestra los cinco con su dibujo real en el color del estilo.
 - **Subathon:** el panel lleva el **reloj base** `t` y `ex`, el total que agregó con «+5 min»; el widget lleva lo que
   suma el público y aplica cada «+5 min» nuevo (la diferencia entre `ex` y lo ya visto). Tiempo que queda = reloj
   base + lo sumado, sin pasar nunca de `cap`. El reloj base puede quedar negativo (lo sostiene lo sumado), por eso
@@ -785,7 +795,8 @@ Hace falta **Node.js 24** (con npm). Una vez: `npm ci`.
    cambie (tarda menos de un segundo). En la vista previa, los botones de prueba suman aunque el reloj
    esté detenido. Para la **batalla**, suma puntos con las pruebas y pulsa *Reiniciar batalla*: los dos
    equipos vuelven a 0 sin que se recargue la vista previa. Para el **jefe**, usa «Golpe final» en la vista
-   previa para ver la victoria, e *Iniciar raid* / *Reiniciar* para el reloj y la vida. Para el **subathon**,
+   previa para ver la victoria, e *Iniciar raid* / *Reiniciar* para el reloj y la vida; elige otro monstruo en la
+   tarjeta *Monstruo* y la vista previa lo cambia sin perder el daño. Para el **subathon**,
    inicia el reloj y usa las pruebas y *+5 min*: en la vista previa el tiempo sube sin recargarse. Para la
    **bóveda**, usa «Regalo de 1.000» o *Abrir ahora* para ver la apertura y *Cerrar y reiniciar* para volver a 0.
    Para el **trono**, usa «Otro espectador: 250» y «…: 1.000» para ver el cambio de rey (tarda 3 s, la espera

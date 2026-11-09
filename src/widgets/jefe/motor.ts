@@ -18,6 +18,7 @@ import { sonar } from '../../nucleo/sonido';
 import type { EventoLive } from '../../tipos/eventos';
 import type { LecturaReloj, RelojRonda } from '../../tipos/reloj';
 import type { ConfigJefe, FaseJefe } from './config';
+import { MONSTRUO_POR_DEFECTO, tipoMonstruo, type TipoMonstruo } from './monstruos/catalogo';
 
 export const CLAVE_DANO = 'live-tools:jefe:';
 export const AVISO_FINAL_S = 5; // segundos finales con "tic" de aviso
@@ -51,6 +52,8 @@ export interface EstadoJefe {
   sacudidas: number;
   /** El último golpe fue un regalo: el monstruo retrocede más (Monstruo.tsx). */
   golpeFuerte: boolean;
+  /** Cuál de los cinco monstruos se ve (solo cambia el dibujo, no las reglas). */
+  monstruo: TipoMonstruo;
 }
 
 export interface MotorJefe extends Observable<EstadoJefe> {
@@ -69,7 +72,7 @@ export function crearMotorJefe(): MotorJefe {
   const estado = crearEstadoObservable<EstadoJefe>({
     nombre: '', vidaTotal: 10000, reloj: { e: 'listo', d: 300 }, textoVictoria: 'Reto desbloqueado',
     ronda: null, dano: 0, restanteVictoria: null, ultimoGolpe: '', animarVida: false, danos: [], sacudidas: 0,
-    golpeFuerte: false,
+    golpeFuerte: false, monstruo: MONSTRUO_POR_DEFECTO,
   });
   let danoLike = 1;
   let danoRegalo = 10;
@@ -105,6 +108,7 @@ export function crearMotorJefe(): MotorJefe {
         vidaTotal: Math.max(1, Math.round(Number(cfg.hp) || 10000)),
         reloj: cfg.t && typeof cfg.t === 'object' ? cfg.t : { e: 'listo', d: 300 },
         textoVictoria: String(cfg.tv || 'Reto desbloqueado').slice(0, 40),
+        monstruo: tipoMonstruo(cfg.mo),
         ...(rondaNueva ? { ronda: nuevaRonda, ultimoGolpe: '', ...restaurarDano(nuevaRonda) } : {}),
         animarVida: false,
       };

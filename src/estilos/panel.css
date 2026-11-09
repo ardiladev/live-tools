@@ -1175,6 +1175,48 @@
   .reto-regalo-fila button { padding: 0; }
   .reto-regalo-id { display: grid; gap: 2px; }
 
+  /* Jefe del LIVE: fichas para elegir el monstruo (el dibujo es el del widget, Monstruo.tsx). */
+  .selector-monstruo {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(128px, 1fr));
+    gap: 10px;
+  }
+  .ficha-monstruo {
+    display: grid;
+    grid-template-rows: auto minmax(2.7em, auto) auto;   /* nombres de una o dos líneas, alineados */
+    justify-items: center;
+    align-items: center;
+    gap: 6px;
+    height: auto;
+    padding: 10px 8px 12px;
+    white-space: normal;
+    text-transform: none;
+    letter-spacing: normal;
+  }
+  .ficha-monstruo .monstruo { width: 100%; height: 92px; }
+  .ficha-monstruo[aria-pressed="true"],
+  .ficha-monstruo[aria-pressed="true"]:hover:not(:disabled) {
+    border-color: rgba(212, 175, 55, .7);
+    background: linear-gradient(180deg, rgba(212, 175, 55, .22), rgba(212, 175, 55, .06));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 6px 18px -8px rgba(212, 175, 55, .8);
+  }
+  .ficha-monstruo-nombre { color: var(--texto); font-size: 12.5px; font-weight: 600; text-align: center; }
+  .ficha-monstruo-amenaza {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    color: var(--suave);
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .ficha-monstruo-puntos { display: flex; gap: 3px; }
+  .ficha-monstruo-puntos i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, .12); }
+  .ficha-monstruo-puntos i.lleno { background: var(--oro); }
+  .ficha-monstruo-amenaza[data-nivel="4"] .lleno { background: #F08A3C; }
+  .ficha-monstruo-amenaza[data-nivel="5"] .lleno { background: #E5304F; box-shadow: 0 0 6px rgba(229, 48, 79, .7); }
+
 
   /* ---------- 11. Tablas ---------- */
   .contenedor-tabla {

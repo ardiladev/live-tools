@@ -8,6 +8,7 @@
 import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
 import type { ConfigJefe } from '../../../widgets/jefe/config';
+import { MONSTRUO_POR_DEFECTO, tipoMonstruo, type TipoMonstruo } from '../../../widgets/jefe/monstruos/catalogo';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { textoLimpio } from '../../piezas';
@@ -36,6 +37,8 @@ export type AjustesJefe = {
   /** Forma de la fuente en OBS, solo para la vista previa y el tamaño sugerido: el widget se
    *  acomoda solo (franja = monstruo a un lado; escenario = monstruo en grande). No va al widget. */
   forma: FormaJefe;
+  /** Cuál de los cinco monstruos se ve (monstruos/catalogo.ts). Solo cambia el dibujo. */
+  monstruo: TipoMonstruo;
 };
 
 export type FormaJefe = 'franja' | 'escenario';
@@ -53,6 +56,7 @@ export const POR_DEFECTO: AjustesJefe = {
   reloj: { e: 'listo', fin: 0, r: 0 },
   ronda: 0,
   forma: 'franja',
+  monstruo: MONSTRUO_POR_DEFECTO,
 };
 
 export const minutosDe = (a: AjustesJefe): number => Math.min(MINUTOS_MAX, Math.max(MINUTOS_MIN, Number(a.minutos) || POR_DEFECTO.minutos));
@@ -70,6 +74,8 @@ export function configJefe(estado: EstadoPanel): ConfigJefe {
     tv: textoLimpio(cfg.textoVictoria).slice(0, 40) || POR_DEFECTO.textoVictoria,
     sr: cfg.soloConReloj ? 1 : 0,
     s: cfg.sonido ? 1 : 0,
+    // La bestia (el de siempre) no manda `mo`: así la configuración queda igual que antes.
+    ...(tipoMonstruo(cfg.monstruo) !== MONSTRUO_POR_DEFECTO ? { mo: tipoMonstruo(cfg.monstruo) } : {}),
   };
 }
 

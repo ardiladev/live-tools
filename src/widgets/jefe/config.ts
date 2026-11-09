@@ -5,6 +5,8 @@
 //   ti = nombre del jefe · hp = vida total · t = reloj { e, d, fin, r } · ro = ronda (al cambiar,
 //   vida llena) · dl = vida por like · dr = vida por moneda de regalo · v = monedas de un regalo
 //   sin precio · tv = texto de victoria · sr = solo con el reloj en marcha (1/0) · s = sonido (1/0)
+//   mo = monstruo: gelaton | golem | dragon | rey (sin `mo` = bestia, el de siempre; ver
+//        monstruos/catalogo.ts)
 // =============================================================================
 
 import type { RelojRonda } from '../../tipos/reloj';
@@ -21,6 +23,7 @@ export interface ConfigJefe extends ConfigBase {
   tv?: string;
   sr?: number;
   s?: number;
+  mo?: string;
 }
 
 /** Fase del jefe: la del reloj, salvo 'escapo' (se acabó el tiempo) y 'vencido'. */
