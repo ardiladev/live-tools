@@ -100,20 +100,6 @@
    "captura": "final"
   },
   {
-   "evento": {
-    "tipo": "regalo",
-    "usuario": "D",
-    "giftId": "5655",
-    "nombre": "",
-    "cantidad": 1,
-    "diamantes": 0,
-    "imagen": ""
-   }
-  },
-  {
-   "captura": "sr0-suma-tras-final"
-  },
-  {
    "config": {
     "ti": "Marcador",
     "j": [

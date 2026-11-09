@@ -6,7 +6,8 @@
 //   j  = integrantes [{ i: id, n: nombre, c: color (vacío = acento del estilo), g: id del regalo,
 //                       gn: nombre del regalo, v: monedas por regalo, img: imagen }]
 //   t  = reloj { e, d, fin, r } · ro = ronda (al cambiar, puntos a 0)
-//   sr = solo cuenta con el reloj en marcha (1 = sí; por defecto suma siempre) · s = sonido (1/0)
+//   sr = solo cuenta con el reloj en marcha (1 = sí; por defecto también suma antes de empezar y
+//        en pausa; con el tiempo terminado nunca suma) · s = sonido (1/0)
 // =============================================================================
 
 import { normalizarTexto } from '../../nucleo/juego';

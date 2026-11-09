@@ -5,15 +5,17 @@
 // TikTok y, cuando alguien lo envía, su puntaje sube (precio × cantidad). Sin barras ni metas:
 // el puntaje solo crece hasta que se reinicia la ronda. Arriba, el reloj de la ronda.
 //   - El regalo se asigna por ID; si ninguno coincide, por el nombre que manda TikTok.
-//   - Por defecto los regalos suman siempre; con `sr` = 1, solo con el reloj en marcha (o en
-//     los 3 s de gracia del final). En la vista previa cuentan siempre.
+//   - Con el tiempo terminado no suma nada (solo los combos que cierran en los 3 s de gracia del
+//     final), ni siquiera en la vista previa. Antes de empezar o en pausa los regalos suman, salvo
+//     con `sr` = 1 (solo con el reloj en marcha); en la vista previa cuentan aunque haya `sr`.
 //   - Puntos guardados en live-tools:marcador:<w> como { ro, p }; vuelven a 0 al cambiar `ro`.
 //   - Al terminar el tiempo: clase `final` en <body> (quien va primero queda destacado) y campana.
 // (Port de legado/js/widgets/marcador.js.)
 // =============================================================================
 
 import { crearEstadoObservable, type Observable } from '../../hooks/useMotor';
-import { buscarPorRegalo, escribirGuardado, leerGuardado, prueba, relojCuenta } from '../../nucleo/juego';
+import { buscarPorRegalo, enGracia, escribirGuardado, leerGuardado, prueba, relojCuenta } from '../../nucleo/juego';
+import { leerReloj } from '../../nucleo/reloj';
 import { sonar } from '../../nucleo/sonido';
 import type { EventoLive, EventoRegalo } from '../../tipos/eventos';
 import type { LecturaReloj, RelojRonda } from '../../tipos/reloj';
@@ -81,8 +83,12 @@ export function crearMotorMarcador(): MotorMarcador {
     });
   }
 
-  /** ¿Cuenta un regalo que llega ahora? Por defecto siempre; con `sr`, solo con el reloj en marcha. */
-  const cuentaAhora = (e: EstadoMarcador): boolean => prueba || !e.soloConReloj || relojCuenta(e.reloj);
+  /** ¿Cuenta un regalo que llega ahora? Nunca con el tiempo terminado (pasada la gracia). Si no,
+   *  siempre; con `sr`, solo con el reloj en marcha (la vista previa no exige `sr`). */
+  function cuentaAhora(e: EstadoMarcador, ahora: number = Date.now()): boolean {
+    if (leerReloj(e.reloj, ahora).estado === 'fin' && !enGracia(e.reloj, ahora)) return false;
+    return prueba || !e.soloConReloj || relojCuenta(e.reloj, ahora);
+  }
 
   function alRegalo(evento: EventoRegalo): void {
     const e = estado.obtener();
