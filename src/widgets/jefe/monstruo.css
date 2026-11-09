@@ -7,7 +7,8 @@
    Qué se ve lo deciden cuatro atributos del <div class="monstruo">:
      data-tipo   gelaton | bestia | golem | dragon | rey
      data-etapa  1 | 2 | 3 | 4   daño según la vida (4 también al vencerlo)
-     data-cara   confiado | molesto | herido | mareado | ko | risa | dormido
+     data-cara   confiado | molesto | herido | mareado | dolor (un momento tras cada golpe)
+                 | ko | risa | dormido
      data-fase   listo | corre | pausa | escapo | vencido   (la de jefe.css)
    y dos clases: `golpe` (se reinicia en cada golpe) y `fuerte` (el último fue un regalo).
    El oro sale del estilo del widget (--activo, --borde-color).
@@ -115,6 +116,7 @@
 .monstruo[data-cara="molesto"] .mj-cara-molesto,
 .monstruo[data-cara="herido"] .mj-cara-herido,
 .monstruo[data-cara="mareado"] .mj-cara-mareado,
+.monstruo[data-cara="dolor"] .mj-cara-dolor,
 .monstruo[data-cara="ko"] .mj-cara-ko,
 .monstruo[data-cara="risa"] .mj-cara-risa,
 .monstruo[data-cara="dormido"] .mj-cara-dormido { display: inline; }

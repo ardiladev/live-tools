@@ -195,7 +195,7 @@ const AGREGADOS = {
   todas: ['TEXTURA Textura estática (cuadros fijos, de prueba) Las placas se vuelven ventanas a un patrón de cuadros morados y rosados que queda quieto aunque el contenido se mueva. Apágala para volver al cristal.'],
   jefe: [
     'Forma de la fuente en OBS Franja Escenario',
-    'MONSTRUO Gelatón TRAVIESO Bestia de obsidiana GRUÑÓN Gólem de piedra PELIGROSO Dragón de brasas TEMIBLE Rey del abismo LEGENDARIO Del menos al más amenazante. Todos se van rompiendo a medida que baja la vida, se duermen en pausa, se burlan si se acaba el tiempo y quedan K.O. al vencerlos. Solo cambia el dibujo: la vida y el daño siguen igual.',
+    'MONSTRUO Gelatón TRAVIESO Bestia de obsidiana GRUÑÓN Gólem de piedra PELIGROSO Dragón de brasas TEMIBLE Rey del abismo LEGENDARIO Del menos al más amenazante. Todos ponen cara de dolor con cada golpe, se van rompiendo cada vez que pierden un cuarto de la vida, se duermen en pausa, se burlan si se acaba el tiempo y quedan K.O. al vencerlos. Solo cambia el dibujo: la vida y el daño siguen igual.',
   ],
 };
 const sinAgregados = [...AGREGADOS.todas, ...(AGREGADOS[vista] || [])]

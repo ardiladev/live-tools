@@ -7,6 +7,7 @@
 //   etapa 3 (50–25 %)  herido: se le rompe un cuerno (la punta cae), ojo morado, curita, sudor
 //   etapa 4 (25–0 %)   mareado: ojos en espiral, el otro cuerno roto, humo, el núcleo parpadea
 //   vencido            K.O.: ojos en X y la lengua afuera
+//   cada golpe         dolor: ojos apretados y boca abierta (un momento)
 // Estilos propios en la sección 8 de monstruo.css.
 // =============================================================================
 
@@ -121,6 +122,14 @@ function Cuerpo() {
         <path className="mj-boca" d="M78 114q22-8 44 0-4 20-22 20t-22-20z" />
         <path className="mj-lengua" d="M91 127q9-7 18 0 0 11-9 11t-9-11z" />
         <path className="mj-diente" d="M86 114l3 7 4-8z" />
+      </g>
+
+      {/* Dolor (un momento tras cada golpe): ojos apretados > < y boca abierta */}
+      <g className="mj-cara mj-cara-dolor">
+        <path className="mj-ojo-linea" d="M70 82l17 8-17 8M130 82l-17 8 17 8" />
+        <path className="mj-ceja" d="M60 70l32 7M140 70l-32 7" />
+        <path className="mj-boca" d="M74 110h52q-4 22-26 22t-26-22z" />
+        <path className="mj-diente" d="M80 110l4 7 4-7zM112 110l4 7 4-7z" />
       </g>
 
       {/* K.O.: ojos en X y la lengua afuera */}

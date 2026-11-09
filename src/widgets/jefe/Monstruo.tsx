@@ -8,7 +8,9 @@
 //   etapa 1 (100–75 %) confiado · etapa 2 (75–50 %) molesto · etapa 3 (50–25 %) herido ·
 //   etapa 4 (25–0 %) mareado · vencido = K.O. (el núcleo estalla en monedas y le giran estrellas)
 // Además: en pausa se duerme (zzz) y si se acaba el tiempo se burla.
-// Cada golpe lo hace retroceder con un destello y una chispa (más fuerte con regalos).
+// Cada golpe lo hace retroceder con un destello y una chispa (más fuerte con regalos) y le pone
+// cara de DOLOR un momento (DOLOR_MS); luego vuelve la cara de su etapa. Así se nota cada golpe
+// aunque la etapa solo cambie cada 25 % de vida.
 //
 // Este archivo es el MARCO común: capas de movimiento, destello, chispa, humo, zetas, monedas y
 // estrellas. El dibujo de cada monstruo está en monstruos/<Nombre>.tsx (ver monstruos/comun.tsx).
@@ -18,7 +20,7 @@
 // El oro sale de las variables del estilo del widget (--activo, --borde-color).
 // =============================================================================
 
-import { useRef, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useReiniciarAnimacion } from '../../hooks/useReiniciarAnimacion';
 import type { FaseJefe } from './config';
 import { bestia } from './monstruos/Bestia';
@@ -32,7 +34,10 @@ import './monstruo.css';
 import './monstruos.css';
 
 export type EtapaMonstruo = 1 | 2 | 3 | 4;
-type Cara = 'confiado' | 'molesto' | 'herido' | 'mareado' | 'ko' | 'risa' | 'dormido';
+type Cara = 'confiado' | 'molesto' | 'herido' | 'mareado' | 'dolor' | 'ko' | 'risa' | 'dormido';
+
+/** Cuánto dura la cara de dolor después de un golpe (ms). */
+export const DOLOR_MS = 600;
 
 const DIBUJOS: Record<TipoMonstruo, DibujoMonstruo> = { gelaton, bestia, golem, dragon, rey };
 
@@ -44,11 +49,13 @@ export function etapaDe(fraccionVida: number): EtapaMonstruo {
   return 4;
 }
 
-/** La cara manda la fase (vencido, escapó, pausa); si está peleando, la etapa. */
-function caraDe(etapa: EtapaMonstruo, fase: FaseJefe): Cara {
+/** La cara manda la fase (vencido, escapó, pausa); si está peleando, el dolor de un golpe
+ *  reciente y, si no, la etapa. */
+export function caraDe(etapa: EtapaMonstruo, fase: FaseJefe, dolor = false): Cara {
   if (fase === 'vencido') return 'ko';
   if (fase === 'escapo') return 'risa';
   if (fase === 'pausa') return 'dormido';
+  if (dolor) return 'dolor';
   return (['confiado', 'molesto', 'herido', 'mareado'] as const)[etapa - 1] ?? 'confiado';
 }
 
@@ -85,6 +92,14 @@ export function Monstruo({ tipo = 'bestia', etapa, fase, golpes, fuerte }: {
 }) {
   const raiz = useRef<HTMLDivElement>(null);
   useReiniciarAnimacion(raiz, 'golpe', golpes);
+  // Cara de dolor tras cada golpe; si los golpes siguen llegando, se mantiene.
+  const [dolor, setDolor] = useState(false);
+  useEffect(() => {
+    if (!golpes) return undefined;
+    setDolor(true);
+    const t = setTimeout(() => setDolor(false), DOLOR_MS);
+    return () => clearTimeout(t);
+  }, [golpes]);
   const dibujo = DIBUJOS[tipo] ?? bestia;
   const { Cuerpo, Fuera } = dibujo;
   const [ix, iy] = dibujo.impactos[golpes % dibujo.impactos.length] ?? [100, 100];
@@ -92,7 +107,7 @@ export function Monstruo({ tipo = 'bestia', etapa, fase, golpes, fuerte }: {
   const clases = ['monstruo', golpes > 0 && 'golpe', fuerte && 'fuerte'].filter(Boolean).join(' ');
 
   return (
-    <div className={clases} ref={raiz} data-tipo={tipo} data-etapa={fase === 'vencido' ? 4 : etapa} data-fase={fase} data-cara={caraDe(etapa, fase)} aria-hidden="true">
+    <div className={clases} ref={raiz} data-tipo={tipo} data-etapa={fase === 'vencido' ? 4 : etapa} data-fase={fase} data-cara={caraDe(etapa, fase, dolor)} aria-hidden="true">
       <svg viewBox="-14 -24 228 228" preserveAspectRatio="xMidYMax meet">
         <defs>
           <linearGradient id="mj-cuerno" x1="0" y1="1" x2="0" y2="0">

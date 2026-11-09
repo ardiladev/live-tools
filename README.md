@@ -314,7 +314,9 @@ del original); el componente solo pinta lo que el motor publica:
   pierde los cuernos (ojo morado, curita); **gólem** se parte el hombro y le caen piedritas, con runas en el color
   del estilo; **dragón** echa humo y brasas, se le rasga el ala y se le parte un cuerno, y se ríe con fuego en la
   garganta; **rey del abismo** flota con un aura de fuego oscuro, se le apaga un orbe, se le parte un cuerno y al
-  vencerlo se le cae la corona. La cara la manda la fase (pausa = dormido, escapó = risa). Cada golpe reinicia su animación con
+  vencerlo se le cae la corona. La cara la manda la fase (pausa = dormido, escapó = risa); peleando, cada golpe le
+  pone cara de **dolor** durante `DOLOR_MS` (0,6 s) y luego vuelve la de su etapa, así se nota aunque el golpe sea
+  pequeño (la etapa solo cambia cada 25 % de vida). Cada golpe reinicia su animación con
   `sacudidas`; `golpeFuerte` (regalo) la hace más grande. El oro sigue al estilo del widget (`--activo`,
   `--borde-color`). La escena se acomoda a la forma de la fuente con `@media (max-aspect-ratio: 5/2)`: franja con
   `--u: 1vw` (la placa igual que antes) o escenario con `--u` = el menor entre ancho y alto. «Forma de la fuente

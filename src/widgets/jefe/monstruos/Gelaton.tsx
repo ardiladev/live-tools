@@ -81,6 +81,12 @@ function Cuerpo() {
         <ellipse className="mj-boca" cx="100" cy="113" rx="6" ry="5" />
       </g>
 
+      <g className="mj-cara mj-cara-dolor">
+        <path className="mj-trazo" strokeWidth="4" d="M75 90l12 6-12 6M125 90l-12 6 12 6" />
+        <path className="mj-boca" d="M88 105h24q-2 13-12 13t-12-13z" />
+        <path className="mj-sudor" d={gota(134, 86, 4)} />
+      </g>
+
       <g className="mj-cara mj-cara-ko">
         <path className="mj-equis" d="M76 90l12 12M88 90l-12 12M112 90l12 12M124 90l-12 12" />
         <path className="mj-trazo" strokeWidth="3" d="M88 110q6-4 12 0t12 0" />

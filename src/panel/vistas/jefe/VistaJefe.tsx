@@ -111,8 +111,9 @@ export function VistaJefe() {
       <Tarjeta titulo="Monstruo" ancha>
         <SelectorMonstruo valor={tipoMonstruo(cfg.monstruo)} alCambiar={(v) => cambiarCfg((a) => { a.monstruo = v; })} />
         <Nota>
-          Del menos al más amenazante. Todos se van rompiendo a medida que baja la vida, se duermen en pausa, se burlan si se{' '}
-          acaba el tiempo y quedan K.O. al vencerlos. Solo cambia el dibujo: la vida y el daño siguen igual.
+          Del menos al más amenazante. Todos ponen cara de dolor con cada golpe, se van rompiendo cada vez que pierden un cuarto{' '}
+          de la vida, se duermen en pausa, se burlan si se acaba el tiempo y quedan K.O. al vencerlos. Solo cambia el dibujo:{' '}
+          la vida y el daño siguen igual.
         </Nota>
       </Tarjeta>
 

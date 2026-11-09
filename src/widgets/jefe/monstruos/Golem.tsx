@@ -93,6 +93,12 @@ function Cuerpo() {
         <path className="mj-trazo" strokeWidth="3" d="M86 58q4-4 7 0t7 0 7 0 7 0" />
       </g>
 
+      <g className="mj-cara mj-cara-dolor">
+        <path className="mj-ojo-linea" d="M79 37l12 5-12 5M121 37l-12 5 12 5" />
+        <path className="mj-boca" d="M86 52h28q-3 13-14 13t-14-13z" />
+        <path className="mj-diente" d="M90 52l3 5 3-5zM104 52l3 5 3-5z" />
+      </g>
+
       <g className="mj-cara mj-cara-ko">
         <path className="mj-equis" d="M80 36l12 12M92 36l-12 12M108 36l12 12M120 36l-12 12" />
         <path className="mj-trazo" strokeWidth="3" d="M88 59h24" />
