@@ -4,8 +4,10 @@
 // Va ENCIMA de toda la escena: cada bailarina baila en una mitad de la pantalla y una línea
 // divisoria de oro las separa. Arriba, el reloj, la barra de activación de 2 cuadrantes y la
 // ficha de cada equipo (con el «VS» sobre la línea). Abajo, el aviso.
-// Al terminar el tiempo (y los 3 s de gracia), la mitad de quien perdió queda presa del efecto
-// elegido (Efectos.tsx) y la de quien ganó se ilumina. Así se queda hasta la próxima ronda.
+// Durante TODO el duelo, la mitad de quien va perdiendo ya se ve presa del efecto elegido
+// (Efectos.tsx); si la pasa, se libera (el efecto se va) y el efecto cae sobre la otra.
+// Al terminar el tiempo (y los 3 s de gracia), quien perdió se queda presa con su cartel y la
+// mitad de quien ganó se ilumina. Así se queda hasta la próxima ronda.
 // Reglas en motor.ts (las de la Barra de activación); diseño en duelo.css y efectos.css.
 // Secciones: 1. Widget · 2. Mitad de la pantalla · 3. Cuadrante · 4. Ficha de un equipo
 // =============================================================================
@@ -32,6 +34,8 @@ const CONTEO_MS = 500; // duración de la animación del número
 const ESTADOS: Record<EstadoReloj, string> = { listo: 'Listo', corre: 'En juego', pausa: 'En pausa', fin: 'Final' };
 const formato = new Intl.NumberFormat('es-CO');
 const LADOS = ['izq', 'der'] as const;
+/** Lo que tarda en irse el efecto cuando la bailarina se libera (la animación «liberar» de efectos.css). */
+const SALIDA_MS = 700;
 
 /** Colores de un equipo para el CSS (calculados aquí: sin color-mix, ver config.ts). */
 const coloresDe = (color: string): CSSProperties => ({
@@ -66,7 +70,7 @@ export function Duelo() {
     return () => clearTimeout(espera);
   }, [lectura.estado, finReloj]);
 
-  const duelo = faseDuelo(lectura, estado.reloj, estado.puntos, { amenaza: estado.amenaza });
+  const duelo = faseDuelo(lectura, estado.reloj, estado.puntos, { enVivo: estado.enVivo });
 
   // El efecto suena solo si se vio caer (no al recargar OBS con la ronda ya terminada).
   const faseAnterior = useRef<FaseDuelo>(duelo.fase);
@@ -94,10 +98,8 @@ export function Duelo() {
             lado={LADOS[i] ?? 'izq'}
             equipo={e}
             efecto={estado.efecto}
-            modo={
-              duelo.perdedor === i ? (duelo.fase === 'atrapada' ? 'atrapada' : 'amenaza')
-                : duelo.ganador === i ? 'gana' : 'libre'
-            }
+            modo={duelo.perdedor === i ? 'atrapada' : duelo.ganador === i ? 'gana' : 'libre'}
+            final={duelo.fase === 'atrapada'}
             estado={estado}
           />
         ))}
@@ -144,17 +146,39 @@ export function Duelo() {
 
 
 // -----------------------------------------------------------------------------
-// 2. Mitad de la pantalla: libre, amenazada (últimos segundos), atrapada o ganadora
+// 2. Mitad de la pantalla: libre, atrapada (durante el duelo o al final) o ganadora
 // -----------------------------------------------------------------------------
 
-type ModoMitad = 'libre' | 'amenaza' | 'atrapada' | 'gana';
+type ModoMitad = 'libre' | 'atrapada' | 'gana';
 
-function Mitad({ lado, equipo, efecto, modo, estado }: {
-  lado: (typeof LADOS)[number]; equipo: EquipoActivacion; efecto: TipoEfecto; modo: ModoMitad; estado: EstadoDuelo;
+function Mitad({ lado, equipo, efecto, modo, final, estado }: {
+  lado: (typeof LADOS)[number]; equipo: EquipoActivacion; efecto: TipoEfecto; modo: ModoMitad; final: boolean; estado: EstadoDuelo;
 }) {
+  const atrapada = modo === 'atrapada';
+  // Cada vez que vuelve a quedar atrapada, el efecto entra otra vez desde el principio (`vez`);
+  // al liberarse no desaparece de golpe: se va durante SALIDA_MS (`saliendo`).
+  const [antes, setAntes] = useState(atrapada);
+  const [vez, setVez] = useState(0);
+  const [saliendo, setSaliendo] = useState(false);
+  if (antes !== atrapada) {
+    setAntes(atrapada);
+    setSaliendo(!atrapada);
+    if (atrapada) setVez((n) => n + 1);
+  }
+  useEffect(() => {
+    if (!saliendo) return undefined;
+    const espera = setTimeout(() => setSaliendo(false), SALIDA_MS);
+    return () => clearTimeout(espera);
+  }, [saliendo]);
+
   return (
     <section className={`mitad ${lado}`} data-modo={modo} style={coloresDe(equipo.color)} aria-label={equipo.nombre}>
-      {modo === 'atrapada' && <Efecto tipo={efecto} cartel={estado.cartelPierde} />}
+      {(atrapada || saliendo) && (
+        <div key={vez} className={atrapada ? 'efecto' : 'efecto saliendo'}>
+          {/* El cartel («¡Congelada!»…) cae solo al final; durante el duelo basta con el efecto. */}
+          <Efecto tipo={efecto} cartel={atrapada && final ? estado.cartelPierde : ''} />
+        </div>
+      )}
       {modo === 'gana' && <Victoria cartel={estado.cartelGana} />}
     </section>
   );

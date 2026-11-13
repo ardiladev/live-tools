@@ -1,7 +1,10 @@
 /* ==========================================================================
-   efectos.css — Lo que cae sobre cada mitad al final del Duelo VS (Efectos.tsx)
+   efectos.css — Lo que cae sobre la mitad de quien va perdiendo el Duelo VS
+   (Efectos.tsx): durante todo el duelo y, al final, con su cartel.
    Cada efecto ocupa toda su mitad (.ef, inset 0) y queda quieto al terminar de
    entrar, salvo lo que se mueve siempre (nieve, lluvia, rayos, la araña).
+   Cuando la pasan, se libera: el efecto se va (.efecto.saliendo, 0,7 s, lo
+   mismo que SALIDA_MS en Duelo.tsx) y entra en la otra mitad.
    Todo es traslúcido: la bailarina se sigue viendo detrás.
    Los trazos que «se dibujan» usan pathLength=1 + stroke-dasharray: 1.
 
@@ -10,13 +13,18 @@
    ========================================================================== */
 
 
-/* ---------- 1. Común y cartel ---------- */
+/* ---------- 1. Común, salida y cartel ---------- */
+.efecto,
 .ef {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 .ef > div[aria-hidden] { position: absolute; inset: 0; }
+/* Se libera: todo se desvanece hacia arriba y la reja de la celda sube (la reja no tiene animación
+   propia, así que la subida no choca con la de los barrotes que bajan). */
+.efecto.saliendo { animation: liberar .7s ease-in forwards; }
+.efecto.saliendo .celda-reja { animation: reja-sube .6s cubic-bezier(.5, 0, .9, .4) forwards; }
 .ef-velo {
   position: absolute;
   inset: 0;
@@ -374,6 +382,11 @@
 
 /* ---------- 7. Animaciones ---------- */
 @keyframes aparecer { to { opacity: 1; } }
+@keyframes liberar {
+  from { opacity: 1; }
+  to { opacity: 0; transform: translateY(calc(var(--u) * -3)); }
+}
+@keyframes reja-sube { to { transform: translateY(-105%); } }
 @keyframes cartel-golpe {
   from { opacity: 0; transform: translateX(-50%) scale(2.4); }
   to { opacity: 1; transform: translateX(-50%) scale(1); }
@@ -445,4 +458,5 @@
 @media (prefers-reduced-motion: reduce) {
   .ef *, .ef-celda { animation-duration: 1ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
   .copo, .gota, .rayo, .tormenta-destello, .destello { display: none; }
+  .efecto.saliendo, .efecto.saliendo * { animation: none !important; opacity: 0; }
 }

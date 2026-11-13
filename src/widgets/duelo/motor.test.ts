@@ -4,24 +4,36 @@ import { GRACIA_MS } from '../../nucleo/juego';
 import { leerReloj } from '../../nucleo/reloj';
 import type { RelojRonda } from '../../tipos/reloj';
 import { EFECTOS, conAlfa, efectoDeRonda, eleccionDe, mezclar, textoCartel } from './config';
-import { AMENAZA_MS, crearMotorDuelo, faseDuelo } from './motor';
+import { crearMotorDuelo, faseDuelo } from './motor';
 
 const AHORA = 1_800_000_000_000;
 const corriendo = (restanteMs: number): RelojRonda => ({ e: 'corre', d: 180, fin: AHORA + restanteMs, r: 0 });
-const fase = (reloj: RelojRonda, puntos: number[], opciones: { amenaza?: boolean; ahora?: number } = {}) =>
+const fase = (reloj: RelojRonda, puntos: number[], opciones: { enVivo?: boolean; ahora?: number } = {}) =>
   faseDuelo(leerReloj(reloj, opciones.ahora ?? AHORA), reloj, puntos, { ahora: AHORA, ...opciones });
 
 describe('faseDuelo', () => {
-  it('antes de empezar y a mitad de ronda no le pasa nada a nadie', () => {
-    expect(fase({ e: 'listo', d: 180 }, [10, 0]).fase).toBe('juego');
-    expect(fase(corriendo(60_000), [10, 0]).fase).toBe('juego');
+  it('antes de empezar nadie está atrapada', () => {
+    expect(fase({ e: 'listo', d: 180 }, [0, 0])).toEqual({ fase: 'juego', perdedor: null, ganador: null });
   });
 
-  it('en los últimos 10 s avisa la mitad de quien va perdiendo (si está encendido)', () => {
-    expect(fase(corriendo(AMENAZA_MS), [10, 30])).toEqual({ fase: 'amenaza', perdedor: 0, ganador: null });
-    expect(fase(corriendo(5000), [40, 30])).toEqual({ fase: 'amenaza', perdedor: 1, ganador: null });
-    expect(fase(corriendo(5000), [40, 30], { amenaza: false }).fase).toBe('juego');
-    expect(fase(corriendo(5000), [30, 30]).fase).toBe('juego'); // empatadas: nadie va perdiendo
+  it('durante todo el duelo, quien va perdiendo ya está atrapada (si está encendido)', () => {
+    expect(fase(corriendo(170_000), [10, 30])).toEqual({ fase: 'juego', perdedor: 0, ganador: null });
+    expect(fase(corriendo(60_000), [40, 30])).toEqual({ fase: 'juego', perdedor: 1, ganador: null });
+    expect(fase(corriendo(5000), [40, 30]).perdedor).toBe(1);
+    // En pausa sigue atrapada.
+    expect(fase({ e: 'pausa', d: 180, r: 60 }, [40, 30]).perdedor).toBe(1);
+    // Empatadas (o en 0 las dos): nadie va perdiendo.
+    expect(fase(corriendo(60_000), [30, 30]).perdedor).toBeNull();
+    expect(fase(corriendo(60_000), [0, 0]).perdedor).toBeNull();
+    // Apagado: durante el duelo no le pasa nada a nadie.
+    expect(fase(corriendo(5000), [40, 30], { enVivo: false }).perdedor).toBeNull();
+  });
+
+  it('en los 3 s de gracia sigue atrapada quien va perdiendo (puede cambiar con los últimos regalos)', () => {
+    const recien: RelojRonda = { e: 'corre', d: 180, fin: AHORA - 1000, r: 0 };
+    expect(fase(recien, [5, 9])).toEqual({ fase: 'conteo', perdedor: 0, ganador: null });
+    expect(fase(recien, [12, 9]).perdedor).toBe(1);
+    expect(fase(recien, [5, 9], { enVivo: false }).perdedor).toBeNull();
   });
 
   it('al terminar, espera la gracia y luego atrapa a quien perdió', () => {

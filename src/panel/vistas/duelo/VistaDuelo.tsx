@@ -2,8 +2,9 @@
 // vistas/duelo/VistaDuelo.tsx — Juegos → Competencias → Duelo VS
 //
 // Configura el widget duelo.html: dos bailarinas (izquierda y derecha) con la barra de activación
-// arriba. Al terminar la ronda, la mitad de quien pierde queda presa del efecto elegido (celda,
-// invierno, telaraña, tormenta o uno al azar en cada ronda). Iniciar/Pausar/Terminar ahora/
+// arriba. Durante todo el duelo, la mitad de quien va perdiendo se ve presa del efecto elegido
+// (celda, invierno, telaraña, tormenta o uno al azar en cada ronda); al terminar, quien perdió se
+// queda así con su cartel. Iniciar/Pausar/Terminar ahora/
 // Reiniciar cambian el reloj (`t`) o la ronda (`ro`) y se suben a Supabase al instante.
 // Secciones: 1. Pruebas · 2. Vista · 3. Tarjeta de una bailarina
 // =============================================================================
@@ -95,7 +96,7 @@ export function VistaDuelo() {
     },
   ];
 
-  /** Termina la ronda ya (como si el reloj llegara a 0): a los 3 s cae el efecto sobre quien pierde. */
+  /** Termina la ronda ya (como si el reloj llegara a 0): a los 3 s quien pierde se queda atrapada. */
   function terminarAhora(): void {
     reloj.aplicar({ e: 'corre', fin: Date.now(), r: 0 });
   }
@@ -129,7 +130,7 @@ export function VistaDuelo() {
         <PanelReloj reloj={reloj} />
         <div className="fila-acciones separado-arriba">
           <BotonesReloj reloj={reloj} />
-          <button onClick={terminarAhora} disabled={estado !== 'corre' && estado !== 'pausa'} title="Pone el reloj en 0: a los 3 segundos cae el efecto sobre quien va perdiendo">
+          <button onClick={terminarAhora} disabled={estado !== 'corre' && estado !== 'pausa'} title="Pone el reloj en 0: a los 3 segundos quien va perdiendo se queda atrapada con su cartel">
             Terminar ahora
           </button>
           <button onClick={reiniciar} title="Detiene el reloj, pone a las dos en 0, las libera y saca a todos de sus equipos">Reiniciar duelo</button>
@@ -140,8 +141,10 @@ export function VistaDuelo() {
         <Nota>
           {'Cómo se juega: cada bailarina tiene su regalo activador. Quien lo envía se une a su equipo (ese regalo ya le suma) y, desde ahí, '
             + 'CUALQUIER regalo suyo le suma. Si envía el activador de la otra, se cambia. Los regalos de quien no se ha unido no suman. '
-            + 'Arriba, la barra se reparte según las monedas de cada una. Al llegar a 0 (o con «Terminar ahora»), se cuentan los últimos '
-            + 'regalos durante 3 segundos y la mitad de la pantalla de quien perdió queda atrapada; la de quien ganó se ilumina. '
+            + 'Arriba, la barra se reparte según las monedas de cada una. Durante todo el duelo, la mitad de la pantalla de quien va '
+            + 'perdiendo se ve atrapada (congelada, en la celda, en la telaraña o en la tormenta); si pasa a la otra, se libera y el efecto '
+            + 'cae sobre la otra. Al llegar a 0 (o con «Terminar ahora»), se cuentan los últimos regalos durante 3 segundos y quien perdió '
+            + 'se queda atrapada con su cartel; la mitad de quien ganó se ilumina. '
             + 'Queda así hasta «Nueva ronda» o «Reiniciar duelo». Si terminan empatadas, nadie queda atrapada.'}
         </Nota>
       </Tarjeta>
@@ -153,9 +156,9 @@ export function VistaDuelo() {
           {cfg.efecto === 'azar' ? ` En esta ronda tocará: ${tocaEstaRonda}.` : ''}
         </p>
         <Casilla
-          texto="En los últimos 10 segundos, la mitad de quien va perdiendo empieza a avisar (se oscurece, se escarcha…)"
-          marcada={cfg.amenaza}
-          alCambiar={(v) => cambiarCfg((a) => { a.amenaza = v; })}
+          texto="Durante todo el duelo, quien va perdiendo ya se ve atrapada (si la pasa, se libera y le cae a la otra). Sin marcar, el efecto cae solo al final."
+          marcada={cfg.enVivo}
+          alCambiar={(v) => cambiarCfg((a) => { a.enVivo = v; })}
         />
         <div className="campos separado-arriba">
           <Campo
@@ -185,7 +188,8 @@ export function VistaDuelo() {
           + 'con cada bailarina en su mitad: la 1 a la izquierda y la 2 a la derecha. TikTok no siempre manda el precio de los regalos: '
           + 'entonces el activador vale lo que pongas en «Monedas del activador» (en 0, el precio del Buscador) y los demás regalos valen su precio del '}
         <a href="#/regalos">Buscador de regalos</a>
-        {' (si no está ahí, suman 1). Para ver el efecto en la vista previa: Iniciar, unos regalos de prueba y «Terminar ahora».'}
+        {' (si no está ahí, suman 1). Para ver el efecto en la vista previa: Iniciar y unos regalos de prueba (cae sobre quien va perdiendo); '
+          + 'para ver el final, «Terminar ahora».'}
       </Nota>
     </>
   );

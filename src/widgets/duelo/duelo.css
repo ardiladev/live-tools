@@ -10,8 +10,7 @@
    (1080 × 1920, lo normal en TikTok) o en horizontal.
 
    Secciones: 1. Escena y mitades · 2. Línea divisoria · 3. Reloj · 4. Barra
-              5. Fichas y VS · 6. Aviso · 7. Amenaza (últimos segundos)
-              8. Animaciones
+              5. Fichas y VS · 6. Aviso · 7. Animaciones
    ========================================================================== */
 
 
@@ -259,7 +258,6 @@
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .6));
 }
 .duelo[data-fase="juego"] .vs { animation: vs-pulso 2.4s ease-in-out infinite; }
-.duelo[data-fase="amenaza"] .vs { animation: vs-pulso .6s ease-in-out infinite; }
 
 
 /* ---------- 6. Aviso ---------- */
@@ -290,30 +288,7 @@
 }
 
 
-/* ---------- 7. Amenaza (últimos segundos: la mitad de quien va perdiendo avisa) ---------- */
-.mitad { --tinte: rgba(30, 30, 36, .8); }
-.duelo[data-efecto="hielo"] .mitad { --tinte: rgba(190, 232, 255, .85); }
-.duelo[data-efecto="telarana"] .mitad { --tinte: rgba(185, 170, 220, .7); }
-.duelo[data-efecto="tormenta"] .mitad { --tinte: rgba(40, 55, 90, .85); }
-.mitad[data-modo="amenaza"]::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  box-shadow: inset 0 0 calc(var(--u) * 14) calc(var(--u) * 2) var(--tinte);
-  animation: amenaza 1s ease-in-out infinite alternate;
-}
-/* En la celda, además, se adivina la sombra de los barrotes. */
-.duelo[data-efecto="celda"] .mitad[data-modo="amenaza"]::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(90deg, transparent 0 calc(16.66% - var(--u) * 2.4), rgba(0, 0, 0, .35) calc(16.66% - var(--u) * 2.4) 16.66%);
-  background-position: calc(var(--u) * 1.2) 0;
-  animation: amenaza 1s ease-in-out infinite alternate;
-}
-
-
-/* ---------- 8. Animaciones ---------- */
+/* ---------- 7. Animaciones ---------- */
 .suma {
   position: absolute;
   top: calc(var(--u) * -1.6);
@@ -338,11 +313,10 @@
 @keyframes latir-linea { 50% { box-shadow: 0 0 calc(var(--u) * 3) rgba(255, 223, 140, 1), 0 0 calc(var(--u) * .3) rgba(0, 0, 0, .6); } }
 @keyframes chispa { 50% { opacity: .55; transform: translateX(-50%) scaleY(.8); } }
 @keyframes vs-pulso { 50% { transform: translate(-50%, -50%) rotate(45deg) scale(1.08); } }
-@keyframes amenaza { from { opacity: .35; } to { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
   .cuadrante, .icono, .costura { transition: none; }
   .suma, .golpe .icono, .cuadrante.gana::after, .divisoria::after, .costura, .vs,
   .reloj[data-estado="pausa"] .tiempo, .reloj.urgente .tiempo,
-  .duelo[data-fase="atrapada"] .divisoria, .mitad::before, .mitad::after { animation: none; }
+  .duelo[data-fase="atrapada"] .divisoria { animation: none; }
 }

@@ -1,6 +1,6 @@
 // =============================================================================
-// widgets/duelo/Efectos.tsx — Lo que cae sobre la mitad de la pantalla de quien pierde el duelo
-// (y la luz sobre la de quien gana). Todo es SVG y CSS propio (efectos.css), sin imágenes:
+// widgets/duelo/Efectos.tsx — Lo que cae sobre la mitad de la pantalla de quien va perdiendo el
+// duelo (durante todo el duelo y al final, con su cartel) y la luz sobre la de quien gana. Todo es SVG y CSS propio (efectos.css), sin imágenes:
 //   Celda     → los barrotes bajan de golpe, se cierran los travesaños y cae un candado
 //   Invierno  → la escarcha crece desde los bordes, cuelgan carámbanos, nieva y queda un bloque de hielo
 //   Telaraña  → se tejen telarañas en las esquinas y en el centro, y baja una araña por su hilo
@@ -37,8 +37,9 @@ const r1 = (n: number): string => n.toFixed(1);
 /** Variables CSS en línea (React no tipa las propiedades personalizadas). */
 const vars = (v: Record<string, string | number>): CSSProperties => v as CSSProperties;
 
-/** Cartel grande con el texto del final (el único texto del efecto). */
+/** Cartel grande con el texto del final (el único texto del efecto). Sin texto, no hay cartel. */
 function Cartel({ texto, clase }: { texto: string; clase: string }) {
+  if (!texto) return null;
   return <div className={`cartel ${clase}`}><span>{texto}</span></div>;
 }
 

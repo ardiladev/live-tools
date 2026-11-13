@@ -4,7 +4,8 @@
 // Se registra en sincronizar AL CARGAR; config() es PURA. Las reglas son las de la Barra de
 // activación (las mismas claves eq/pr/ro/s/t), con 2 equipos fijos: el 1 es la mitad izquierda
 // de la pantalla y el 2, la derecha. Lo propio del duelo: el efecto que cae sobre quien pierde
-// (`ef`), el aviso de los últimos segundos (`am`) y los textos de los carteles (`tp`, `tg`).
+// (`ef`), si quien va perdiendo se ve atrapada durante todo el duelo (`am`) y los textos de los
+// carteles (`tp`, `tg`).
 // Nada bloquea el envío (si bloqueara, el reloj tampoco llegaría a OBS): los problemas se avisan.
 // =============================================================================
 
@@ -39,8 +40,8 @@ export type AjustesDuelo = {
   /** Izquierda y derecha. */
   equipos: EquipoDuelo[];
   efecto: EleccionEfecto;
-  /** Aviso en los últimos 10 s sobre la mitad de quien va perdiendo. */
-  amenaza: boolean;
+  /** Durante todo el duelo, la mitad de quien va perdiendo ya se ve atrapada (si no, solo al final). */
+  enVivo: boolean;
   /** Textos de los carteles ('' = los de siempre). */
   cartelPierde: string;
   cartelGana: string;
@@ -56,7 +57,7 @@ export const POR_DEFECTO: AjustesDuelo = {
     { nombre: 'Bailarina 2', giftId: '5487', regalo: 'Finger Heart', valor: 5, color: '#3FA9E8' },
   ],
   efecto: 'azar',
-  amenaza: true,
+  enVivo: true,
   cartelPierde: '',
   cartelGana: '',
 };
@@ -94,7 +95,7 @@ export function configDuelo(estado: EstadoPanel): ConfigDuelo {
     s: cfg.sonido ? 1 : 0,
     t: { ...cfg.reloj, d: duracionDe(cfg) },
     ef: cfg.efecto,
-    am: cfg.amenaza ? 1 : 0,
+    am: cfg.enVivo ? 1 : 0,
     tp: textoLimpio(cfg.cartelPierde).slice(0, MAX_CARTEL),
     tg: textoLimpio(cfg.cartelGana).slice(0, MAX_CARTEL),
   };

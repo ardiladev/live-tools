@@ -6,7 +6,8 @@
 // ver src/widgets/activacion/config.ts), con solo 2 equipos, más las propias del duelo:
 //   ef = efecto sobre la mitad de quien pierde: 'celda' | 'hielo' | 'telarana' | 'tormenta' | 'azar'
 //        (azar = uno distinto según la ronda, el mismo en el panel y en OBS)
-//   am = 1/0: en los últimos 10 s, la mitad de quien va perdiendo «avisa» con el color del efecto
+//   am = 1/0: durante todo el duelo, la mitad de quien va perdiendo ya se ve atrapada (si la pasa,
+//        se libera y el efecto cae sobre la otra); en 0, el efecto cae solo al final
 //   tp = texto del cartel de quien pierde ('' = el del efecto: «¡Atrapada!», «¡Congelada!»…)
 //   tg = texto del cartel de quien gana ('' = «¡Ganadora!»)
 // El equipo 1 es la mitad IZQUIERDA de la pantalla y el equipo 2, la DERECHA.

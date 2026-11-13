@@ -8,11 +8,14 @@
 // (live-tools:duelo:<w>) y solo 2 equipos.
 //
 // Lo propio del duelo es qué le pasa a cada mitad de la pantalla (faseDuelo):
-//   juego    → nada todavía
-//   amenaza  → últimos 10 s: la mitad de quien va perdiendo empieza a «avisar»
-//   conteo   → se acabó el tiempo: 3 s de gracia (los combos del último segundo todavía cuentan)
-//   atrapada → la mitad de quien perdió queda presa del efecto (celda, hielo, telaraña, tormenta)
-//              y la de quien ganó se ilumina; así se queda hasta la próxima ronda
+//   juego    → durante TODO el duelo (en marcha o en pausa) la mitad de quien va perdiendo ya se ve
+//              presa del efecto (celda, hielo, telaraña, tormenta); si la pasa, se libera y el
+//              efecto cae sobre la otra. Empatadas (o en 0 las dos), nadie está atrapada.
+//              Con `am` en 0, durante el duelo no le pasa nada a nadie (solo al final).
+//   conteo   → se acabó el tiempo: 3 s de gracia (los combos del último segundo todavía cuentan y
+//              todavía pueden cambiar quién queda atrapada)
+//   atrapada → final: la mitad de quien perdió se queda presa, con su cartel, y la de quien ganó
+//              se ilumina; así se queda hasta la próxima ronda
 //   empate   → terminó igualado (o sin monedas): nadie queda atrapada
 // =============================================================================
 
@@ -27,14 +30,12 @@ import {
 
 export const CLAVE_DUELO = 'live-tools:duelo:';
 export const EQUIPOS_DUELO = 2;
-/** Desde cuántos ms antes del final la mitad de quien va perdiendo empieza a avisar. */
-export const AMENAZA_MS = 10000;
 
-export type FaseDuelo = 'juego' | 'amenaza' | 'conteo' | 'atrapada' | 'empate';
+export type FaseDuelo = 'juego' | 'conteo' | 'atrapada' | 'empate';
 
 export interface LecturaDuelo {
   fase: FaseDuelo;
-  /** Índice de la mitad que pierde (o va perdiendo, en 'amenaza'); null si no hay. */
+  /** Índice de la mitad atrapada: la que perdió o, durante el duelo, la que va perdiendo; null si no hay. */
   perdedor: number | null;
   /** Índice de la mitad que gana (solo en 'atrapada'). */
   ganador: number | null;
@@ -44,8 +45,8 @@ export interface EstadoDuelo extends EstadoActivacion {
   eleccion: EleccionEfecto;
   /** El efecto de esta ronda (con 'azar', el que tocó). */
   efecto: Efecto;
-  /** ¿Avisa la mitad de quien va perdiendo en los últimos segundos? */
-  amenaza: boolean;
+  /** ¿Se ve atrapada quien va perdiendo durante todo el duelo (`am`)? Si no, solo al final. */
+  enVivo: boolean;
   cartelPierde: string;
   cartelGana: string;
   /** La ronda (`ro`): las animaciones del efecto vuelven a empezar con cada ronda. */
@@ -69,20 +70,19 @@ export function faseDuelo(
   lectura: LecturaReloj,
   reloj: RelojRonda,
   puntos: readonly number[],
-  { ahora = Date.now(), amenaza = true }: { ahora?: number; amenaza?: boolean } = {},
+  { ahora = Date.now(), enVivo = true }: { ahora?: number; enVivo?: boolean } = {},
 ): LecturaDuelo {
   const lider = quienGana(puntos.slice(0, EQUIPOS_DUELO));
   const otro = lider === null ? null : 1 - lider;
   if (lectura.estado === 'fin') {
-    if (enGracia(reloj, ahora)) return { fase: 'conteo', perdedor: null, ganador: null };
+    if (enGracia(reloj, ahora)) return { fase: 'conteo', perdedor: enVivo ? otro : null, ganador: null };
     return lider === null
       ? { fase: 'empate', perdedor: null, ganador: null }
       : { fase: 'atrapada', perdedor: otro, ganador: lider };
   }
-  if (amenaza && lectura.estado === 'corre' && lectura.restanteMs <= AMENAZA_MS && lider !== null) {
-    return { fase: 'amenaza', perdedor: otro, ganador: null };
-  }
-  return { fase: 'juego', perdedor: null, ganador: null };
+  // Antes de empezar (listo) nadie está atrapada; en marcha o en pausa, quien va perdiendo sí.
+  const enDuelo = lectura.estado === 'corre' || lectura.estado === 'pausa';
+  return { fase: 'juego', perdedor: enVivo && enDuelo ? otro : null, ganador: null };
 }
 
 
@@ -93,7 +93,7 @@ export function faseDuelo(
 export function crearMotorDuelo(): MotorDuelo {
   const base = crearMotorActivacion(CLAVE_DUELO);
   let propio: Omit<EstadoDuelo, keyof EstadoActivacion> = {
-    eleccion: 'azar', efecto: efectoDeRonda('azar', 0), amenaza: true,
+    eleccion: 'azar', efecto: efectoDeRonda('azar', 0), enVivo: true,
     cartelPierde: DATOS_EFECTO[efectoDeRonda('azar', 0)].cartel, cartelGana: CARTEL_GANA, ronda: 0, sonido: true,
   };
   const estado = crearEstadoObservable<EstadoDuelo>({ ...base.obtener(), ...propio });
@@ -110,7 +110,7 @@ export function crearMotorDuelo(): MotorDuelo {
       propio = {
         eleccion,
         efecto,
-        amenaza: cfg.am !== 0,
+        enVivo: cfg.am !== 0,
         cartelPierde: textoCartel(cfg.tp, DATOS_EFECTO[efecto].cartel),
         cartelGana: textoCartel(cfg.tg, CARTEL_GANA),
         ronda,
