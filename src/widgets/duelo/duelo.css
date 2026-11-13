@@ -1,0 +1,348 @@
+/* ==========================================================================
+   duelo.css — Widget "Duelo VS" (duelo.html → src/widgets/duelo/Duelo.tsx)
+   Pantalla completa encima de la cámara: dos mitades (izquierda = equipo 1,
+   derecha = equipo 2) separadas por una línea divisoria de oro. Arriba el reloj,
+   la barra de activación de 2 cuadrantes y las fichas con el «VS» sobre la
+   línea; abajo, el aviso. Lo que cae sobre cada mitad está en efectos.css.
+   Los colores de cada equipo llegan ya calculados en --color, --claro, --oscuro
+   y --halo (sin color-mix: algunas versiones de OBS lo pintan negro).
+   Las medidas van en --u (1 % del lado más corto): se ve igual en vertical
+   (1080 × 1920, lo normal en TikTok) o en horizontal.
+
+   Secciones: 1. Escena y mitades · 2. Línea divisoria · 3. Reloj · 4. Barra
+              5. Fichas y VS · 6. Aviso · 7. Amenaza (últimos segundos)
+              8. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena y mitades ---------- */
+:root { --u: min(1vw, 1vh); }
+.duelo {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+.mitad {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  overflow: hidden;
+}
+.mitad.izq { left: 0; }
+.mitad.der { right: 0; }
+
+
+/* ---------- 2. Línea divisoria ---------- */
+.divisoria {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: 2;
+  width: calc(var(--u) * .5);
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #AA771C 0%, #F3DFA2 20%, #D4AF37 50%, #F3DFA2 80%, #AA771C 100%);
+  box-shadow: 0 0 calc(var(--u) * 1.4) rgba(212, 175, 55, .75), 0 0 calc(var(--u) * .3) rgba(0, 0, 0, .6);
+}
+/* Un brillo que recorre la línea de arriba abajo. */
+.divisoria::after {
+  content: "";
+  position: absolute;
+  left: -100%;
+  right: -100%;
+  height: 18%;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, .95), transparent);
+  filter: blur(1px);
+  animation: recorrer 3.2s linear infinite;
+}
+/* Al final, la línea late una vez más fuerte. */
+.duelo[data-fase="atrapada"] .divisoria { animation: latir-linea 1.6s ease-in-out infinite; }
+
+
+/* ---------- 3. Reloj ---------- */
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 1.4);
+  padding: calc(var(--u) * 2.4) calc(var(--u) * 2.4) 0;
+}
+.reloj {
+  display: flex;
+  align-items: baseline;
+  gap: calc(var(--u) * 1);
+  padding: calc(var(--u) * .8) calc(var(--u) * 2.4);
+}
+.tiempo {
+  color: var(--texto-sec);
+  font-weight: 800;
+  font-size: calc(var(--u) * 4);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+.estado-reloj {
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.5);
+  letter-spacing: var(--espaciado-widget);
+  text-transform: var(--mayus);
+  opacity: .8;
+}
+.reloj[data-estado="corre"] .estado-reloj { color: var(--ok); opacity: 1; }
+.reloj[data-estado="pausa"] .tiempo { animation: parpadeo 1.2s ease-in-out infinite; }
+.reloj[data-estado="fin"] .estado-reloj { color: var(--activo); opacity: 1; }
+.reloj.urgente .tiempo { color: var(--mal); animation: latido 1s ease-in-out infinite; }
+
+
+/* ---------- 4. Barra ---------- */
+.barra-duelo {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: calc(var(--u) * 5.2);
+  overflow: hidden;
+  border-radius: calc(var(--u) * 2.6);
+  background: rgba(0, 0, 0, .4);
+  box-shadow: inset 0 0 0 calc(var(--u) * .25) rgba(212, 175, 55, .85), 0 0 calc(var(--u) * 2) rgba(0, 0, 0, .45);
+}
+.cuadrante {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: calc(var(--u) * .8);
+  min-width: 0;
+  padding: 0 calc(var(--u) * 2);
+  box-sizing: border-box;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--claro), var(--color) 55%, var(--oscuro));
+  transition: width .45s ease;
+}
+.cuadrante + .cuadrante { flex-direction: row-reverse; }
+.cuadrante .regalo {
+  width: calc(var(--u) * 3.6);
+  height: calc(var(--u) * 3.6);
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .6));
+}
+.porcentaje {
+  color: #fff;
+  font-weight: 800;
+  font-size: calc(var(--u) * 2.4);
+  font-variant-numeric: tabular-nums;
+  text-shadow: var(--sombra-texto);
+}
+.porcentaje:empty { display: none; }
+.cuadrante.gana::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .35) 50%, transparent 70%);
+  background-size: 250% 100%;
+  animation: brillo 2.4s linear infinite;
+}
+/* La unión de los dos colores: una chispa blanca que tiembla. */
+.costura {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  width: calc(var(--u) * .7);
+  transform: translateX(-50%);
+  background: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 calc(var(--u) * 1.2) calc(var(--u) * .4) rgba(255, 240, 200, .9);
+  transition: left .45s ease;
+  animation: chispa .45s steps(2) infinite;
+}
+
+
+/* ---------- 5. Fichas y VS ---------- */
+.fichas {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: calc(var(--u) * 10);
+  width: 100%;
+}
+.ficha {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.4);
+  min-width: 0;
+  padding: calc(var(--u) * 1.2) calc(var(--u) * 1.6);
+  box-sizing: border-box;
+  box-shadow: inset calc(var(--u) * .5) 0 0 var(--color), var(--resplandor);
+}
+.ficha.der {
+  flex-direction: row-reverse;
+  text-align: right;
+  box-shadow: inset calc(var(--u) * -.5) 0 0 var(--color), var(--resplandor);
+}
+.icono {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: calc(var(--u) * 6);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, var(--halo), transparent 70%), var(--cristal-claro);
+  box-shadow: 0 0 0 calc(var(--u) * .3) var(--color);
+  transition: box-shadow .3s ease;
+}
+.icono .regalo { width: 78%; height: 78%; object-fit: contain; }
+.inicial { color: var(--color); font-weight: 800; font-size: calc(var(--u) * 2.8); }
+.inicial:empty { display: none; }
+.datos { display: flex; flex-direction: column; min-width: 0; }
+.nombre,
+.detalle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nombre {
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 2);
+  letter-spacing: .06em;
+  text-transform: var(--mayus);
+}
+.monedas {
+  color: var(--texto-sec);
+  font-weight: 800;
+  font-size: calc(var(--u) * 3.8);
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.detalle {
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.4);
+  opacity: .85;
+}
+.mejor::before { content: "·"; margin: 0 .5em; }
+.ficha.gana .icono { box-shadow: 0 0 0 calc(var(--u) * .3) var(--color), 0 0 calc(var(--u) * 3) var(--halo); }
+
+/* El «VS» va justo encima de la línea divisoria, entre las dos fichas. */
+.vs {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 8.4);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border-radius: calc(var(--u) * 1.4);
+  background: linear-gradient(135deg, #2a2418, #0F0F12 60%);
+  box-shadow: inset 0 0 0 calc(var(--u) * .35) #D4AF37, 0 0 calc(var(--u) * 2.6) rgba(212, 175, 55, .6);
+  color: transparent;
+  font-size: 0;
+}
+.vs::after {
+  content: "VS";
+  transform: rotate(-45deg);
+  background: linear-gradient(180deg, #FFF3C4, #D4AF37 55%, #AA771C);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 800;
+  font-style: italic;
+  font-size: calc(var(--u) * 3.6);
+  letter-spacing: -.04em;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, .6));
+}
+.duelo[data-fase="juego"] .vs { animation: vs-pulso 2.4s ease-in-out infinite; }
+.duelo[data-fase="amenaza"] .vs { animation: vs-pulso .6s ease-in-out infinite; }
+
+
+/* ---------- 6. Aviso ---------- */
+.aviso-duelo {
+  --color: transparent;
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--u) * 8);
+  z-index: 3;
+  max-width: calc(100% - var(--u) * 6);
+  overflow: hidden;
+  padding: calc(var(--u) * .9) calc(var(--u) * 2.6);
+  transform: translateX(-50%);
+  border-radius: var(--radio-grande);
+  box-sizing: border-box;
+  background: var(--cristal-oscuro);
+  -webkit-backdrop-filter: var(--desenfoque);
+  backdrop-filter: var(--desenfoque);
+  box-shadow: inset calc(var(--u) * .4) 0 0 var(--color), var(--resplandor);
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 1.9);
+  letter-spacing: var(--espaciado-widget);
+  text-overflow: ellipsis;
+  text-transform: var(--mayus);
+  text-shadow: var(--sombra-texto);
+  white-space: nowrap;
+}
+
+
+/* ---------- 7. Amenaza (últimos segundos: la mitad de quien va perdiendo avisa) ---------- */
+.mitad { --tinte: rgba(30, 30, 36, .8); }
+.duelo[data-efecto="hielo"] .mitad { --tinte: rgba(190, 232, 255, .85); }
+.duelo[data-efecto="telarana"] .mitad { --tinte: rgba(185, 170, 220, .7); }
+.duelo[data-efecto="tormenta"] .mitad { --tinte: rgba(40, 55, 90, .85); }
+.mitad[data-modo="amenaza"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 calc(var(--u) * 14) calc(var(--u) * 2) var(--tinte);
+  animation: amenaza 1s ease-in-out infinite alternate;
+}
+/* En la celda, además, se adivina la sombra de los barrotes. */
+.duelo[data-efecto="celda"] .mitad[data-modo="amenaza"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 calc(16.66% - var(--u) * 2.4), rgba(0, 0, 0, .35) calc(16.66% - var(--u) * 2.4) 16.66%);
+  background-position: calc(var(--u) * 1.2) 0;
+  animation: amenaza 1s ease-in-out infinite alternate;
+}
+
+
+/* ---------- 8. Animaciones ---------- */
+.suma {
+  position: absolute;
+  top: calc(var(--u) * -1.6);
+  left: calc(var(--u) * 5);
+  z-index: 4;
+  color: var(--claro);
+  font-weight: 800;
+  font-size: calc(var(--u) * 2.6);
+  text-shadow: var(--sombra-texto);
+  pointer-events: none;
+  animation: subir 1.1s ease-out forwards;
+}
+.ficha.der .suma { left: auto; right: calc(var(--u) * 5); }
+.golpe .icono { animation: golpe .35s ease-out; }
+
+@keyframes subir { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(calc(var(--u) * -4)); } }
+@keyframes golpe { 40% { transform: scale(1.14); } }
+@keyframes brillo { from { background-position: 150% 0; } to { background-position: -100% 0; } }
+@keyframes parpadeo { 50% { opacity: .35; } }
+@keyframes latido { 50% { transform: scale(1.1); } }
+@keyframes recorrer { from { top: -20%; } to { top: 100%; } }
+@keyframes latir-linea { 50% { box-shadow: 0 0 calc(var(--u) * 3) rgba(255, 223, 140, 1), 0 0 calc(var(--u) * .3) rgba(0, 0, 0, .6); } }
+@keyframes chispa { 50% { opacity: .55; transform: translateX(-50%) scaleY(.8); } }
+@keyframes vs-pulso { 50% { transform: translate(-50%, -50%) rotate(45deg) scale(1.08); } }
+@keyframes amenaza { from { opacity: .35; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .cuadrante, .icono, .costura { transition: none; }
+  .suma, .golpe .icono, .cuadrante.gana::after, .divisoria::after, .costura, .vs,
+  .reloj[data-estado="pausa"] .tiempo, .reloj.urgente .tiempo,
+  .duelo[data-fase="atrapada"] .divisoria, .mitad::before, .mitad::after { animation: none; }
+}

@@ -136,7 +136,11 @@ export function avisoDe(e: EstadoActivacion, lectura: LecturaReloj, ahora: numbe
 // Motor
 // -----------------------------------------------------------------------------
 
-export function crearMotorActivacion(): MotorActivacion {
+/**
+ * `prefijo`: dónde se guarda la ronda (el Duelo VS usa estas mismas reglas con su propia clave,
+ * src/widgets/duelo).
+ */
+export function crearMotorActivacion(prefijo: string = CLAVE_RONDA): MotorActivacion {
   const estado = crearEstadoObservable<EstadoActivacion>({
     equipos: [], reloj: { e: 'listo', d: 180 }, puntos: [], miembros: [], mejores: [], avisoUnion: null,
     animarCifras: false, pintadas: 0, sumas: [], golpes: cuatro(),
@@ -224,7 +228,7 @@ export function crearMotorActivacion(): MotorActivacion {
     precios = cfg.pr && typeof cfg.pr === 'object' ? cfg.pr : {};
     sonido = cfg.s !== 0;
     reloj = cfg.t && typeof cfg.t === 'object' ? cfg.t : { e: 'listo', d: 180 };
-    claveGuardado = `${CLAVE_RONDA}${cfg.w || 'url'}`;
+    claveGuardado = `${prefijo}${cfg.w || 'url'}`;
 
     // Ronda nueva (el panel pulsó "Reiniciar" o "Nueva ronda"): todo vuelve a 0.
     const nuevaRonda = Number(cfg.ro) || 0;

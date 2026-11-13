@@ -104,6 +104,7 @@ las URLs de OBS y lo guardado siguen igual.
 |  |  | Marcador | Versión sencilla de la carrera: de 1 a 6 integrantes con su regalo, y cada regalo suma a su **puntaje** (sin barras ni metas). Arriba, aparte, el reloj en una píldora pequeña (**Iniciar / Pausar / Reiniciar** en vivo). Color propio opcional por integrante. Por defecto los regalos suman también antes de iniciar el reloj y en pausa; **cuando se acaba el tiempo ya no suman** (solo los combos que cierran en los 3 s de gracia), hasta reiniciar. |
 |  |  | Batalla de regalos | Tira y afloja entre dos equipos: cada uno tiene su regalo, monedas por regalo, color y foto opcional. La barra central empieza en 50 % y se corre hacia el equipo que lleva más monedas. Botón **Reiniciar batalla** que pone los puntos en 0 en OBS al instante. **Con cronómetro** (opción en *Personalizar*, encendida por defecto): los regalos solo suman con el reloj en marcha (Iniciar / Pausar / Nueva ronda, duración en segundos) y, al llegar a 0, el equipo con más monedas gana la ronda; arriba se ven las victorias de cada equipo y la racha («🔥 2 seguidas») cuando uno gana 2 o más rondas seguidas. Botón **Reiniciar victorias**. |
 |  |  | Barra de activación | Una sola barra repartida en 2, 3 o 4 cuadrantes (selector *Equipos*), uno por equipo; cada equipo tiene nombre, regalo activador, monedas del activador y color. Quien envía el activador de un equipo **se une** a él y desde ahí **cualquier** regalo suyo le suma; si envía el activador de otro, se cambia (lo sumado se queda donde estaba). Los regalos de quien no se ha unido no suman. Cada cuadrante ocupa de la barra el **porcentaje de monedas** de su equipo (al empezar, todos miden lo mismo). Reloj de la ronda (Iniciar / Pausar / Nueva ronda / **Reiniciar ronda**): unirse se puede antes de iniciar, pero las monedas solo suman con el reloj en marcha; al llegar a 0 gana el equipo con más monedas. Debajo de la barra, cada equipo muestra sus monedas, cuántas personas tiene (👥) y quién aportó más (⭐). |
+|  |  | Duelo VS | Para dos bailarinas en **pantalla completa**: cada una en su mitad, con una **línea divisoria** de oro en el centro y el «VS» sobre ella. Arriba, el reloj, una **barra de activación de 2 cuadrantes** (las mismas reglas de la Barra de activación: quien envía el activador de una se une a su equipo y desde ahí todos sus regalos le suman) y la ficha de cada una. Al acabarse el tiempo (o con **Terminar ahora**) se cuentan los últimos regalos 3 s y **la mitad de quien perdió queda atrapada** con el efecto elegido: **Celda** (bajan barrotes, travesaños y un candado), **Invierno** (escarcha, carámbanos, nieve y un bloque de hielo), **Telaraña** (telarañas y una araña que baja) o **Tormenta** (nube negra, lluvia, rayos y charco); o **Al azar** (uno distinto cada ronda; el panel dice cuál tocará). La mitad de quien ganó se ilumina con destellos. Carteles editables («¡Atrapada!», «¡Ganadora!»), aviso opcional en los últimos 10 s (la mitad de quien va perdiendo se oscurece o se escarcha) y sonido para cada efecto. Queda así hasta **Nueva ronda** o **Reiniciar duelo**; si empatan, nadie queda atrapada. |
 |  | Retos del público | Cola de retos | Fila de retos pendientes para hacerlos con calma cuando llegan muchos regalos seguidos. En OBS se ve el reto de **Ahora** y los siguientes («+N más en espera»). Los retos llegan de la **ruleta** y el **tragamonedas** (casilla *Mandar a la Cola de retos* en su *Personalizar*; en la ruleta se elige qué premios van), de los **retos por regalo** (regalo → reto fijo; un combo es un solo reto «×5») y **a mano**. El panel muestra la cola real: **Hecho**, **Deshacer**, **Vaciar la cola** (pide un segundo clic). Necesita Supabase. |
 |  |  | Jefe del LIVE | Reto cooperativo (boss raid): el chat le quita vida a un jefe con likes y regalos antes de que se acabe el tiempo. Un **monstruo** se va rompiendo a medida que baja la barra (grietas, cuernos rotos, ojo morado, ojos en espiral), retrocede con cada golpe y, al vencerlo, cae noqueado y su núcleo estalla en monedas; si se acaba el tiempo se burla y en pausa se duerme. Nombre, vida total, tiempo límite, texto de victoria y daño por like y por moneda. Raid con **Iniciar / Pausar / Reiniciar** que llegan a OBS al instante. En 0 muestra «Reto desbloqueado» con brillo dorado; si se acaba el tiempo, «Tiempo agotado». Se acomoda solo a la forma de la fuente: franja (monstruo a un lado) o escenario (monstruo en grande). **Cinco monstruos para elegir**, del menos al más amenazante: Gelatón (travieso), Bestia de obsidiana (gruñón, el de siempre), Gólem de piedra (peligroso), Dragón de brasas (temible) y Rey del abismo (legendario); cada uno se rompe a su manera. |
 |  |  | Bóveda dorada | Caja sorpresa: los regalos llenan una barra hacia una meta de monedas; el premio queda oculto hasta llegar. Entonces el candado se abre y aparece el **texto secreto** en letras de oro. Meta, texto secreto, título y pista. **Cerrar y reiniciar** y **Abrir ahora** llegan a OBS al instante. |
@@ -145,6 +146,7 @@ flowchart LR
   EU -->|eventos JSON| W4[carrera.html]
   EU -->|eventos JSON| W5[batalla.html]
   EU -->|eventos JSON| W5b[activacion.html]
+  EU -->|eventos JSON| W5c[duelo.html]
   EU -->|eventos JSON| W6[jefe.html]
   EU -->|eventos JSON| W7[subathon.html]
   EU -->|eventos JSON| W7b[extensible.html]
@@ -211,6 +213,7 @@ documenta, con su interfaz TypeScript, en `src/widgets/<widget>/config.ts`):
 | `alertas.html` | `ev` eventos `{regalo, follow, share}` · `min` monedas mínimas · `d` segundos · `s` sonido |
 | `batalla.html` | `a`, `b` equipos `{n nombre, g id del regalo, v monedas por regalo, c color, av foto (URL https), img imagen del regalo}` · `ro` ronda (al cambiar, puntos a 0) · `s` sonido · `cr` con cronómetro (1/0) · `t` reloj `{e, d, fin, r}` · `rv` ronda de victorias (al cambiar, victorias a 0) |
 | `activacion.html` | `eq` equipos (2 a 4) `[{n nombre, g id del regalo activador, v monedas del activador, c color, img imagen del regalo}]` · `pr` precios del Buscador `{giftId: monedas}` · `ro` ronda (al cambiar, monedas y equipos a 0) · `s` sonido · `t` reloj `{e, d, fin, r}` |
+| `duelo.html` | Las mismas de `activacion.html` con 2 equipos (el 1 = mitad izquierda, el 2 = derecha) · `ef` efecto sobre quien pierde (`celda`, `hielo`, `telarana`, `tormenta` o `azar`) · `am` aviso en los últimos 10 s (1/0) · `tp` cartel de quien pierde · `tg` cartel de quien gana (vacíos = los de siempre) |
 | `jefe.html` | `ti` nombre del jefe · `hp` vida total · `t` reloj (como en la carrera) · `ro` ronda (al cambiar, vida llena) · `dl` vida por like · `dr` vida por moneda de regalo · `v` monedas de un regalo sin precio · `tv` texto de victoria · `sr` solo con el reloj en marcha · `s` sonido · `mo` monstruo (`gelaton`, `golem`, `dragon` o `rey`; sin `mo` = la bestia) |
 | `subathon.html` | `ti` título · `t` reloj base (como en la carrera) · `ro` ronda (al cambiar, se borra lo sumado) · `ex` ms agregados con «+5 min» · `cap` tope en segundos · `sl` segundos por 100 likes · `sd` segundos por moneda · `v` monedas de un regalo sin precio · `s` sonido |
 | `extensible.html` | Las mismas claves del subathon (usa el mismo componente, `src/widgets/subathon/`) más `mt` = monedas de la meta: hasta juntarlas, ni regalos ni likes suman tiempo; del regalo que la cruza cuenta solo lo que sobra |
@@ -297,6 +300,13 @@ del original); el componente solo pinta lo que el motor publica:
   activador» (solo para el activador), si no el del Buscador de regalos (`pr`), si no 1. Las monedas cuentan con el
   reloj en marcha y 3 s de gracia; pasada la gracia nadie se une ni suma hasta la ronda siguiente. Ancho de cada
   cuadrante = monedas del equipo / total (mínimo 3 % si tiene monedas; sin monedas en total, todos iguales).
+- **Duelo VS:** usa el MISMO motor de la Barra de activación (`crearMotorActivacion('live-tools:duelo:')`), con su
+  propia clave de guardado y solo 2 equipos. Lo propio está en `faseDuelo` (src/widgets/duelo/motor.ts): `juego` →
+  `amenaza` (últimos 10 s, si `am`) → `conteo` (los 3 s de gracia) → `atrapada` (la mitad del que tiene menos monedas
+  recibe el efecto; la otra, la luz de victoria) o `empate`. Con `azar`, el efecto sale de la ronda (`ro`): el mismo en el
+  panel y en OBS, y una recarga no lo cambia. El efecto suena solo si el widget vio el paso de `conteo` a `atrapada`
+  (al recargar OBS con la ronda ya terminada, aparece sin sonar). Los efectos son SVG y CSS (Efectos.tsx, efectos.css),
+  sin imágenes ni `color-mix` (los colores de cada equipo se calculan en TypeScript).
 - **Jefe del LIVE:** usa el mismo reloj que la carrera (`src/nucleo/reloj.ts`) y el mismo reinicio por `ro`. Cada like
   quita `dl` de vida y cada regalo `(precio × cantidad) × dr` (sin precio, el precio es `v`). La vida no baja de 0:
   al llegar a 0 el jefe queda vencido, el reloj del widget se congela en lo que sobró y los ataques siguientes no
@@ -513,7 +523,7 @@ es seguro mostrar nombres y mensajes del chat que vienen de TikTok.
 ```
 live-tools/
 ├── index.html                       panel (lo monta src/panel/main.tsx)
-├── ruleta.html, meta.html, …        los 16 widgets: una página cada uno, con los MISMOS nombres de antes
+├── ruleta.html, meta.html, …        los 17 widgets: una página cada uno, con los MISMOS nombres de antes
 │                                    (las URLs ya pegadas en OBS siguen sirviendo). Cada una solo carga
 │                                    src/widgets/<widget>/main.tsx
 ├── src/
@@ -541,7 +551,7 @@ live-tools/
 │   │   ├── textura.css              textura estática (utilidades textura-estatica / textura-ventana)
 │   │   ├── widget.css               base de los widgets (transparencia, .cristal, .filo-oro, píldora de estado)
 │   │   └── panel.css                estilos del panel: diseño «Estudio Áureo» (Tailwind + las clases del panel)
-│   ├── widgets/<widget>/            uno por widget (ruleta, meta, alertas, carrera, batalla, activacion,
+│   ├── widgets/<widget>/            uno por widget (ruleta, meta, alertas, carrera, batalla, activacion, duelo,
 │   │   │                            jefe, subathon (+ extensible), boveda, trono, marcador, repertorio,
 │   │   │                            cola, destacado, tragamonedas):
 │   │   ├── main.tsx                 entrada de su .html (monta el componente)
@@ -554,7 +564,7 @@ live-tools/
 │       ├── layout/                  barra superior, riel y menú
 │       ├── estado/                  almacen.ts (Zustand + Immer) · sincronizar.ts · envivo.ts
 │       ├── componentes/             ui.tsx · TarjetaWidget.tsx · EditorEstilo.tsx · piezasJuego.tsx
-│       └── vistas/<vista>/          las 23 vistas: config.ts · Vista*.tsx · index.ts
+│       └── vistas/<vista>/          las 24 vistas: config.ts · Vista*.tsx · index.ts
 ├── pruebas/
 │   ├── unidad/                      pruebas diferenciales contra la versión original (Vitest)
 │   ├── paridad/                     escenarios de los widgets (JSON) para compararlos con la versión original
@@ -778,7 +788,7 @@ Hace falta **Node.js 24** (con npm). Una vez: `npm ci`.
      catálogo de regalos y cambios en vivo con sus 0,6 s y reintentos). Las diferenciales necesitan la versión
      original: `npm run legado:extraer` la saca del historial de git (si no está, se saltan solas).
    - **Paridad de punta a punta:** en una terminal `npm run legado` (la versión original en
-     `http://localhost:8080`), en otra `npm run dev`, y `npm run e2e`: abre los 16 widgets y las 23 vistas en las
+     `http://localhost:8080`), en otra `npm run dev`, y `npm run e2e`: abre los 16 widgets y las 23 vistas que vienen de la versión original en las
      dos versiones con Chrome, hace lo mismo en ambas (eventos, órdenes, recargas, con un reloj simulado) y compara
      textos, clases, lo guardado en el navegador y lo que se subiría a Supabase. En las vistas del panel el texto
      se compara sin mayúsculas ni espacios (el diseño nuevo cambió el `text-transform`): mismas palabras, mismo
@@ -809,7 +819,9 @@ Hace falta **Node.js 24** (con npm). Una vez: `npm ci`.
    la cola real no se toca). Para probar la cola real, usa *+ Agregar a la cola* y luego *Hecho* / *Deshacer*.
    **Barra de activación**: «Unirme al siguiente equipo» une a la persona de prueba al primer equipo (al repetirlo, la
    cambia al siguiente), «Mi regalo de 25» le suma a su equipo y «Otra persona se une» agrega gente; *Reiniciar ronda*
-   pone todo en 0. **Subathon extensible**: con la meta de 1.000, «Regalo de 500» dos veces la cumple; desde ahí,
+   pone todo en 0. **Duelo VS**: *Iniciar*, «Unirme a Bailarina 2», «Mi regalo de 25», «Unirme a Bailarina 1» y
+   *Terminar ahora*: a los 3 s la mitad de la bailarina 1 queda atrapada (cambia el efecto en la tarjeta *Efecto para
+   quien pierde*: la vista previa no se recarga ni pierde los regalos de prueba); *Reiniciar duelo* la libera. **Subathon extensible**: con la meta de 1.000, «Regalo de 500» dos veces la cumple; desde ahí,
    «+100 likes» y los regalos suman tiempo.
 6. **Publicado:** después del `git push`, espera la publicación (pestaña *Actions* del repositorio) y
    recarga el panel en `https://ardiladev.github.io/live-tools/`.

@@ -1,0 +1,25 @@
+<!doctype html>
+<!--
+  duelo.html — Widget "Duelo VS" para OBS / TikTok LIVE Studio (pantalla completa, 1080 × 1920).
+  Dos bailarinas, una en cada mitad de la pantalla, separadas por una línea divisoria. Arriba,
+  una barra de activación de 2 equipos (las mismas reglas de activacion.html: quien envía el
+  activador de un equipo se une a él y desde ahí todos sus regalos le suman). Al terminar el
+  reloj, la mitad de quien perdió queda presa de un efecto (rejas de una celda, el hielo del
+  invierno, telarañas o una tormenta) y la de quien ganó se ilumina.
+  La URL la genera el panel (index.html): #c= lleva usuario, clave e identificador del widget,
+  y la configuración llega en vivo desde Supabase.
+  Código (React + TypeScript): src/widgets/duelo/ · se compila con Vite (ver vite.config.ts).
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Duelo VS — overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+</head>
+<body>
+  <div id="raiz"></div>
+  <script type="module" src="/src/widgets/duelo/main.tsx"></script>
+</body>
+</html>

@@ -21,11 +21,11 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-/** Las páginas publicadas: el panel (index) y los 16 widgets. */
+/** Las páginas publicadas: el panel (index) y los 17 widgets. */
 export const PAGINAS = [
   'index',
   'ruleta', 'tragamonedas',
-  'carrera', 'marcador', 'batalla', 'activacion',
+  'carrera', 'marcador', 'batalla', 'activacion', 'duelo',
   'cola', 'jefe', 'boveda', 'subathon', 'extensible', 'repertorio',
   'meta', 'alertas', 'destacado', 'trono',
 ] as const;

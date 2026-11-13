@@ -26,6 +26,7 @@ import { carrera } from './vistas/carrera';
 import { cola } from './vistas/cola';
 import { conexion } from './vistas/conexion';
 import { destacado } from './vistas/destacado';
+import { duelo } from './vistas/duelo';
 import { jefe } from './vistas/jefe';
 import { marcador } from './vistas/marcador';
 import { metaCompartidos, metaLikes, metaMonedas, metaSeguidores } from './vistas/metas';
@@ -59,7 +60,7 @@ export const CATEGORIAS: Categoria[] = [
     icono: 'juegos',
     grupos: [
       { id: 'sorteos', titulo: 'Sorteos', vistas: [ruletaNormal, ruletaPremium, tragamonedas] },
-      { id: 'competencias', titulo: 'Competencias', vistas: [carrera, marcador, batalla, activacion] },
+      { id: 'competencias', titulo: 'Competencias', vistas: [carrera, marcador, batalla, activacion, duelo] },
       { id: 'retos', titulo: 'Retos del público', vistas: [cola, jefe, boveda, subathon, extensible, repertorio] },
     ],
   },
