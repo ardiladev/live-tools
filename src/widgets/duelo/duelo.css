@@ -70,7 +70,10 @@
   flex-direction: column;
   align-items: center;
   gap: calc(var(--u) * 1.4);
-  padding: calc(var(--u) * 2.4) calc(var(--u) * 2.4) 0;
+  /* Arriba deja libre la franja que TikTok tapa con sus propios overlays (perfil,
+     espectadores, top de regalos): en vh para que sea la misma franja en vertical
+     (≈ 154 px de 1920) y no baje de más en horizontal. */
+  padding: max(calc(var(--u) * 2.4), 8vh) calc(var(--u) * 2.4) 0;
 }
 .reloj {
   display: flex;
