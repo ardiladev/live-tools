@@ -75,8 +75,9 @@
   width: calc(var(--u) * 8);
   aspect-ratio: 1;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--color) 35%, rgba(0, 0, 0, .35));
-  box-shadow: 0 0 0 calc(var(--u) * .3) var(--color), 0 0 calc(var(--u) * 2) color-mix(in srgb, var(--color) 45%, transparent);
+  /* --color-suave y --color-brillo los calcula el componente (sin color-mix con variables: en el navegador viejo de algunas versiones de OBS queda negro). */
+  background: linear-gradient(var(--color-suave), var(--color-suave)), rgba(0, 0, 0, .35);
+  box-shadow: 0 0 0 calc(var(--u) * .3) var(--color), 0 0 calc(var(--u) * 2) var(--color-brillo);
 }
 .circulo .inicial { color: var(--nitido); font-weight: 800; font-size: calc(var(--u) * 3.6); }
 .tarjeta-bailarina .datos { min-width: 0; }
@@ -115,8 +116,8 @@
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--color) 45%, transparent), var(--color));
-  box-shadow: 0 0 calc(var(--u) * 1.2) color-mix(in srgb, var(--color) 60%, transparent);
+  background: linear-gradient(90deg, var(--color-suave), var(--color));
+  box-shadow: 0 0 calc(var(--u) * 1.2) var(--color-brillo);
   transition: width .9s cubic-bezier(.2, .9, .3, 1);
 }
 .texto-meta {

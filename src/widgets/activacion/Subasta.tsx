@@ -14,11 +14,16 @@ import { useCifraAnimada } from '../../hooks/useCifraAnimada';
 import { useReiniciarAnimacion } from '../../hooks/useReiniciarAnimacion';
 import { formatoReloj } from '../../nucleo/reloj';
 import type { EstadoReloj, LecturaReloj } from '../../tipos/reloj';
+import { conAlfa } from '../duelo/config';
 import { quienGana, type EstadoActivacion, type MotorActivacion } from './motor';
 import './subasta.css';
 
 const ESTADOS: Record<EstadoReloj, string> = { listo: 'Abre pronto', corre: 'Subasta abierta', pausa: 'En pausa', fin: 'Subasta cerrada' };
 const formato = new Intl.NumberFormat('es-CO');
+
+/** El color de una canción y sus versiones traslúcidas (sin color-mix: OBS viejo lo pinta negro). */
+const colores = (color: string): CSSProperties =>
+  ({ '--color': color, '--color-suave': conAlfa(color, 0.3), '--color-brillo': conAlfa(color, 0.6) } as CSSProperties);
 
 /** El orden de las canciones en el tablero: la que más lleva arriba (empates: en su orden). */
 export function ordenSubasta(puntos: readonly number[]): number[] {
@@ -66,7 +71,7 @@ export function Subasta({ estado, motor, lectura, titulo }: { estado: EstadoActi
       </ol>
 
       {ganadora ? (
-        <div className="se-baila cristal" style={{ '--color': ganadora.color } as CSSProperties} aria-live="polite">
+        <div className="se-baila cristal" style={colores(ganadora.color)} aria-live="polite">
           <span className="martillo" aria-hidden="true">🔨</span>
           <span className="etiqueta-se-baila">¡Se baila!</span>
           <span className="cancion-ganadora">{ganadora.nombre}</span>
@@ -89,7 +94,7 @@ function Fila({ indice: i, puesto, estado, motor, fraccion, lider, perdio, color
   if (!e) return null;
   const clases = ['fila-subasta', lider && 'lider', perdio && 'perdio', golpe && 'golpe'].filter(Boolean).join(' ');
   return (
-    <li className={clases} ref={nodo} style={{ '--color': color, '--puesto': puesto } as CSSProperties}>
+    <li className={clases} ref={nodo} style={{ ...colores(color), '--puesto': puesto } as CSSProperties}>
       <span className="puesto-subasta">{puesto + 1}</span>
       <span className={conFotos(e.fotos) ? 'icono-subasta con-fotos' : 'icono-subasta'}>
         <img alt="" src={e.imagen || undefined} hidden={!e.imagen} />

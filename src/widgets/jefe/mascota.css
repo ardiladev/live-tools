@@ -141,8 +141,9 @@
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--mascota) 55%, transparent), var(--mascota));
-  box-shadow: 0 0 calc(var(--u) * 1.6) color-mix(in srgb, var(--mascota) 60%, transparent);
+  /* --mascota-suave y --mascota-brillo los calcula Mascota.tsx (sin color-mix con variables: en el navegador viejo de algunas versiones de OBS queda negro). */
+  background: linear-gradient(90deg, var(--mascota-suave), var(--mascota));
+  box-shadow: 0 0 calc(var(--u) * 1.6) var(--mascota-brillo);
 }
 .mascota-placa .relleno.animado { transition: width .7s cubic-bezier(.2, .9, .3, 1); }
 .mascota-placa .cifra {

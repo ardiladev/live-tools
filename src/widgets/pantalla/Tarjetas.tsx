@@ -13,6 +13,7 @@ import { Fotos } from '../../componentes/Fotos';
 import { useCifraAnimada } from '../../hooks/useCifraAnimada';
 import type { LiveEnPantalla } from '../../nucleo/nube';
 import { esperar, sonar } from '../../nucleo/sonido';
+import { conAlfa } from '../duelo/config';
 import type { AjustesPantallaWidget } from './config';
 import { armarTarjetas, type Tarjeta } from './motor';
 
@@ -66,6 +67,10 @@ function useCelebraciones(tarjetas: readonly Tarjeta[], sesion: string, sonido: 
   return celebrando;
 }
 
+/** El color de la bailarina y sus versiones traslúcidas (sin color-mix: OBS viejo lo pinta negro). */
+export const coloresBailarina = (color: string): CSSProperties =>
+  ({ '--color': color, '--color-suave': conAlfa(color, 0.4), '--color-brillo': conAlfa(color, 0.55) } as CSSProperties);
+
 export function Tarjetas({ cfg, live }: { cfg: AjustesPantallaWidget; live: LiveEnPantalla }) {
   const tarjetas = armarTarjetas(cfg, live);
   const celebrando = useCelebraciones(tarjetas, live.sesion, cfg.sonido);
@@ -86,7 +91,7 @@ function TarjetaBailarina({ t, cfg, celebra }: { t: Tarjeta; cfg: AjustesPantall
   const clases = ['tarjeta-bailarina', 'cristal', celebra ? 'celebra' : '', meta.cumplidas && !cfg.escalonada ? 'cumplida' : ''].filter(Boolean).join(' ');
 
   return (
-    <section className={clases} style={{ '--color': b.color } as CSSProperties}>
+    <section className={clases} style={coloresBailarina(b.color)}>
       <div className="cabeza">
         <span className="circulo con-fotos">
           <span className="inicial">{b.nombre.charAt(0).toUpperCase()}</span>

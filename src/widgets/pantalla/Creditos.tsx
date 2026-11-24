@@ -10,11 +10,12 @@
 // Estilos: pantalla.css (sección 3).
 // =============================================================================
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Fotos } from '../../componentes/Fotos';
 import type { LiveEnPantalla } from '../../nucleo/nube';
 import type { AjustesPantallaWidget } from './config';
 import { armarCreditos } from './motor';
+import { coloresBailarina } from './Tarjetas';
 
 /** Velocidad: qué parte del alto de la pantalla sube cada segundo (1 lenta · 2 normal · 3 rápida). */
 const VELOCIDADES = [0, 0.05, 0.08, 0.12] as const;
@@ -85,7 +86,7 @@ export function Creditos({ cfg, live }: { cfg: AjustesPantallaWidget; live: Live
       <div ref={rollo} className="rollo">
         {cfg.titulo ? <h1 className="titulo-creditos">{cfg.titulo}</h1> : null}
         {grupos.map((g) => (
-          <section key={g.bailarina.id} className="grupo-creditos" style={{ '--color': g.bailarina.color } as CSSProperties}>
+          <section key={g.bailarina.id} className="grupo-creditos" style={coloresBailarina(g.bailarina.color)}>
             <span className="circulo con-fotos">
               <span className="inicial">{g.bailarina.nombre.charAt(0).toUpperCase()}</span>
               <Fotos ids={g.bailarina.fotos} />

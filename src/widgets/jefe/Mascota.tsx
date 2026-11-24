@@ -12,6 +12,7 @@
 import { useRef, useState, type CSSProperties } from 'react';
 import { useIntervalo } from '../../hooks/useIntervalo';
 import { useReiniciarAnimacion } from '../../hooks/useReiniciarAnimacion';
+import { conAlfa } from '../duelo/config';
 import { animoDe, nivelDe, NIVEL_MAX, type EstadoMascota } from './motorMascota';
 import './mascota.css';
 
@@ -41,7 +42,7 @@ export function EscenaMascota({ estado }: { estado: EstadoMascota }) {
   const texto = animo === 'comiendo' && estado.ultimaAccion ? estado.ultimaAccion : TEXTOS_ANIMO[animo];
 
   return (
-    <main className={clases} ref={raiz} data-animo={animo} data-nivel={n.nivel} style={{ '--mascota': estado.color } as CSSProperties}>
+    <main className={clases} ref={raiz} data-animo={animo} data-nivel={n.nivel} style={{ '--mascota': estado.color, '--mascota-suave': conAlfa(estado.color, 0.5), '--mascota-brillo': conAlfa(estado.color, 0.6) } as CSSProperties}>
       <div className="mascota-caja">
         <DibujoMascota />
         <div className="cartel-nivel" aria-hidden="true">{`¡Nivel ${n.nivel}: ${n.nombre}!`}</div>
