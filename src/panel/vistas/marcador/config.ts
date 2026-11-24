@@ -11,6 +11,7 @@ import { idAleatorio } from '../../../nucleo/nube';
 import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
 import { MAX_INTEGRANTES, type ConfigMarcador } from '../../../widgets/marcador/config';
+import { claveFotos, completarParticipante } from '../../bailarinas';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
@@ -29,6 +30,8 @@ export type IntegranteMarcadorAjustes = {
   giftId: string;
   regalo: string;
   valor: number;
+  /** Bailarina de este integrante (Bailarinas en juego): toma su nombre, color, regalo y foto. */
+  bailarina?: string;
 };
 
 export type AjustesMarcador = {
@@ -65,15 +68,19 @@ export function configMarcador(estado: EstadoPanel): ConfigMarcador {
   const catalogo = estado.regalos;
   return {
     ti: textoLimpio(cfg.titulo).slice(0, 30),
-    j: cfg.integrantes.slice(0, MAX_INTEGRANTES).map((j, i) => ({
-      i: j.id,
-      n: textoLimpio(j.nombre).slice(0, MAX_NOMBRE) || `Integrante ${i + 1}`,
-      c: j.usarColor ? j.color : '',
-      g: textoLimpio(j.giftId),
-      gn: textoLimpio(j.regalo),
-      v: Math.max(0, Number(j.valor) || 0),
-      img: catalogo[textoLimpio(j.giftId)]?.imagen || '',
-    })),
+    j: cfg.integrantes.slice(0, MAX_INTEGRANTES).map((integrante, i) => {
+      const j = completarParticipante(estado, integrante, integrante.bailarina ? [integrante.bailarina] : []);
+      return {
+        i: j.id,
+        n: textoLimpio(j.nombre).slice(0, MAX_NOMBRE) || `Integrante ${i + 1}`,
+        c: j.usarColor || j.miembros.length ? j.color : '', // una bailarina siempre lleva su color
+        g: textoLimpio(j.giftId),
+        gn: textoLimpio(j.regalo),
+        v: Math.max(0, Number(j.valor) || 0),
+        img: catalogo[textoLimpio(j.giftId)]?.imagen || '',
+        ...claveFotos(j.fotos),
+      };
+    }),
     t: { ...cfg.reloj, d: duracionDe(cfg) },
     ro: cfg.ronda,
     sr: cfg.soloConReloj ? 1 : 0,

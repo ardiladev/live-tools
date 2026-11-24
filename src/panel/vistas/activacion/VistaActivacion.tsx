@@ -18,7 +18,9 @@ import {
 } from '../../componentes/piezasJuego';
 import { TarjetaWidget, type PruebaWidget } from '../../componentes/TarjetaWidget';
 import { Aviso, Campo, Casilla, Nota, Segmentado, Tarjeta, useAviso } from '../../componentes/ui';
-import { nombreRegalo, obtener, useAjustesWidget } from '../../estado/almacen';
+import { asignarBailarina, bailarinasDe, completarParticipante, problemasEquipo, type Bailarina } from '../../bailarinas';
+import { MiembrosEquipo, SelectorBailarinas, useBailarinasActivas } from '../../componentes/Bailarinas';
+import { nombreRegalo, obtener, useAjustesWidget, usarAlmacen } from '../../estado/almacen';
 import { textoLimpio, type TextosReloj } from '../../piezas';
 import {
   CANTIDADES, cantidadDe, duracionDe, enJuego, ID, MAX_NOMBRE, POR_DEFECTO, problemas,
@@ -63,7 +65,11 @@ export function VistaActivacion() {
   const [avisoReinicio, avisarReinicio] = useAviso();
   const siguiente = useRef(0); // «Unirme al siguiente equipo» va rotando mientras la vista está abierta
   const cantidad = cantidadDe(cfg);
-  const equipos = enJuego(cfg);
+  const estado = usarAlmacen((e) => e);
+  const registradas = useBailarinasActivas();
+  // Con bailarinas, el equipo toma sus datos (los mismos que van al widget).
+  const equipos = enJuego(cfg).map((e) => completarParticipante(estado, e, e.bailarinas));
+  const avisosBailarinas = equipos.flatMap((e, i) => problemasEquipo(estado, `el equipo ${i + 1}`, e.giftId, e.bailarinas));
 
   const pruebas: PruebaWidget[] = [
     { texto: 'Unirme al siguiente equipo', evento: (nombre) => activador(equipos[siguiente.current++ % cantidad], nombre) },
@@ -115,7 +121,7 @@ export function VistaActivacion() {
           <Segmentado etiqueta="Equipos (cuadrantes de la barra):" opciones={OPCIONES_CANTIDAD} valor={cantidad} alCambiar={(n) => cambiarCfg((a) => { a.cantidad = n; })} />
         </div>
         <Aviso aviso={avisoReinicio} />
-        <div className="aviso error" role="status">{problemas(cfg).join(' ')}</div>
+        <div className="aviso error" role="status">{[...problemas(cfg, estado), ...avisosBailarinas].join(' ')}</div>
         <Nota>
           {'Cómo se juega: hay una sola barra, repartida en un cuadrante por equipo. Cada equipo tiene su regalo activador: quien lo envía '
             + 'se une a ese equipo (ese regalo ya le suma) y, desde ahí, CUALQUIER regalo suyo le suma. Si envía el activador de otro equipo, '
@@ -126,9 +132,16 @@ export function VistaActivacion() {
         </Nota>
       </Tarjeta>
 
+      <SelectorBailarinas
+        columnas={equipos.map((_, i) => `Equipo ${i + 1}`)}
+        columnaDe={(id) => equipos.findIndex((e) => e.bailarinas?.includes(id))}
+        alElegir={(id, columna) => cambiarCfg((a) => { asignarBailarina(a.barras, id, columna, registradas); })}
+        nota="Marca a cada bailarina en su equipo: con una sola, el equipo toma su nombre, color, activador y foto. Con varias, el equipo usa su propio regalo y lo que le regalen se reparte entre ellas en el registro."
+      />
+
       {cfg.barras.map((b, i) => (
         // key = posición: los 4 equipos son fijos, cada uno en su lugar
-        <TarjetaEquipo key={i} b={b} i={i} oculta={i >= cantidad} cambiarCfg={cambiarCfg} />
+        <TarjetaEquipo key={i} b={b} i={i} oculta={i >= cantidad} miembros={bailarinasDe(estado, b.bailarinas)} cambiarCfg={cambiarCfg} />
       ))}
       <ListaRegalos id={LISTA_REGALOS} />
 
@@ -147,15 +160,26 @@ export function VistaActivacion() {
 // 3. Tarjeta de un equipo: nombre · ID del activador · monedas · color
 // -----------------------------------------------------------------------------
 
-function TarjetaEquipo({ b, i, oculta, cambiarCfg }: {
+function TarjetaEquipo({ b, i, oculta, miembros, cambiarCfg }: {
   b: EquipoAjustes; i: number; oculta: boolean;
+  /** Sus bailarinas (con una, el equipo es ella: no hay nada que editar aquí). */
+  miembros: Bailarina[];
   cambiarCfg: (receta: (a: Draft<AjustesActivacion>) => void) => void;
 }) {
   const cambiarEste = (receta: (x: Draft<EquipoAjustes>) => void): void =>
     cambiarCfg((a) => { const x = a.barras[i]; if (x) receta(x); });
 
+  if (miembros.length === 1) {
+    return (
+      <Tarjeta titulo={`Equipo ${i + 1}`} oculta={oculta}>
+        <MiembrosEquipo miembros={miembros} />
+      </Tarjeta>
+    );
+  }
+
   return (
     <Tarjeta titulo={`Equipo ${i + 1}`} oculta={oculta}>
+      <MiembrosEquipo miembros={miembros} />
       <div className="campos">
         <Campo etiqueta="Nombre:" valor={b.nombre} maxLength={MAX_NOMBRE} alCambiar={(v) => cambiarEste((x) => { x.nombre = v; })} />
         <Campo

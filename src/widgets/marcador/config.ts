@@ -4,12 +4,14 @@
 // Claves cortas (NO renombrar):
 //   ti = título junto al reloj
 //   j  = integrantes [{ i: id, n: nombre, c: color (vacío = acento del estilo), g: id del regalo,
-//                       gn: nombre del regalo, v: monedas por regalo, img: imagen }]
+//                       gn: nombre del regalo, v: monedas por regalo, img: imagen,
+//                       f: id de la foto de su bailarina (ver src/nucleo/fotos.ts) }]
 //   t  = reloj { e, d, fin, r } · ro = ronda (al cambiar, puntos a 0)
 //   sr = solo cuenta con el reloj en marcha (1 = sí; por defecto también suma antes de empezar y
 //        en pausa; con el tiempo terminado nunca suma) · s = sonido (1/0)
 // =============================================================================
 
+import { normalizarFotos } from '../../nucleo/fotos';
 import { normalizarTexto } from '../../nucleo/juego';
 import type { RelojRonda } from '../../tipos/reloj';
 import type { ConfigBase } from '../../tipos/widgets';
@@ -24,6 +26,7 @@ export interface IntegranteConfigMarcador {
   gn?: string;
   v?: number;
   img?: string;
+  f?: string[];
 }
 
 export interface ConfigMarcador extends ConfigBase {
@@ -44,6 +47,8 @@ export interface IntegranteMarcador {
   regalo: string;
   valor: number;
   imagen: string;
+  /** Ids de las fotos de su bailarina ([] = sin foto: se ve la imagen del regalo). */
+  fotos: string[];
 }
 
 export function normalizarIntegrante(j: IntegranteConfigMarcador | undefined, i: number): IntegranteMarcador {
@@ -55,5 +60,6 @@ export function normalizarIntegrante(j: IntegranteConfigMarcador | undefined, i:
     regalo: normalizarTexto(j?.gn),
     valor: Math.max(0, Number(j?.v) || 0),
     imagen: String(j?.img || ''),
+    fotos: normalizarFotos(j?.f),
   };
 }

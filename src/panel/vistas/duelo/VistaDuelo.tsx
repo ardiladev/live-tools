@@ -18,7 +18,9 @@ import {
 } from '../../componentes/piezasJuego';
 import { TarjetaWidget, type PruebaWidget } from '../../componentes/TarjetaWidget';
 import { Aviso, Campo, Casilla, Nota, Segmentado, Tarjeta, useAviso } from '../../componentes/ui';
-import { nombreRegalo, obtener, useAjustesWidget } from '../../estado/almacen';
+import { asignarBailarina, bailarinasDe, completarParticipante, problemasEquipo, type Bailarina } from '../../bailarinas';
+import { MiembrosEquipo, SelectorBailarinas, useBailarinasActivas } from '../../componentes/Bailarinas';
+import { nombreRegalo, obtener, useAjustesWidget, usarAlmacen } from '../../estado/almacen';
 import { textoLimpio, type TextosReloj } from '../../piezas';
 import {
   duracionDe, equiposDe, ID, MAX_NOMBRE, POR_DEFECTO, problemas,
@@ -77,7 +79,11 @@ export function VistaDuelo() {
   const duracionS = duracionDe(cfg);
   const reloj = useRelojDeRonda({ id: ID, ajustes: cfg, cambiarAjustes: cambiarCfg, duracionS, textos: TEXTOS });
   const [avisoReinicio, avisarReinicio] = useAviso();
-  const equipos = equiposDe(cfg);
+  const panel = usarAlmacen((e) => e);
+  const registradas = useBailarinasActivas();
+  // Con una bailarina elegida, el lado toma sus datos (los mismos que van al widget).
+  const equipos = equiposDe(cfg).map((e) => completarParticipante(panel, e, e.bailarinas));
+  const avisosBailarinas = equipos.flatMap((e, i) => problemasEquipo(panel, `el lado ${LADOS[i]}`, e.giftId, e.bailarinas));
   const { estado } = reloj.lectura;
   const tocaEstaRonda = DATOS_EFECTO[efectoDeRonda(cfg.efecto, cfg.ronda)].nombre;
 
@@ -137,7 +143,7 @@ export function VistaDuelo() {
         </div>
         <CampoDuracion etiqueta="Duración de cada ronda (segundos):" valor={cfg.duracion} duracionS={duracionS} alCambiar={(v) => cambiarCfg((a) => { a.duracion = v; })} />
         <Aviso aviso={avisoReinicio} />
-        <div className="aviso error" role="status">{problemas(cfg).join(' ')}</div>
+        <div className="aviso error" role="status">{[...problemas(cfg, panel), ...avisosBailarinas].join(' ')}</div>
         <Nota>
           {'Cómo se juega: cada bailarina tiene su regalo activador. Quien lo envía se une a su equipo (ese regalo ya le suma) y, desde ahí, '
             + 'CUALQUIER regalo suyo le suma. Si envía el activador de la otra, se cambia. Los regalos de quien no se ha unido no suman. '
@@ -178,8 +184,18 @@ export function VistaDuelo() {
         </div>
       </Tarjeta>
 
-      {equipos.map((b, i) => (
-        <TarjetaBailarina key={i} b={b} i={i} cambiarCfg={cambiarCfg} />
+      <SelectorBailarinas
+        columnas={['Izquierda', 'Derecha']}
+        columnaDe={(id) => equipos.findIndex((e) => e.bailarinas?.includes(id))}
+        alElegir={(id, columna) => cambiarCfg((a) => {
+          while (a.equipos.length < 2) a.equipos.push({ ...(POR_DEFECTO.equipos[a.equipos.length] as EquipoDuelo) });
+          asignarBailarina(a.equipos, id, columna, registradas);
+        })}
+        nota="Marca en qué mitad de la pantalla baila cada una: el lado toma su nombre, color, activador y foto. Si marcas a varias en un lado, ese lado usa su propio regalo y lo que le regalen se reparte entre ellas en el registro."
+      />
+
+      {equiposDe(cfg).map((b, i) => (
+        <TarjetaBailarina key={i} b={b} i={i} miembros={bailarinasDe(panel, b.bailarinas)} cambiarCfg={cambiarCfg} />
       ))}
       <ListaRegalos id={LISTA_REGALOS} />
 
@@ -200,8 +216,10 @@ export function VistaDuelo() {
 // 3. Tarjeta de una bailarina: nombre · ID del activador · monedas · color
 // -----------------------------------------------------------------------------
 
-function TarjetaBailarina({ b, i, cambiarCfg }: {
+function TarjetaBailarina({ b, i, miembros, cambiarCfg }: {
   b: EquipoDuelo; i: number;
+  /** Las bailarinas elegidas para este lado (con una, el lado es ella: no hay nada que editar aquí). */
+  miembros: Bailarina[];
   cambiarCfg: (receta: (a: Draft<AjustesDuelo>) => void) => void;
 }) {
   const cambiarEsta = (receta: (x: Draft<EquipoDuelo>) => void): void =>
@@ -212,8 +230,17 @@ function TarjetaBailarina({ b, i, cambiarCfg }: {
       if (x) receta(x);
     });
 
+  if (miembros.length === 1) {
+    return (
+      <Tarjeta titulo={`Bailarina ${i + 1} · mitad ${LADOS[i]}`}>
+        <MiembrosEquipo miembros={miembros} />
+      </Tarjeta>
+    );
+  }
+
   return (
     <Tarjeta titulo={`Bailarina ${i + 1} · mitad ${LADOS[i]}`}>
+      <MiembrosEquipo miembros={miembros} />
       <div className="campos">
         <Campo etiqueta="Nombre:" valor={b.nombre} maxLength={MAX_NOMBRE} alCambiar={(v) => cambiarEsta((x) => { x.nombre = v; })} />
         <Campo

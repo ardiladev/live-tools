@@ -1,0 +1,24 @@
+<!doctype html>
+<!--
+  registro.html — Widget "Registro de bailarinas" para OBS / TikTok LIVE Studio (INVISIBLE).
+  Escucha el LIVE y anota en Supabase los regalos que le corresponden a cada bailarina:
+  quien envía el regalo activador de una bailarina queda con ella y, desde ahí, todos sus
+  regalos se le anotan (en un equipo de varias, se reparten en partes iguales).
+  Va UNA sola vez, en una escena que esté siempre abierta. Con ?fondo=1 muestra lo que anota.
+  La URL la genera el panel (index.html → Bailarinas): #c= lleva usuario, clave e identificador
+  del widget, y la configuración (bailarinas, equipos y precios) llega en vivo desde Supabase.
+  Código (React + TypeScript): src/widgets/registro/ · se compila con Vite (ver vite.config.ts).
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Registro de bailarinas — overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+</head>
+<body>
+  <div id="raiz"></div>
+  <script type="module" src="/src/widgets/registro/main.tsx"></script>
+</body>
+</html>

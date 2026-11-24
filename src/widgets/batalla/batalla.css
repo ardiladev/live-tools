@@ -92,6 +92,8 @@
   box-shadow: 0 0 0 1px var(--color);
   object-fit: contain;
 }
+/* Con las fotos de las bailarinas (componente <Fotos>), la insignia del regalo va encima. */
+.avatar.con-fotos .insignia { z-index: 2; }
 .datos { min-width: 0; }
 .nombre {
   overflow: hidden;

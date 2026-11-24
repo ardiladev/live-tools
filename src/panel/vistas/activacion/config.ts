@@ -10,6 +10,7 @@
 import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
 import type { ConfigActivacion } from '../../../widgets/activacion/config';
+import { claveFotos, completarParticipante } from '../../bailarinas';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
@@ -27,6 +28,8 @@ export type EquipoAjustes = {
   /** Monedas del activador si TikTok no manda el precio. */
   valor: number;
   color: string;
+  /** Bailarinas del equipo (Bailarinas en juego). Con una, el equipo toma sus datos; ver panel/bailarinas.ts. */
+  bailarinas?: string[];
 };
 
 export type AjustesActivacion = {
@@ -78,21 +81,25 @@ function preciosDelCatalogo(estado: EstadoPanel): Record<string, number> {
 export function configActivacion(estado: EstadoPanel): ConfigActivacion {
   const cfg = ajustesDe(estado, ID, POR_DEFECTO);
   const catalogo = estado.regalos;
-  const eq = enJuego(cfg).map((b, i) => ({
-    n: textoLimpio(b.nombre).slice(0, MAX_NOMBRE) || `Equipo ${i + 1}`,
-    g: textoLimpio(b.giftId),
-    v: Math.max(0, Number(b.valor) || 0),
-    c: b.color,
-    img: catalogo[textoLimpio(b.giftId)]?.imagen || '', // la imagen sale del Buscador de regalos
-  }));
+  const eq = enJuego(cfg).map((equipo, i) => {
+    const b = completarParticipante(estado, equipo, equipo.bailarinas);
+    return {
+      n: textoLimpio(b.nombre).slice(0, MAX_NOMBRE) || `Equipo ${i + 1}`,
+      g: textoLimpio(b.giftId),
+      v: Math.max(0, Number(b.valor) || 0),
+      c: b.color,
+      img: catalogo[textoLimpio(b.giftId)]?.imagen || '', // la imagen sale del Buscador de regalos
+      ...claveFotos(b.fotos),
+    };
+  });
   return { eq, pr: preciosDelCatalogo(estado), ro: cfg.ronda, s: cfg.sonido ? 1 : 0, t: { ...cfg.reloj, d: duracionDe(cfg) } };
 }
 
 /** Problemas de la configuración (no impiden enviarla). */
-export function problemas(a: AjustesActivacion): string[] {
+export function problemas(a: AjustesActivacion, estado?: EstadoPanel): string[] {
   const lista: string[] = [];
   const vistos = new Map<string, number>();
-  enJuego(a).forEach((b, i) => {
+  enJuego(a).map((b) => (estado ? completarParticipante(estado, b, b.bailarinas) : b)).forEach((b, i) => {
     const id = textoLimpio(b.giftId);
     const anterior = vistos.get(id);
     if (!id) lista.push(`El equipo ${i + 1} no tiene regalo activador: nadie podrá unirse a él.`);

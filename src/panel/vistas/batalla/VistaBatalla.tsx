@@ -13,7 +13,9 @@ import { EditorEstilo } from '../../componentes/EditorEstilo';
 import { BotonesReloj, CampoDuracion, ListaRegalos, PanelReloj, useRelojDeRonda } from '../../componentes/piezasJuego';
 import { TarjetaWidget, type PruebaWidget } from '../../componentes/TarjetaWidget';
 import { Aviso, Campo, Casilla, Nota, Tarjeta, useAviso } from '../../componentes/ui';
-import { nombreRegalo, obtener, useAjustesWidget } from '../../estado/almacen';
+import { asignarBailarina, bailarinasDe, completarParticipante, problemasEquipo, type Bailarina } from '../../bailarinas';
+import { MiembrosEquipo, SelectorBailarinas, useBailarinasActivas } from '../../componentes/Bailarinas';
+import { nombreRegalo, obtener, useAjustesWidget, usarAlmacen } from '../../estado/almacen';
 import { TEXTOS_RELOJ, textoLimpio, type TextosReloj } from '../../piezas';
 import { duracionDe, ID, LETRAS, MAX_NOMBRE, POR_DEFECTO, problemas, type AjustesBatalla, type EquipoAjustes } from './config';
 
@@ -31,10 +33,15 @@ export function VistaBatalla() {
   const duracionS = duracionDe(cfg);
   const reloj = useRelojDeRonda({ id: ID, ajustes: cfg, cambiarAjustes: cambiarCfg, duracionS, textos: TEXTOS });
   const sinReloj = !cfg.conReloj;
+  const panel = usarAlmacen((e) => e);
+  const registradas = useBailarinasActivas();
+  // Con bailarinas, el equipo toma sus datos (los mismos que van al widget).
+  const equipos = cfg.equipos.map((e) => completarParticipante(panel, e, e.bailarinas));
+  const avisosBailarinas = equipos.flatMap((e, i) => problemasEquipo(panel, `el equipo ${LETRAS[i]}`, e.giftId, e.bailarinas));
 
   // Prueba: un regalo para un equipo, con su precio configurado.
   const regaloDePrueba = (i: number, cantidad: number) => (nombre: string): EventoRegalo => {
-    const e = cfg.equipos[i];
+    const e = equipos[i];
     return {
       tipo: 'regalo', usuario: nombre, giftId: textoLimpio(e?.giftId), nombre: textoLimpio(e?.regalo),
       cantidad, diamantes: Math.max(1, Number(e?.valor) || 1), imagen: '',
@@ -102,7 +109,7 @@ export function VistaBatalla() {
           alCambiar={(v) => cambiarCfg((a) => { a.duracion = v; })}
         />
         <Aviso aviso={avisoReinicio} />
-        <div className="aviso error" role="status">{problemas(cfg.equipos).join(' ')}</div>
+        <div className="aviso error" role="status">{[...problemas(equipos), ...avisosBailarinas].join(' ')}</div>
         <p className="nota" hidden={sinReloj}>
           Iniciar, pausar y reiniciar llegan a OBS en uno o dos segundos. Con el reloj detenido, los regalos no suman.{' '}
           Cuando el reloj llega a 0, el equipo con más monedas gana la ronda: el widget le suma una victoria y, con 2 o más seguidas,{' '}
@@ -114,7 +121,17 @@ export function VistaBatalla() {
         </p>
       </Tarjeta>
 
-      {[0, 1].map((i) => <TarjetaEquipo key={i} i={i} e={cfg.equipos[i] ?? POR_DEFECTO.equipos[0] as EquipoAjustes} cambiarCfg={cambiarCfg} />)}
+      <SelectorBailarinas
+        columnas={['Equipo A', 'Equipo B']}
+        columnaDe={(id) => cfg.equipos.findIndex((e) => e.bailarinas?.includes(id))}
+        alElegir={(id, columna) => cambiarCfg((a) => { asignarBailarina(a.equipos, id, columna, registradas); })}
+        nota="Marca a cada bailarina en su equipo: con una sola, el equipo toma su nombre, color, regalo y foto. Si batallan por equipos (varias en cada uno), cada equipo usa su propio regalo y lo que le regalen se reparte entre sus bailarinas en partes iguales en el registro."
+      />
+
+      {[0, 1].map((i) => {
+        const e = cfg.equipos[i] ?? POR_DEFECTO.equipos[0] as EquipoAjustes;
+        return <TarjetaEquipo key={i} i={i} e={e} miembros={bailarinasDe(panel, e.bailarinas)} cambiarCfg={cambiarCfg} />;
+      })}
       <ListaRegalos id="regalos-batalla" />
 
       <Nota>
@@ -127,12 +144,22 @@ export function VistaBatalla() {
   );
 }
 
-function TarjetaEquipo({ i, e, cambiarCfg }: { i: number; e: EquipoAjustes; cambiarCfg: CambiarBatalla }) {
+function TarjetaEquipo({ i, e, miembros, cambiarCfg }: { i: number; e: EquipoAjustes; miembros: Bailarina[]; cambiarCfg: CambiarBatalla }) {
   const cambiarEste = (receta: (x: Draft<EquipoAjustes>) => void): void =>
     cambiarCfg((a) => { const x = a.equipos[i]; if (x) receta(x); });
 
+  // Con una bailarina, el equipo es ella: no hay nada que editar aquí.
+  if (miembros.length === 1) {
+    return (
+      <Tarjeta titulo={`Equipo ${LETRAS[i]} (${i ? 'derecha' : 'izquierda'})`}>
+        <MiembrosEquipo miembros={miembros} />
+      </Tarjeta>
+    );
+  }
+
   return (
     <Tarjeta titulo={`Equipo ${LETRAS[i]} (${i ? 'derecha' : 'izquierda'})`}>
+      <MiembrosEquipo miembros={miembros} />
       <div className="campos">
         <Campo etiqueta="Nombre:" valor={e.nombre} maxLength={MAX_NOMBRE} alCambiar={(v) => cambiarEste((x) => { x.nombre = v; })} />
         <Campo

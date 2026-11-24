@@ -33,7 +33,7 @@ nada de eso: GitHub Actions arma la versión publicada. Para desarrollar, ver la
 1. [Qué se necesita](#1-qué-se-necesita)
 2. [Guía rápida](#2-guía-rápida)
 3. [Qué hace cada sección del panel](#3-qué-hace-cada-sección-del-panel)
-4. [Cómo funciona por dentro](#4-cómo-funciona-por-dentro)
+4. [Cómo funciona por dentro](#4-cómo-funciona-por-dentro) (bailarinas: [4.10](#410-bailarinas-registro-palomitas-y-registro-de-regalos))
 5. [Estructura de archivos](#5-estructura-de-archivos)
 6. [Agregar una función nueva](#6-agregar-una-función-nueva)
 7. [Publicación en GitHub Pages](#7-publicación-en-github-pages)
@@ -91,8 +91,9 @@ nada de eso: GitHub Actions arma la versión publicada. Para desarrollar, ver la
 
 El panel se organiza como TikFinity: **categorías** (íconos de la izquierda) → **grupos
 desplegables** (menú) → **vistas** (contenido). Desde el 2026-10-13 se ordena por propósito:
-**Juegos** (la persona en vivo y el público juegan), **Superposiciones** (lo que acompaña el LIVE sin ser
-un juego), **Actividad** y **Ajustes**. Los ids de las vistas (`#/ruleta`, `#/carrera`…) no cambiaron, así que
+**Juegos** (la persona en vivo y el público juegan), **Bailarinas** (desde el 2026-11-24: registro de
+bailarinas y el historial de sus regalos), **Superposiciones** (lo que acompaña el LIVE sin ser un juego),
+**Actividad** y **Ajustes**. Los ids de las vistas (`#/ruleta`, `#/carrera`…) no cambiaron, así que
 las URLs de OBS y lo guardado siguen igual.
 
 | Categoría | Grupo | Vista | Qué hace |
@@ -110,6 +111,8 @@ las URLs de OBS y lo guardado siguen igual.
 |  |  | Bóveda dorada | Caja sorpresa: los regalos llenan una barra hacia una meta de monedas; el premio queda oculto hasta llegar. Entonces el candado se abre y aparece el **texto secreto** en letras de oro. Meta, texto secreto, título y pista. **Cerrar y reiniciar** y **Abrir ahora** llegan a OBS al instante. |
 |  |  | Subathon | Reloj hacia atrás al que el público le suma tiempo: segundos por cada 100 likes y por cada moneda de regalo, con un **tope**. Tiempo inicial y tope en minutos. **Iniciar / Pausar / +5 min / Reiniciar** llegan a OBS al instante. Pulso dorado al sumarse tiempo y color de alerta con menos de 1 minuto. |
 |  |  | Repertorio | Playlist o menú de bailes: lista de canciones, cada una con meta de monedas. Los regalos llenan la **activa**; al llegar a su meta queda «Desbloqueada · Sonando». **Activar**, **Hecha y siguiente**, **Deshacer**, ordenar y **Reiniciar repertorio** en vivo. |
+| Bailarinas | Equipo | Registro de bailarinas | Cada bailarina con **nombre, color, regalo activador** (y sus monedas, si TikTok no manda el precio), **foto** (se sube y se encuadra: arrastrar, acercar, girar y brillo) y si está **activa**. Las activas aparecen con una **palomita** en la Barra de activación, el Duelo VS, la Batalla, la Carrera y el Marcador. Aquí va también la URL del widget **invisible** «Registro de bailarinas» (`registro.html`), que anota en Supabase los regalos de cada una: quien envía su activador **queda con ella** y todos sus regalos siguientes se le anotan (aunque no haya juego), hasta que active a otra. **Anotar / pausa** y **Empezar un LIVE nuevo**. Ver [4.10](#410-bailarinas-registro-palomitas-y-registro-de-regalos). |
+|  |  | Historial de regalos | Los LIVE anotados (uno por fila, con su total). Se marcan uno o varios con una palomita y se ve el **total de cada bailarina** (monedas, regalos, personas, activaciones), **quién la apoyó** y el **detalle** de cada regalo. **Exportar a Excel** (.xlsx con 4 hojas: Resumen, Por LIVE, Apoyos, Detalle) y **Borrar** un LIVE (por ejemplo, el de las pruebas). Solo desde el navegador del panel (pide su secreto). |
 | Superposiciones | Metas | Likes · Seguidores · Compartidos · Monedas | Barra de progreso con meta, título, color propio opcional (si no, el acento del estilo) y acción al alcanzarla (duplicar, volver a empezar o dejarla llena). |
 |  | Alertas | Alertas de eventos | Aviso animado por regalos, seguidores y compartidos, en fila, con sonido y mínimo de monedas. |
 |  | Reconocimiento | Mensaje VIP destacado | Cuando alguien envía regalos por encima del **umbral**, fija en pantalla su último mensaje del chat por unos segundos (si no escribió, un agradecimiento con su nombre). Los VIP hacen fila. **Quitar el mensaje actual** y **Probar en OBS** en vivo. |
@@ -224,10 +227,15 @@ documenta, con su interfaz TypeScript, en `src/widgets/<widget>/config.ts`):
 | `repertorio.html` | `ti` título · `c` canciones `[{i id, n nombre, m meta}]` · `a` id de la activa · `h` ids hechas · `mx` cuántas se ven (3 a 5) · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, todo a 0) · `s` sonido |
 | `destacado.html` | `um` umbral VIP en monedas · `d` segundos en pantalla · `ti` etiqueta · `tx` agradecimiento si no escribió · `v` monedas de un regalo sin precio · `lp` quitar el mensaje actual · `pr` probar en OBS · `s` sonido |
 | `tragamonedas.html` | `g` id del regalo · `r` texto en pantalla · `rd` rodillos `[{t título, i [textos]}]` (3) · `max` tope por combo · `oc` ocultar sin giros · `pr` probar en OBS · `s` sonido |
+| `registro.html` | `bl` bailarinas `[{i id, n nombre, g id del activador, v monedas del activador}]` · `eq` equipos de VARIAS bailarinas en los juegos `[{g id del regalo del equipo, v monedas, b [ids], t reloj del juego, sr 1 = deja de unir gente cuando el juego termina}]` · `pr` precios del Buscador · `ac` anotando (1/0) · `ro` LIVE nuevo (al cambiar, nadie sigue con nadie) |
 | `carrera.html` | `ti` título · `j` integrantes `[{i id, n nombre, c color, g id del regalo, gn nombre del regalo, v monedas por regalo, m meta, img imagen}]` · `t` reloj `{e listo/corre/pausa, d segundos, fin hora de término, r ms restantes}` · `ro` ronda (al cambiar, puntos a 0) · `sr` solo cuenta con el reloj en marcha · `s` sonido |
 
 Además, el panel agrega `_v` (hora de guardado) a lo que sube a Supabase: si llegara tarde una versión
 vieja, el widget la ignora.
+
+**Fotos de las bailarinas (`f`).** Cada equipo de `activacion.html`, `duelo.html` y `batalla.html` (`eq`, `a`, `b`) y
+cada integrante de `carrera.html` y `marcador.html` (`j`) puede llevar `f`: los **ids** de las fotos de sus
+bailarinas (la foto no cabe en la configuración: está en Supabase, ver 4.10). Sin `f`, todo se ve como siempre.
 
 Parámetros visibles (`?…`): `fondo=1` (fondo gris y píldora de estado) y `prueba=1` (no se conecta a TikTok),
 que usa la vista previa del panel. Por compatibilidad, la ruleta acepta también `?ocultar=1` y `?sonido=0`.
@@ -357,6 +365,9 @@ del original); el componente solo pinta lo que el motor publica:
   se distinguen por su nombre visible. Rey y totales en `live-tools:trono:<w>`; cambiar de modo deja el trono libre.
   Las medidas del CSS usan `--u` = el menor entre 1 % del ancho y 2,2 % del alto, así la insignia cabe en cualquier
   tamaño de fuente.
+
+- **Registro de bailarinas** (`registro.html`, invisible): reglas en `src/widgets/registro/motor.ts` (con pruebas en
+  `motor.test.ts`). Ver [4.10](#410-bailarinas-registro-palomitas-y-registro-de-regalos).
 
 El widget guarda una copia de la última configuración en su navegador (`localStorage`, clave
 `live-tools:widget:<w>`): si al abrir OBS Supabase no responde, arranca con esa copia.
@@ -520,12 +531,64 @@ es seguro mostrar nombres y mensajes del chat que vienen de TikTok.
 
 ---
 
+### 4.10 Bailarinas: registro, palomitas y registro de regalos
+
+Pedido del 2026-11-24: registrar a las bailarinas una sola vez, elegirlas en los juegos con una palomita y llevar la
+cuenta de los regalos que recibe cada una.
+
+**Dónde se guardan.** En los ajustes del widget `registro` (`widgets.registro.bailarinas` en el `localStorage` del
+panel): `id`, `nombre`, `color`, `giftId` (activador), `regalo`, `valor`, `foto` (la imagen ya recortada, para el panel),
+`fotoId` (su id en Supabase), `fotoSubida` y `activa`. Las funciones comunes están en `src/panel/bailarinas.ts`.
+
+**Fotos.** `src/panel/componentes/EditorFoto.tsx` recorta en el navegador a 320 × 320 (WebP, o JPEG) con arrastrar,
+acercar, girar y brillo; la original nunca sale del navegador. La foto recortada se sube a Supabase (`guardar_foto`,
+con el secreto) con un id nuevo cada vez (así ninguna copia queda vieja) y la anterior se borra. Los widgets solo reciben
+los ids (`f`) y la buscan con `src/nucleo/fotos.ts`: primero en su `localStorage` (`live-tools:foto:<id>`, donde el panel
+la deja: la vista previa la ve al instante) y si no, en Supabase (`leer_fotos`); `src/componentes/Fotos.tsx` la pinta
+dentro del círculo de cada equipo (con varias bailarinas, una franja por cada una). Si una foto no se pudo subir,
+el panel la vuelve a subir al abrir *Bailarinas → Registro* (un punto rojo en la foto avisa).
+
+**Palomitas en los juegos** (`SelectorBailarinas` en `src/panel/componentes/Bailarinas.tsx`; si no hay bailarinas, no se
+muestra y los juegos quedan como antes). El equipo o integrante guarda solo los ids (`bailarinas` o `bailarina`); al
+armar la configuración, `completarParticipante` pone sus datos:
+
+- **Con una bailarina**, el equipo ES ella: nombre, color, activador (y su precio) y foto. Su tarjeta ya no tiene campos:
+  se edita en *Bailarinas*, y un cambio ahí cambia en todos los juegos.
+- **Con varias** (batalla por equipos, por ejemplo), el equipo toma como nombre los de todas («Ana y Bea») y el color de
+  la primera, y conserva **su propio regalo**: si era el activador de alguna, se deja vacío para elegir otro (si no,
+  quien activara a esa bailarina quedaría con todo el equipo).
+- **Carrera y marcador**: una columna «En la carrera» / «En el marcador». Marcar a una bailarina ocupa el primer
+  integrante que siga con su nombre de fábrica («Integrante 3») o agrega uno (hasta 6); su regalo es su activador y la
+  meta se sigue poniendo en la fila.
+
+**El registro de regalos** (`registro.html`, invisible; reglas en `src/widgets/registro/motor.ts`, elegidas por el
+usuario: «activación de todo el LIVE»):
+
+- Quien envía el **activador** de una bailarina queda con ella: ese regalo y **todos** los siguientes se le anotan,
+  haya o no un juego corriendo, hasta que envíe el activador de otra (lo anotado se queda donde estaba).
+- Quien envía el **regalo de un equipo de varias** queda con todas, y cada regalo suyo se **reparte en partes iguales**
+  (una fila por bailarina con su parte, 4 decimales). Ese regalo solo une gente mientras el juego no haya terminado
+  (`sr`; en «Listo», en marcha y en pausa sí). Lo que ya estaba unido sigue repartiendo.
+- Quien no ha activado a ninguna no se anota. A la persona se la reconoce por su cuenta (`uid`) y, si no viene, por el apodo.
+- Precio: el de TikTok; si no, el del activador (o del equipo) cuando es ese regalo; si no, el del Buscador (`pr`); si no, 1.
+- **Un LIVE = una sesión**: tras 2 horas sin regalos (o con **Empezar un LIVE nuevo**, `ro`) empieza otra y nadie sigue
+  con nadie. En pausa (`ac` = 0) no se anota nada.
+- Lo anotado espera en una fila guardada en el navegador de OBS (`live-tools:registro:<w>`, máx. 5.000) y se manda en
+  tandas de hasta 200 cada 1,5 s (`anotar_regalos`); si falla, reintenta (2 s → 1 min). Cada fila tiene su id: un
+  reintento nunca la repite. **Va una sola vez**: abierta en dos lugares, cada regalo se anotaría dos veces. En la vista
+  previa (`?prueba=1`) se ve lo que anotaría, pero no manda nada.
+
+**Historial** (`src/panel/vistas/historial/`): `leer_sesiones` (los LIVE con su total) y `leer_registro` (las filas de
+los LIVE marcados, hasta 31 a la vez). Las cuentas están en `datos.ts` (con pruebas) y el Excel lo arma
+`src/panel/xlsx.ts` sin librerías (un ZIP sin comprimir con los XML de Office; fechas de verdad, títulos fijos con
+filtro). Probado en Excel y con openpyxl.
+
 ## 5. Estructura de archivos
 
 ```
 live-tools/
 ├── index.html                       panel (lo monta src/panel/main.tsx)
-├── ruleta.html, meta.html, …        los 17 widgets: una página cada uno, con los MISMOS nombres de antes
+├── ruleta.html, meta.html, …        los 18 widgets: una página cada uno, con los MISMOS nombres de antes
 │                                    (las URLs ya pegadas en OBS siguen sirviendo). Cada una solo carga
 │                                    src/widgets/<widget>/main.tsx
 ├── src/
@@ -537,7 +600,9 @@ live-tools/
 │   │   ├── rastreadorRegalos.ts     combos y regalos sueltos (espera de 2 s, sin duplicados)
 │   │   ├── contadorLikes.ts         likes según el total de TikTok
 │   │   ├── euler.ts                 conexión con Euler Stream: códigos de cierre y reintentos
-│   │   ├── nube.ts                  Supabase: leer/guardar configuración, Realtime, cola de retos
+│   │   ├── nube.ts                  Supabase: leer/guardar configuración, Realtime, cola de retos,
+│   │   │                            fotos y registro de las bailarinas
+│   │   ├── fotos.ts                 fotos de las bailarinas en los widgets (copia local + Supabase)
 │   │   ├── reloj.ts                 reloj por rondas (guarda la hora de término)
 │   │   ├── juego.ts                 piezas de los juegos: modo prueba, guardado de la ronda, gracia del
 │   │   │                            reloj, cifras animadas, regalo → integrante, mandar retos
@@ -546,8 +611,8 @@ live-tools/
 │   │   └── mensajes.ts              mensajes widget → panel (vista previa)
 │   ├── hooks/                       useWidget (arranque de un widget), useTikTokLive, useConfigEnVivo,
 │   │                                useRondaReloj, useMotor, useCifraAnimada, useReiniciarAnimacion,
-│   │                                useRetos, useIntervalo, useAcompasado
-│   ├── componentes/                 lo común de los widgets: montarWidget, PildoraEstado, Cristal
+│   │                                useRetos, useIntervalo, useAcompasado, useFotos
+│   ├── componentes/                 lo común de los widgets: montarWidget, PildoraEstado, Cristal, Fotos
 │   ├── estilos/
 │   │   ├── aurea.css                sistema de diseño ÁUREA NETWORK: variables + tema de Tailwind (@theme)
 │   │   ├── textura.css              textura estática (utilidades textura-estatica / textura-ventana)
@@ -555,7 +620,7 @@ live-tools/
 │   │   └── panel.css                estilos del panel: diseño «Estudio Áureo» (Tailwind + las clases del panel)
 │   ├── widgets/<widget>/            uno por widget (ruleta, meta, alertas, carrera, batalla, activacion, duelo,
 │   │   │                            jefe, subathon (+ extensible), boveda, trono, marcador, repertorio,
-│   │   │                            cola, destacado, tragamonedas):
+│   │   │                            cola, destacado, tragamonedas, registro):
 │   │   ├── main.tsx                 entrada de su .html (monta el componente)
 │   │   ├── <Widget>.tsx             lo que se ve
 │   │   ├── motor.ts                 sus reglas (sin React)
@@ -563,10 +628,13 @@ live-tools/
 │   │   └── <widget>.css             su diseño (el original, tal cual)
 │   └── panel/
 │       ├── main.tsx, App.tsx, rutas.ts, useRuta.ts, importarUrlVieja.ts, piezas.ts
+│       ├── bailarinas.ts            las bailarinas registradas y cómo completan equipos e integrantes
+│       ├── xlsx.ts                  archivos de Excel (.xlsx) sin librerías (el historial)
 │       ├── layout/                  barra superior, riel y menú
 │       ├── estado/                  almacen.ts (Zustand + Immer) · sincronizar.ts · envivo.ts
-│       ├── componentes/             ui.tsx · TarjetaWidget.tsx · EditorEstilo.tsx · piezasJuego.tsx
-│       └── vistas/<vista>/          las 24 vistas: config.ts · Vista*.tsx · index.ts
+│       ├── componentes/             ui.tsx · TarjetaWidget.tsx · EditorEstilo.tsx · piezasJuego.tsx ·
+│       │                            Bailarinas.tsx (palomitas) · EditorFoto.tsx (recorte de fotos)
+│       └── vistas/<vista>/          las 26 vistas: config.ts · Vista*.tsx · index.ts
 ├── pruebas/
 │   ├── unidad/                      pruebas diferenciales contra la versión original (Vitest)
 │   ├── paridad/                     escenarios de los widgets (JSON) para compararlos con la versión original
@@ -574,6 +642,7 @@ live-tools/
 │   ├── herramientas/                paridad.mjs (widgets) · panel.mjs (vistas) · servir.mjs · legado.mjs
 │   └── e2e/todas.mjs                todas las comparaciones juntas (npm run e2e)
 ├── supabase/esquema.sql             tabla, funciones y permisos de Supabase (se ejecuta una vez)
+├── supabase/bailarinas.sql          fotos y registro de regalos de las bailarinas (se ejecuta después)
 ├── vite.config.ts                   build de varias páginas (una por widget + el panel)
 ├── tsconfig*.json, package.json     TypeScript estricto y dependencias con versión exacta
 └── .github/workflows/pages.yml      arma (npm ci + pruebas + build) y publica dist/
@@ -697,6 +766,12 @@ las otras, así ninguna borra lo de las demás.
 | `agregar_reto(cola, texto, …)` | Agrega un reto. **Sin secreto** (lo llaman los widgets), pero solo a una cola que exista y con tope de 500 pendientes. Borra los hechos de hace más de 2 días. |
 | `leer_retos(cola)` | Pendientes (hasta 200, del más viejo al más nuevo), total y los 10 últimos hechos. |
 | `marcar_reto(cola, secreto, id, hecho)` · `vaciar_retos(cola, secreto)` | Marcar / deshacer y vaciar. Piden el secreto del panel. |
+| Tabla `fotos` (`supabase/bailarinas.sql`) | Fotos de las bailarinas: `id` · `registro` (id del widget registro.html) · `datos` (`data:image/…;base64,…` en WebP, JPEG o PNG, máx. 200.000 caracteres) |
+| `guardar_foto(registro, secreto, id, datos)` · `borrar_foto(registro, secreto, id)` | Las sube y las borra el panel (piden el secreto; tope de 300 fotos). |
+| `leer_fotos(ids)` | Las fotos pedidas `{id: datos}` (hasta 24). Hay que conocer el id de cada una. |
+| Tabla `regalos_bailarinas` | Una fila por regalo y por bailarina: `id` (lo pone el widget) · `registro` · `sesion` (el LIVE) · `bailarina` · `nombre` · `usuario` · `uid` · `gift_id` · `regalo` · `cantidad` · `monedas` (su parte) · `total` · `partes` · `origen` (`activador`, `equipo` o `apoyo`) · `hora` |
+| `anotar_regalos(registro, filas)` | **Sin secreto** (lo llama el widget en OBS), solo a un registro que exista, hasta 200 filas; una fila con un id ya guardado no se repite; la hora no puede ser del futuro ni de hace más de 2 días. |
+| `leer_sesiones(registro, secreto)` · `leer_registro(registro, secreto, sesiones)` · `borrar_sesion(registro, secreto, sesion)` | Los LIVE (hasta 300), sus filas (hasta 31 LIVE y 60.000 filas) y borrar un LIVE. Piden el secreto. |
 
 - **RLS activo y sin políticas**, y sin permisos sobre la tabla: con la clave pública **no se puede leer ni
   listar la tabla**, solo usar las dos funciones (`security definer`).
@@ -707,7 +782,7 @@ las otras, así ninguna borra lo de las demás.
   la conexión del panel (Actividad) hace lo mismo a los 1,5 s y pone en 0 los contadores de la sesión.
 
 Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard → **SQL Editor** → pegar
-`supabase/esquema.sql` → **Run**, y poner la URL y la clave pública del proyecto nuevo en `src/nucleo/nube.ts`.
+`supabase/esquema.sql` → **Run**, luego lo mismo con `supabase/bailarinas.sql`, y poner la URL y la clave pública del proyecto nuevo en `src/nucleo/nube.ts`.
 
 ### 8.3 Lo que conviene saber
 

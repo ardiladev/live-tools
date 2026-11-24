@@ -7,6 +7,7 @@
 // =============================================================================
 
 import { useEffect, useRef, type CSSProperties } from 'react';
+import { conFotos, Fotos } from '../../componentes/Fotos';
 import { PildoraEstado } from '../../componentes/PildoraEstado';
 import { useCifraAnimada } from '../../hooks/useCifraAnimada';
 import { useMotor } from '../../hooks/useMotor';
@@ -69,9 +70,10 @@ function TarjetaIntegrante({ j, estado, lider }: { j: IntegranteMarcador; estado
   return (
     <article ref={nodo} className={clases} style={estilo}>
       <div className="nombre">{j.nombre}</div>
-      <div className="regalo">
+      <div className={conFotos(j.fotos) ? 'regalo con-fotos' : 'regalo'}>
         <img alt="" src={imagen || undefined} hidden={!imagen} />
         <span className="sin-imagen" aria-hidden="true" hidden={Boolean(imagen)}>🎁</span>
+        <Fotos ids={j.fotos} />
       </div>
       <div className="puntos">{formato.format(mostrado)}</div>
     </article>

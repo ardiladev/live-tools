@@ -11,8 +11,10 @@ import type { EventoRegalo } from '../../../tipos/eventos';
 import { EditorEstilo } from '../../componentes/EditorEstilo';
 import { BotonesReloj, CampoDuracion, ListaRegalos, PanelReloj, useRelojDeRonda } from '../../componentes/piezasJuego';
 import { TarjetaWidget, type PruebaWidget } from '../../componentes/TarjetaWidget';
-import { Campo, Casilla, EntradaNumero, Nota, Tarjeta } from '../../componentes/ui';
-import { nombreRegalo, obtener, useAjustesWidget } from '../../estado/almacen';
+import { Campo, Casilla, EntradaNumero, Nota, Tarjeta, useAviso } from '../../componentes/ui';
+import { completarParticipante, elegirIntegrante, type Bailarina } from '../../bailarinas';
+import { FotoBailarina, SelectorBailarinas } from '../../componentes/Bailarinas';
+import { nombreRegalo, obtener, useAjustesWidget, usarAlmacen } from '../../estado/almacen';
 import { textoLimpio } from '../../piezas';
 import {
   duracionDe, ID, MAX_INTEGRANTES, MAX_NOMBRE, nuevoIntegrante, POR_DEFECTO, problemasRegalos,
@@ -37,13 +39,23 @@ export function VistaMarcador() {
   const [cfg, cambiarCfg] = useAjustesWidget(ID, POR_DEFECTO);
   const duracionS = duracionDe(cfg);
   const reloj = useRelojDeRonda({ id: ID, ajustes: cfg, cambiarAjustes: cambiarCfg, duracionS });
-  const problemas = problemasRegalos(cfg.integrantes);
+  const panel = usarAlmacen((e) => e);
+  const [avisoBailarinas, avisarBailarinas] = useAviso();
+  // Con una bailarina, el integrante toma sus datos (los mismos que van al widget).
+  const integrantes = cfg.integrantes.map((j) => completarParticipante(panel, j, j.bailarina ? [j.bailarina] : []));
+  const problemas = problemasRegalos(integrantes);
 
   const pruebas: PruebaWidget[] = [
-    { texto: 'Regalo al azar', evento: regaloDePrueba(cfg.integrantes, 1, alAzar) },
-    { texto: 'Combo ×10 al azar', evento: regaloDePrueba(cfg.integrantes, 10, alAzar) },
-    { texto: 'Combo ×50 al primero', evento: regaloDePrueba(cfg.integrantes, 50, (lista) => lista[0]) },
+    { texto: 'Regalo al azar', evento: regaloDePrueba(integrantes, 1, alAzar) },
+    { texto: 'Combo ×10 al azar', evento: regaloDePrueba(integrantes, 10, alAzar) },
+    { texto: 'Combo ×50 al primero', evento: regaloDePrueba(integrantes, 50, (lista) => lista[0]) },
   ];
+
+  function elegirBailarina(id: string, si: boolean): void {
+    let aviso = '';
+    cambiarCfg((a) => { aviso = elegirIntegrante(a.integrantes, id, si, () => nuevoIntegrante(a.integrantes.length), MAX_INTEGRANTES); });
+    if (aviso) avisarBailarinas(aviso, { error: true });
+  }
 
   function agregar(): void {
     cambiarCfg((a) => {
@@ -87,13 +99,21 @@ export function VistaMarcador() {
         </Nota>
       </Tarjeta>
 
+      <SelectorBailarinas
+        columnas={['En el marcador']}
+        columnaDe={(id) => (cfg.integrantes.some((j) => j.bailarina === id) ? 0 : -1)}
+        alElegir={(id, columna) => elegirBailarina(id, columna === 0)}
+        aviso={avisoBailarinas.texto}
+        nota={`Marca a las que participan (hasta ${MAX_INTEGRANTES}): cada una entra con su nombre, color, foto y su activador como regalo.`}
+      />
+
       <Tarjeta titulo={`Integrantes (1 a ${MAX_INTEGRANTES})`} ancha>
         <div className="integrante-fila sin-meta encabezado">
           <span>Color</span><span>Nombre</span><span>ID regalo</span><span>Nombre del regalo</span><span>Monedas c/u</span><span />
         </div>
         <div>
-          {cfg.integrantes.map((j, i) => (
-            <FilaIntegrante key={j.id} j={j} i={i} total={cfg.integrantes.length} cambiarCfg={cambiarCfg} />
+          {integrantes.map((j, i) => (
+            <FilaIntegrante key={j.id} j={j} vinculada={j.miembros[0]} i={i} total={cfg.integrantes.length} cambiarCfg={cambiarCfg} />
           ))}
         </div>
         <ListaRegalos id={LISTA_REGALOS} />
@@ -112,23 +132,29 @@ export function VistaMarcador() {
 }
 
 /** Una fila: color (con su casilla) · nombre · ID · nombre del regalo · monedas · quitar. */
-function FilaIntegrante({ j, i, total, cambiarCfg }: {
+function FilaIntegrante({ j, vinculada, i, total, cambiarCfg }: {
   j: IntegranteMarcadorAjustes; i: number; total: number;
+  /** Su bailarina: el nombre, el color y el regalo son los de ella (se editan en Bailarinas). */
+  vinculada?: Bailarina;
   cambiarCfg: (receta: (a: Draft<AjustesMarcador>) => void) => void;
 }) {
   const n = i + 1;
   const cambiarEste = (receta: (x: Draft<IntegranteMarcadorAjustes>) => void): void =>
     cambiarCfg((a) => { const x = a.integrantes[i]; if (x) receta(x); });
+  const fija = Boolean(vinculada);
 
   return (
-    <div className="integrante-fila sin-meta">
-      {/* Color opcional: sin marcar, la tarjeta usa el acento del estilo. */}
-      <div className="color-opcional">
-        <input type="checkbox" checked={j.usarColor} title="Usar un color propio" aria-label={`Usar color propio en el integrante ${n}`} onChange={(e) => cambiarEste((x) => { x.usarColor = e.target.checked; })} />
-        <input type="color" value={j.color} disabled={!j.usarColor} aria-label={`Color del integrante ${n}`} onChange={(e) => cambiarEste((x) => { x.color = e.target.value; })} />
-      </div>
-      <input value={j.nombre} maxLength={MAX_NOMBRE} aria-label={`Nombre del integrante ${n}`} onChange={(e) => cambiarEste((x) => { x.nombre = e.target.value; })} />
+    <div className={fija ? 'integrante-fila sin-meta con-bailarina' : 'integrante-fila sin-meta'} title={fija ? 'Sus datos se editan en Bailarinas → Registro' : undefined}>
+      {vinculada ? <FotoBailarina b={vinculada} /> : (
+        // Color opcional: sin marcar, la tarjeta usa el acento del estilo.
+        <div className="color-opcional">
+          <input type="checkbox" checked={j.usarColor} title="Usar un color propio" aria-label={`Usar color propio en el integrante ${n}`} onChange={(e) => cambiarEste((x) => { x.usarColor = e.target.checked; })} />
+          <input type="color" value={j.color} disabled={!j.usarColor} aria-label={`Color del integrante ${n}`} onChange={(e) => cambiarEste((x) => { x.color = e.target.value; })} />
+        </div>
+      )}
+      <input value={j.nombre} maxLength={MAX_NOMBRE} disabled={fija} aria-label={`Nombre del integrante ${n}`} onChange={(e) => cambiarEste((x) => { x.nombre = e.target.value; })} />
       <input
+        disabled={fija}
         value={j.giftId}
         inputMode="numeric"
         placeholder="ID"
@@ -147,8 +173,8 @@ function FilaIntegrante({ j, i, total, cambiarCfg }: {
           });
         }}
       />
-      <input value={j.regalo} maxLength={40} placeholder="Nombre" aria-label={`Nombre del regalo del integrante ${n}`} onChange={(e) => cambiarEste((x) => { x.regalo = e.target.value; })} />
-      <EntradaNumero valor={j.valor} min={0} step={1} aria-label={`Monedas por regalo del integrante ${n}`} alCambiar={(v) => cambiarEste((x) => { x.valor = v; })} />
+      <input value={j.regalo} maxLength={40} placeholder="Nombre" disabled={fija} aria-label={`Nombre del regalo del integrante ${n}`} onChange={(e) => cambiarEste((x) => { x.regalo = e.target.value; })} />
+      <EntradaNumero valor={j.valor} min={0} step={1} disabled={fija} aria-label={`Monedas por regalo del integrante ${n}`} alCambiar={(v) => cambiarEste((x) => { x.valor = v; })} />
       <button title="Quitar" aria-label={`Quitar al integrante ${n}`} disabled={total <= 1} onClick={() => cambiarCfg((a) => { a.integrantes.splice(i, 1); })}>✕</button>
     </div>
   );

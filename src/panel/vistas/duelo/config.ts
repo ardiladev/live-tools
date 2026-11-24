@@ -12,6 +12,7 @@
 import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
 import { MAX_CARTEL, type ConfigDuelo, type EleccionEfecto } from '../../../widgets/duelo/config';
+import { claveFotos, completarParticipante } from '../../bailarinas';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
@@ -28,6 +29,8 @@ export type EquipoDuelo = {
   /** Monedas del activador si TikTok no manda el precio. */
   valor: number;
   color: string;
+  /** Bailarinas de este lado (Bailarinas en juego). Con una, toma sus datos; ver panel/bailarinas.ts. */
+  bailarinas?: string[];
 };
 
 export type AjustesDuelo = {
@@ -81,13 +84,17 @@ function preciosDelCatalogo(estado: EstadoPanel): Record<string, number> {
 export function configDuelo(estado: EstadoPanel): ConfigDuelo {
   const cfg = ajustesDe(estado, ID, POR_DEFECTO);
   const catalogo = estado.regalos;
-  const eq = equiposDe(cfg).map((b, i) => ({
-    n: textoLimpio(b.nombre).slice(0, MAX_NOMBRE) || `Bailarina ${i + 1}`,
-    g: textoLimpio(b.giftId),
-    v: Math.max(0, Number(b.valor) || 0),
-    c: b.color,
-    img: catalogo[textoLimpio(b.giftId)]?.imagen || '', // la imagen sale del Buscador de regalos
-  }));
+  const eq = equiposDe(cfg).map((equipo, i) => {
+    const b = completarParticipante(estado, equipo, equipo.bailarinas);
+    return {
+      n: textoLimpio(b.nombre).slice(0, MAX_NOMBRE) || `Bailarina ${i + 1}`,
+      g: textoLimpio(b.giftId),
+      v: Math.max(0, Number(b.valor) || 0),
+      c: b.color,
+      img: catalogo[textoLimpio(b.giftId)]?.imagen || '', // la imagen sale del Buscador de regalos
+      ...claveFotos(b.fotos),
+    };
+  });
   return {
     eq,
     pr: preciosDelCatalogo(estado),
@@ -102,9 +109,11 @@ export function configDuelo(estado: EstadoPanel): ConfigDuelo {
 }
 
 /** Problemas de la configuración (no impiden enviarla). */
-export function problemas(a: AjustesDuelo): string[] {
+export function problemas(a: AjustesDuelo, estado?: EstadoPanel): string[] {
   const lista: string[] = [];
-  const [uno, dos] = equiposDe(a).map((b) => textoLimpio(b.giftId));
+  const [uno, dos] = equiposDe(a)
+    .map((b) => (estado ? completarParticipante(estado, b, b.bailarinas) : b))
+    .map((b) => textoLimpio(b.giftId));
   if (!uno) lista.push('La bailarina 1 no tiene regalo activador: nadie podrá unirse a su equipo.');
   if (!dos) lista.push('La bailarina 2 no tiene regalo activador: nadie podrá unirse a su equipo.');
   if (uno && uno === dos) lista.push(`Las dos tienen el mismo activador (${uno}): solo funcionará el de la bailarina 1.`);

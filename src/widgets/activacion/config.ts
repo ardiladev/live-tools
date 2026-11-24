@@ -4,13 +4,15 @@
 // La genera el panel (src/panel/vistas/activacion/config.ts) y llega en #c=… o, con cambios en
 // vivo, desde Supabase. Claves cortas (NO renombrar: hay URLs pegadas en OBS):
 //   eq = equipos [{ n: nombre, g: id del regalo activador, v: monedas del activador (si TikTok no
-//        manda el precio), c: color, img: imagen del regalo }] (de 2 a 4)
+//        manda el precio), c: color, img: imagen del regalo, f: ids de las fotos de sus bailarinas
+//        (ver src/nucleo/fotos.ts; sin `f`, como siempre) }] (de 2 a 4)
 //   pr = precios del Buscador de regalos { giftId: monedas }, para los regalos que llegan sin
 //        precio (si tampoco está ahí, el regalo suma 1)
 //   ro = ronda (al cambiar, las monedas y los equipos vuelven a 0) · s = sonido (1/0)
 //   t = reloj { e, d, fin, r } (ver src/nucleo/reloj.ts) · est = estilo visual (lo aplica useWidget)
 // =============================================================================
 
+import { normalizarFotos } from '../../nucleo/fotos';
 import { urlSegura } from '../../nucleo/juego';
 import type { RelojRonda } from '../../tipos/reloj';
 import type { ConfigBase } from '../../tipos/widgets';
@@ -26,6 +28,7 @@ export interface EquipoConfigActivacion {
   v?: number;
   c?: string;
   img?: string;
+  f?: string[];
 }
 
 export interface ConfigActivacion extends ConfigBase {
@@ -45,6 +48,8 @@ export interface EquipoActivacion {
   valor: number;
   color: string;
   imagen: string;
+  /** Ids de las fotos de sus bailarinas ([] = sin fotos: se ve la imagen del regalo). */
+  fotos: string[];
 }
 
 export function normalizarEquipo(e: EquipoConfigActivacion | undefined, i: number): EquipoActivacion {
@@ -54,5 +59,6 @@ export function normalizarEquipo(e: EquipoConfigActivacion | undefined, i: numbe
     valor: Math.max(0, Number(e?.v) || 0),
     color: /^#[0-9a-f]{6}$/i.test(String(e?.c)) ? String(e?.c) : (COLORES[i] ?? '#D4AF37'),
     imagen: urlSegura(e?.img),
+    fotos: normalizarFotos(e?.f),
   };
 }

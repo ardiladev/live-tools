@@ -13,6 +13,7 @@
 // =============================================================================
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { conFotos, Fotos } from '../../componentes/Fotos';
 import { PildoraEstado } from '../../componentes/PildoraEstado';
 import { useCifraAnimada } from '../../hooks/useCifraAnimada';
 import { useMotor } from '../../hooks/useMotor';
@@ -221,9 +222,10 @@ function Ficha({ equipo: e, indice: i, lado, estado, motor, gana }: PropsFicha) 
 
   return (
     <div className={clases} style={coloresDe(e.color)} ref={nodo}>
-      <div className="icono">
+      <div className={conFotos(e.fotos) ? 'icono con-fotos' : 'icono'}>
         <img className="regalo" alt="" src={e.imagen || undefined} hidden={!e.imagen} />
         <span className="inicial" aria-hidden="true">{e.imagen ? '' : e.nombre.charAt(0).toUpperCase()}</span>
+        <Fotos ids={e.fotos} />
       </div>
       <div className="datos">
         <div className="nombre">{e.nombre}</div>

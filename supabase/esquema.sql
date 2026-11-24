@@ -20,6 +20,8 @@
 --
 -- Secciones: 1. Tabla · 2. Leer · 3. Guardar y avisar · 4. Permisos
 --            5. Cola de retos: tabla · 6. Agregar · 7. Leer · 8. Marcar, vaciar y permisos
+-- Las bailarinas (fotos y registro de regalos) siguen en supabase/bailarinas.sql: se ejecuta
+-- después de este archivo.
 -- =============================================================================
 
 

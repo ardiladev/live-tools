@@ -9,6 +9,7 @@
 import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
 import type { ConfigBatalla } from '../../../widgets/batalla/config';
+import { claveFotos, completarParticipante } from '../../bailarinas';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
@@ -26,6 +27,8 @@ export type EquipoAjustes = {
   color: string;
   /** Foto (URL https, opcional). */
   avatar: string;
+  /** Bailarinas del equipo (Bailarinas en juego). Con una, el equipo toma sus datos; ver panel/bailarinas.ts. */
+  bailarinas?: string[];
 };
 
 export type AjustesBatalla = {
@@ -61,14 +64,18 @@ export const urlValida = (texto: unknown): boolean => /^https?:\/\/\S+$/i.test(t
 export function configBatalla(estado: EstadoPanel): ConfigBatalla {
   const cfg = ajustesDe(estado, ID, POR_DEFECTO);
   const catalogo = estado.regalos;
-  const [a, b] = cfg.equipos.map((e, i) => ({
-    n: textoLimpio(e.nombre).slice(0, MAX_NOMBRE) || `Equipo ${LETRAS[i] ?? ''}`,
-    g: textoLimpio(e.giftId),
-    v: Math.max(0, Number(e.valor) || 0),
-    c: e.color,
-    av: urlValida(e.avatar) ? textoLimpio(e.avatar) : '',
-    img: catalogo[textoLimpio(e.giftId)]?.imagen || '', // la imagen sale del Buscador de regalos
-  }));
+  const [a, b] = cfg.equipos.map((equipo, i) => {
+    const e = completarParticipante(estado, equipo, equipo.bailarinas);
+    return {
+      n: textoLimpio(e.nombre).slice(0, MAX_NOMBRE) || `Equipo ${LETRAS[i] ?? ''}`,
+      g: textoLimpio(e.giftId),
+      v: Math.max(0, Number(e.valor) || 0),
+      c: e.color,
+      av: urlValida(e.avatar) ? textoLimpio(e.avatar) : '',
+      img: catalogo[textoLimpio(e.giftId)]?.imagen || '', // la imagen sale del Buscador de regalos
+      ...claveFotos(e.fotos),
+    };
+  });
   return {
     a, b, ro: cfg.ronda, s: cfg.sonido ? 1 : 0,
     cr: cfg.conReloj ? 1 : 0, t: { ...cfg.reloj, d: duracionDe(cfg) }, rv: cfg.rondaVictorias,

@@ -5,12 +5,14 @@
 // vivo, desde Supabase. Claves cortas (NO renombrar: hay URLs pegadas en OBS):
 //   ti = título sobre el reloj
 //   j  = integrantes [{ i: id, n: nombre, c: color, g: id del regalo, gn: nombre del regalo,
-//                       v: monedas por regalo (si TikTok no manda el precio), m: meta, img: imagen }]
+//                       v: monedas por regalo (si TikTok no manda el precio), m: meta, img: imagen,
+//                       f: id de la foto de su bailarina (ver src/nucleo/fotos.ts) }]
 //   t  = reloj { e, d, fin, r } (ver src/nucleo/reloj.ts) · ro = ronda (al cambiar, puntos a 0)
 //   sr = solo cuenta con el reloj en marcha (1/0) · s = sonido (1/0)
 //   est = estilo visual (lo aplica useWidget)
 // =============================================================================
 
+import { normalizarFotos } from '../../nucleo/fotos';
 import { normalizarTexto } from '../../nucleo/juego';
 import type { RelojRonda } from '../../tipos/reloj';
 import type { ConfigBase } from '../../tipos/widgets';
@@ -27,6 +29,7 @@ export interface IntegranteConfigCarrera {
   v?: number;
   m?: number;
   img?: string;
+  f?: string[];
 }
 
 export interface ConfigCarrera extends ConfigBase {
@@ -50,6 +53,8 @@ export interface IntegranteCarrera {
   valor: number;
   meta: number;
   imagen: string;
+  /** Ids de las fotos de su bailarina ([] = sin foto: se ve la imagen del regalo). */
+  fotos: string[];
 }
 
 export function normalizarIntegrante(j: IntegranteConfigCarrera | undefined, i: number): IntegranteCarrera {
@@ -62,5 +67,6 @@ export function normalizarIntegrante(j: IntegranteConfigCarrera | undefined, i: 
     valor: Math.max(0, Number(j?.v) || 0),
     meta: Math.max(1, Number(j?.m) || 1000),
     imagen: String(j?.img || ''),
+    fotos: normalizarFotos(j?.f),
   };
 }

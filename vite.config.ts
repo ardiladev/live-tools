@@ -28,6 +28,7 @@ export const PAGINAS = [
   'carrera', 'marcador', 'batalla', 'activacion', 'duelo',
   'cola', 'jefe', 'boveda', 'subathon', 'extensible', 'repertorio',
   'meta', 'alertas', 'destacado', 'trono',
+  'registro',
 ] as const;
 
 const soloEstas = (process.env.SOLO || '').split(',').map((p) => p.trim()).filter(Boolean);

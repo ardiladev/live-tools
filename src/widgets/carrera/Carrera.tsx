@@ -8,6 +8,7 @@
 // =============================================================================
 
 import { useEffect, useRef, type CSSProperties } from 'react';
+import { conFotos, Fotos } from '../../componentes/Fotos';
 import { PildoraEstado } from '../../componentes/PildoraEstado';
 import { useCifraAnimada } from '../../hooks/useCifraAnimada';
 import { useMotor } from '../../hooks/useMotor';
@@ -109,9 +110,10 @@ function TarjetaIntegrante({ integrante: j, estado, motor, lider, atenuado }: Pr
     <article ref={nodo} className={clases} style={{ '--color': j.color } as CSSProperties}>
       <span className="corona" aria-hidden="true">♛</span>
       <div className="cabeza">
-        <div className="regalo">
+        <div className={conFotos(j.fotos) ? 'regalo con-fotos' : 'regalo'}>
           <img alt="" src={imagen || undefined} hidden={!imagen} />
           <span className="sin-imagen" aria-hidden="true" hidden={Boolean(imagen)}>🎁</span>
+          <Fotos ids={j.fotos} />
         </div>
         <div className="nombre">{j.nombre}</div>
       </div>

@@ -9,6 +9,7 @@
 // =============================================================================
 
 import { useEffect, useRef } from 'react';
+import { conFotos, Fotos } from '../../componentes/Fotos';
 import { PildoraEstado } from '../../componentes/PildoraEstado';
 import { useCifraAnimada } from '../../hooks/useCifraAnimada';
 import { useMotor } from '../../hooks/useMotor';
@@ -128,15 +129,17 @@ function Equipo({ estado, motor, lado, gana }: { estado: EstadoBatalla; motor: M
   useReiniciarAnimacion(nodo, 'golpe', golpes);
   const mostrado = useCifraAnimada(estado.puntos[lado], { ms: CONTEO_MS, animar: estado.animarPuntos, pintada: estado.pintadas });
   const foto = e.avatar || e.imagen;
-  // Con foto, el regalo va de insignia en la esquina del avatar.
-  const insignia = e.avatar ? e.imagen : '';
+  // Con foto (la URL o las de sus bailarinas), el regalo va de insignia en la esquina del avatar.
+  const bailarinas = conFotos(e.fotos);
+  const insignia = e.avatar || bailarinas ? e.imagen : '';
   const clases = ['equipo', lado === 1 && 'b', gana && 'gana', golpes > 0 && 'golpe'].filter(Boolean).join(' ');
 
   return (
     <div className={clases} id={`equipo-${'ab'[lado]}`} ref={nodo}>
-      <div className="avatar">
+      <div className={bailarinas ? 'avatar con-fotos' : 'avatar'}>
         <img className="foto" alt="" src={foto || undefined} hidden={!foto} />
         <span className="inicial" aria-hidden="true">{foto ? '' : e.nombre.charAt(0).toUpperCase()}</span>
+        <Fotos ids={e.fotos} />
         <img className="insignia" alt="" src={insignia || undefined} hidden={!insignia} />
       </div>
       <div className="datos">

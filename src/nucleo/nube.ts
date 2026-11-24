@@ -11,12 +11,16 @@
 //   Ruleta / tragamonedas / cola.html ──agregar_reto──►  Supabase  ──Realtime "retos-<cola>"──►  Cola y panel
 //   Panel ──marcar_reto / vaciar_retos (con el secreto)──►  Supabase
 //
-// La base de datos está descrita en supabase/esquema.sql. Si SUPABASE_URL o SUPABASE_CLAVE
+// Bailarinas (sección 6): el panel guarda sus fotos (guardar_foto, con el secreto) y los widgets
+// las leen (leer_fotos); el widget registro.html anota sus regalos (anotar_regalos) y el panel
+// lee el registro (leer_sesiones / leer_registro, con el secreto).
+//
+// La base de datos está descrita en supabase/esquema.sql y supabase/bailarinas.sql. Si SUPABASE_URL o SUPABASE_CLAVE
 // están vacíos, todo funciona como antes (configuración completa en la URL).
 // Los hooks useConfigEnVivo y useRetos (src/hooks/) envuelven las suscripciones de aquí.
 // (Port 1:1 de legado/js/nube.js; la librería ahora sale de npm, misma versión 2.117.2.)
 // Secciones: 1. Proyecto · 2. Identificadores · 3. Leer y guardar · 4. Escuchar cambios
-//            5. Cola de retos
+//            5. Cola de retos · 6. Bailarinas
 // =============================================================================
 
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
@@ -212,3 +216,83 @@ export async function escucharRetos(
     dejar();
   };
 }
+
+
+// -----------------------------------------------------------------------------
+// 6. Bailarinas: fotos y registro de regalos (ver supabase/bailarinas.sql)
+// -----------------------------------------------------------------------------
+// El registro se identifica con el id del widget "Registro de bailarinas" (su `w`).
+
+/** Guarda (o reemplaza) una foto ya recortada (data:image/…;base64,…). Pide el secreto. */
+export const guardarFoto = (registro: string, secreto: string, id: string, datos: string): Promise<unknown> =>
+  llamar('guardar_foto', { p_registro: registro, p_secreto: secreto, p_id: id, p_datos: datos });
+
+/** Borra una foto que ya no usa ninguna bailarina. Pide el secreto. */
+export const borrarFoto = (registro: string, secreto: string, id: string): Promise<unknown> =>
+  llamar('borrar_foto', { p_registro: registro, p_secreto: secreto, p_id: id });
+
+/** Las fotos pedidas, { id: datos } (las que no existen no vienen). Hasta 24 a la vez. */
+export const leerFotos = (ids: readonly string[]): Promise<Record<string, string>> =>
+  llamar<Record<string, string> | null>('leer_fotos', { p_ids: ids.slice(0, 24) }).then((r) => r || {});
+
+/** Un regalo anotado para una bailarina, tal como viaja a anotar_regalos. */
+export interface FilaRegistro {
+  /** Id único (lo pone el widget: un reintento no repite la fila). */
+  id: string;
+  /** El LIVE (sesión). */
+  s: string;
+  /** Id de la bailarina y su nombre en ese momento. */
+  b: string;
+  bn: string;
+  /** Quién lo envió (apodo y id de la cuenta). */
+  u: string;
+  uid: string;
+  /** Regalo: id, nombre y cantidad. */
+  g: string;
+  gn: string;
+  n: number;
+  /** Monedas para esta bailarina (su parte) y del regalo completo. */
+  m: number;
+  p: number;
+  /** Entre cuántas bailarinas se repartió. */
+  k: number;
+  /** activador = el suyo · equipo = el de un equipo de varias · apoyo = un regalo de alguien que ya la había activado. */
+  o: 'activador' | 'equipo' | 'apoyo';
+  /** Hora (ms). */
+  h: number;
+}
+
+/** Anota regalos en el registro (hasta 200). Lo llama el widget en OBS. Devuelve cuántos eran nuevos. */
+export const anotarRegalos = (registro: string, filas: readonly FilaRegistro[]): Promise<number> =>
+  llamar<number>('anotar_regalos', { p_registro: registro, p_filas: filas });
+
+/** Un LIVE del registro, con su resumen. */
+export interface SesionRegistro {
+  sesion: string;
+  /** Primer y último regalo (ms). */
+  desde: number;
+  hasta: number;
+  monedas: number;
+  filas: number;
+  personas: number;
+}
+
+/** Los LIVE del registro, del más reciente al más viejo (hasta 300). Pide el secreto. */
+export const leerSesiones = (registro: string, secreto: string): Promise<SesionRegistro[]> =>
+  llamar<SesionRegistro[] | null>('leer_sesiones', { p_registro: registro, p_secreto: secreto }).then((r) => r || []);
+
+/** Una fila del registro como la devuelve leer_registro (arreglo compacto, ver bailarinas.sql). */
+export type FilaRegistroLeida = [
+  id: string, sesion: string, bailarina: string, nombre: string, usuario: string, uid: string,
+  giftId: string, regalo: string, cantidad: number, monedas: number, total: number, partes: number,
+  origen: FilaRegistro['o'], hora: number,
+];
+
+/** Las filas de los LIVE pedidos (hasta 31), en orden de hora. Pide el secreto. */
+export const leerRegistro = (registro: string, secreto: string, sesiones: readonly string[]): Promise<FilaRegistroLeida[]> =>
+  llamar<FilaRegistroLeida[] | null>('leer_registro', { p_registro: registro, p_secreto: secreto, p_sesiones: sesiones.slice(0, 31) })
+    .then((r) => r || []);
+
+/** Borra un LIVE completo del registro. Pide el secreto. Devuelve cuántas filas borró. */
+export const borrarSesion = (registro: string, secreto: string, sesion: string): Promise<number> =>
+  llamar<number>('borrar_sesion', { p_registro: registro, p_secreto: secreto, p_sesion: sesion });

@@ -20,6 +20,7 @@ import type { NombreIcono } from './componentes/ui';
 import { activacion } from './vistas/activacion';
 import { actividad } from './vistas/actividad';
 import { alertas } from './vistas/alertas';
+import { bailarinas } from './vistas/bailarinas';
 import { batalla } from './vistas/batalla';
 import { boveda } from './vistas/boveda';
 import { carrera } from './vistas/carrera';
@@ -33,6 +34,7 @@ import { metaCompartidos, metaLikes, metaMonedas, metaSeguidores } from './vista
 import { regalos } from './vistas/regalos';
 import { repertorio } from './vistas/repertorio';
 import { ruletaNormal, ruletaPremium } from './vistas/ruleta';
+import { historial } from './vistas/historial';
 import { extensible, subathon } from './vistas/subathon';
 import type { DefinicionVista } from './vistas/tipos';
 import { tragamonedas } from './vistas/tragamonedas';
@@ -62,6 +64,17 @@ export const CATEGORIAS: Categoria[] = [
       { id: 'sorteos', titulo: 'Sorteos', vistas: [ruletaNormal, ruletaPremium, tragamonedas] },
       { id: 'competencias', titulo: 'Competencias', vistas: [carrera, marcador, batalla, activacion, duelo] },
       { id: 'retos', titulo: 'Retos del público', vistas: [cola, jefe, boveda, subathon, extensible, repertorio] },
+    ],
+  },
+  {
+    // Las bailarinas del LIVE: se registran una vez y se eligen con una palomita en los juegos;
+    // el widget invisible registro.html anota sus regalos (2026-11-24).
+    id: 'bailarinas',
+    titulo: 'Bailarinas',
+    corto: 'Bailarinas',
+    icono: 'persona',
+    grupos: [
+      { id: 'equipo', titulo: 'Equipo', vistas: [bailarinas, historial] },
     ],
   },
   {

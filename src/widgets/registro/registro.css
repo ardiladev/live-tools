@@ -1,0 +1,60 @@
+/* ==========================================================================
+   registro.css — Widget "Registro de bailarinas" (registro.html → Registro.tsx)
+   En OBS no pinta nada (es invisible). Solo con ?fondo=1 (vista previa del panel) se ve
+   esta placa con lo que va anotando: totales del LIVE y últimos regalos.
+   Medidas en --u: cabe en cualquier tamaño de fuente.
+
+   Secciones: 1. Placa · 2. Totales · 3. Últimos regalos
+   ========================================================================== */
+
+
+/* ---------- 1. Placa ---------- */
+:root { --u: min(1vw, 1.6vh); }
+.registro {
+  position: fixed;
+  inset: calc(var(--u) * 3);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1.6);
+  padding: calc(var(--u) * 3);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.registro h1,
+.registro h2 {
+  margin: 0;
+  color: var(--oro-texto);
+  letter-spacing: var(--espaciado-widget);
+  text-transform: var(--mayus);
+}
+.registro h1 { font-weight: 800; font-size: calc(var(--u) * 3.6); }
+.registro h2 { font-weight: 700; font-size: calc(var(--u) * 2.4); }
+.registro .resumen { margin: calc(var(--u) * .6) 0 0; font-size: calc(var(--u) * 2.2); opacity: .85; }
+.registro .resumen.pausa { color: var(--mal); opacity: 1; }
+.registro ol { margin: 0; padding: 0; list-style: none; }
+.registro .vacio { opacity: .7; }
+.registro .envio { margin: auto 0 0; font-size: calc(var(--u) * 1.9); opacity: .8; }
+
+
+/* ---------- 2. Totales del LIVE ---------- */
+.totales { display: grid; gap: calc(var(--u) * .8); }
+.totales li {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 1) calc(var(--u) * 1.6);
+  border-radius: var(--radio);
+  background: rgba(0, 0, 0, .28);
+  font-size: calc(var(--u) * 2.6);
+}
+.totales .nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.totales .monedas { color: var(--activo); font-weight: 800; font-variant-numeric: tabular-nums; }
+
+
+/* ---------- 3. Últimos regalos ---------- */
+.ultimas { display: grid; gap: calc(var(--u) * .7); overflow: hidden; }
+.ultimas li { display: flex; gap: calc(var(--u) * 1.4); font-size: calc(var(--u) * 2); line-height: 1.3; }
+.ultimas .hora { flex: none; opacity: .6; font-variant-numeric: tabular-nums; }
+.ultimas .texto { min-width: 0; }
+.ultimas b { color: var(--oro-texto); font-weight: 700; }
+.ultimas li.nadie { opacity: .55; }
