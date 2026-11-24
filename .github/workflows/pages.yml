@@ -1,44 +1,77 @@
-# Arma el proyecto (React + Vite + TypeScript) y publica la carpeta dist/ en GitHub Pages cada vez
-# que se sube un cambio a main. Solo sale dist/: el código fuente, el README y la documentación se
-# quedan en el repositorio. Las páginas conservan sus nombres (index.html, ruleta.html, …), así que
-# las URLs ya pegadas en OBS / TikTok LIVE Studio siguen funcionando.
+
+# Construye React + Vite + TypeScript y publica únicamente dist/
 name: Publicar en GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: true
 
 jobs:
-  publicar:
+
+  # ----------------------------------------
+  # 1. CONSTRUIR EL PROYECTO
+  # ----------------------------------------
+  construir:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.despliegue.outputs.page_url }}
+
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      - name: Descargar repositorio
+        uses: actions/checkout@v5
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
-      - name: Instalar dependencias (versiones exactas del package-lock.json)
+
+      - name: Instalar dependencias
         run: npm ci
-      - name: Pruebas unitarias
+
+      - name: Ejecutar pruebas unitarias
         run: npm test
-      - name: Armar (tsc + vite build → dist/)
+
+      - name: Construir proyecto
         run: npm run build
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v4
+
+      - name: Verificar carpeta dist
+        run: |
+          echo "Contenido de dist:"
+          ls -lah dist/
+          test -f dist/index.html
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir artefacto de GitHub Pages
+        uses: actions/upload-pages-artifact@v4
         with:
-          path: dist
-      - id: despliegue
+          path: ./dist
+
+  # ----------------------------------------
+  # 2. PUBLICAR EN GITHUB PAGES
+  # ----------------------------------------
+  desplegar:
+    runs-on: ubuntu-latest
+    needs: construir
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.despliegue.outputs.page_url }}
+
+    steps:
+      - name: Publicar en GitHub Pages
+        id: despliegue
         uses: actions/deploy-pages@v4
