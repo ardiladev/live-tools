@@ -8,6 +8,7 @@
 import { idAleatorio } from '../../../nucleo/nube';
 import type { EstadoPanel } from '../../../tipos/panel';
 import { MAX_CANCIONES, type ConfigRepertorio } from '../../../widgets/repertorio/config';
+import { claveHoraFeliz } from '../../modulos';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { textoLimpio } from '../../piezas';
@@ -77,6 +78,6 @@ export function configRepertorio(estado: EstadoPanel): ConfigRepertorio {
 }
 
 registrar(ID, {
-  config: configRepertorio,
+  config: (estado) => ({ ...configRepertorio(estado), ...claveHoraFeliz(estado) }) /* + Hora feliz (panel/modulos.ts) */,
   validar: (estado) => (ajustesDe(estado, ID, POR_DEFECTO).canciones.length ? '' : 'El repertorio necesita al menos 1 canción.'),
 });

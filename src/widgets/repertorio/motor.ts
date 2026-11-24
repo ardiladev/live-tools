@@ -16,6 +16,7 @@
 // =============================================================================
 
 import { crearEstadoObservable, type Observable } from '../../hooks/useMotor';
+import { multiplicador, type HoraFeliz } from '../../nucleo/conteo';
 import { escribirGuardado, leerGuardado } from '../../nucleo/juego';
 import { sonar } from '../../nucleo/sonido';
 import type { EventoLive, EventoRegalo } from '../../tipos/eventos';
@@ -93,8 +94,11 @@ export function crearMotorRepertorio(): MotorRepertorio {
     return monedas;
   }
 
+  let horaFeliz: HoraFeliz | undefined; // la Hora feliz que manda el panel (cfg.hf)
+
   /** Aplica una configuración. Puede llegar en cualquier momento (cambios en vivo, órdenes del panel). */
   function aplicarConfig(cfg: ConfigRepertorio): void {
+    horaFeliz = cfg.hf;
     const canciones = (Array.isArray(cfg.c) ? cfg.c : []).slice(0, MAX_CANCIONES).map(normalizarCancion);
     const hechas = new Set((Array.isArray(cfg.h) ? cfg.h : []).map(String));
     const activa = canciones.some((c) => c.id === String(cfg.a))
@@ -127,7 +131,7 @@ export function crearMotorRepertorio(): MotorRepertorio {
     const c = e.canciones.find((x) => x.id === e.activa);
     if (!c || e.hechas.has(c.id)) return;
     // TikTok no siempre manda el precio: entonces vale lo configurado en el panel.
-    const suma = (Number(evento.diamantes) || valorRegalo) * Math.max(1, Number(evento.cantidad) || 1);
+    const suma = (Number(evento.diamantes) || valorRegalo) * Math.max(1, Number(evento.cantidad) || 1) * multiplicador(horaFeliz); // Hora feliz: x veces
     if (!suma) return;
 
     const antes = desbloqueada(e, c);

@@ -14,6 +14,7 @@
 // =============================================================================
 
 import { crearEstadoObservable, type Observable } from '../../hooks/useMotor';
+import { multiplicador, type HoraFeliz } from '../../nucleo/conteo';
 import { buscarPorRegalo, enGracia, escribirGuardado, leerGuardado, prueba, relojCuenta } from '../../nucleo/juego';
 import { leerReloj } from '../../nucleo/reloj';
 import { sonar } from '../../nucleo/sonido';
@@ -63,7 +64,10 @@ export function crearMotorMarcador(): MotorMarcador {
     return puntos;
   }
 
+  let horaFeliz: HoraFeliz | undefined; // la Hora feliz que manda el panel (cfg.hf)
+
   function aplicarConfig(cfg: ConfigMarcador): void {
+    horaFeliz = cfg.hf;
     claveGuardado = `${CLAVE_PUNTOS}${cfg.w || 'url'}`;
     estado.fijar((e) => {
       const nuevaRonda = Number(cfg.ro) || 0;
@@ -100,7 +104,7 @@ export function crearMotorMarcador(): MotorMarcador {
       : e.imagenesAprendidas;
 
     // TikTok no siempre manda el precio: entonces vale lo configurado en el panel.
-    const suma = (Number(evento.diamantes) || j.valor || 1) * Math.max(1, Number(evento.cantidad) || 1);
+    const suma = (Number(evento.diamantes) || j.valor || 1) * Math.max(1, Number(evento.cantidad) || 1) * multiplicador(horaFeliz); // Hora feliz: x veces
     const puntos = { ...e.puntos, [j.id]: (e.puntos[j.id] || 0) + suma };
     escribirGuardado(claveGuardado, { ro: e.ronda, p: puntos });
     estado.fijar({

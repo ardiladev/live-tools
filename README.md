@@ -33,7 +33,7 @@ nada de eso: GitHub Actions arma la versión publicada. Para desarrollar, ver la
 1. [Qué se necesita](#1-qué-se-necesita)
 2. [Guía rápida](#2-guía-rápida)
 3. [Qué hace cada sección del panel](#3-qué-hace-cada-sección-del-panel)
-4. [Cómo funciona por dentro](#4-cómo-funciona-por-dentro) (bailarinas: [4.10](#410-bailarinas-registro-palomitas-y-registro-de-regalos))
+4. [Cómo funciona por dentro](#4-cómo-funciona-por-dentro) (bailarinas: [4.10](#410-bailarinas-registro-palomitas-y-registro-de-regalos) · módulos y Hora feliz: [4.11](#411-módulos-de-los-juegos-y-hora-feliz))
 5. [Estructura de archivos](#5-estructura-de-archivos)
 6. [Agregar una función nueva](#6-agregar-una-función-nueva)
 7. [Publicación en GitHub Pages](#7-publicación-en-github-pages)
@@ -113,6 +113,7 @@ las URLs de OBS y lo guardado siguen igual.
 |  |  | Repertorio | Playlist o menú de bailes: lista de canciones, cada una con meta de monedas. Los regalos llenan la **activa**; al llegar a su meta queda «Desbloqueada · Sonando». **Activar**, **Hecha y siguiente**, **Deshacer**, ordenar y **Reiniciar repertorio** en vivo. |
 | Bailarinas | Equipo | Registro de bailarinas | Cada bailarina con **nombre, color, regalo activador** (y sus monedas, si TikTok no manda el precio), **foto** (se sube y se encuadra: arrastrar, acercar, girar y brillo) y si está **activa**. Las activas aparecen con una **palomita** en la Barra de activación, el Duelo VS, la Batalla, la Carrera y el Marcador. Aquí va también la URL del widget **invisible** «Registro de bailarinas» (`registro.html`), que anota en Supabase los regalos de cada una: quien envía su activador **queda con ella** y todos sus regalos siguientes se le anotan (aunque no haya juego), hasta que active a otra. **Anotar / pausa** y **Empezar un LIVE nuevo**. Ver [4.10](#410-bailarinas-registro-palomitas-y-registro-de-regalos). |
 |  |  | Historial de regalos | Los LIVE anotados (uno por fila, con su total). Se marcan uno o varios con una palomita y se ve el **total de cada bailarina** (monedas, regalos, personas, activaciones), **quién la apoyó** y el **detalle** de cada regalo. **Exportar a Excel** (.xlsx con 4 hojas: Resumen, Por LIVE, Apoyos, Detalle) y **Borrar** un LIVE (por ejemplo, el de las pruebas). Solo desde el navegador del panel (pide su secreto). |
+|  | Potenciadores | Hora feliz y racha | **Hora feliz**: durante los minutos elegidos, los regalos valen ×2, ×3 o ×5 en **todos** los juegos que cuentan regalos a la vez (Empezar / Terminar ahora). Su widget (`hora-feliz.html`) la anuncia con cuenta regresiva y muestra la **racha** de regalos seguidos («×40», con un anillo que se vacía si no llega otro; al terminar, «¡Racha de N!» y el récord del LIVE). |
 | Superposiciones | Metas | Likes · Seguidores · Compartidos · Monedas | Barra de progreso con meta, título, color propio opcional (si no, el acento del estilo) y acción al alcanzarla (duplicar, volver a empezar o dejarla llena). |
 |  | Alertas | Alertas de eventos | Aviso animado por regalos, seguidores y compartidos, en fila, con sonido y mínimo de monedas. |
 |  | Reconocimiento | Mensaje VIP destacado | Cuando alguien envía regalos por encima del **umbral**, fija en pantalla su último mensaje del chat por unos segundos (si no escribió, un agradecimiento con su nombre). Los VIP hacen fila. **Quitar el mensaje actual** y **Probar en OBS** en vivo. |
@@ -227,11 +228,17 @@ documenta, con su interfaz TypeScript, en `src/widgets/<widget>/config.ts`):
 | `repertorio.html` | `ti` título · `c` canciones `[{i id, n nombre, m meta}]` · `a` id de la activa · `h` ids hechas · `mx` cuántas se ven (3 a 5) · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, todo a 0) · `s` sonido |
 | `destacado.html` | `um` umbral VIP en monedas · `d` segundos en pantalla · `ti` etiqueta · `tx` agradecimiento si no escribió · `v` monedas de un regalo sin precio · `lp` quitar el mensaje actual · `pr` probar en OBS · `s` sonido |
 | `tragamonedas.html` | `g` id del regalo · `r` texto en pantalla · `rd` rodillos `[{t título, i [textos]}]` (3) · `max` tope por combo · `oc` ocultar sin giros · `pr` probar en OBS · `s` sonido |
+| `hora-feliz.html` | `hf` Hora feliz `{x, h}` · `mr` mostrar la racha (1/0) · `rs` segundos máximos entre regalos · `rm` regalos para que aparezca · `s` sonido |
 | `registro.html` | `bl` bailarinas `[{i id, n nombre, g id del activador, v monedas del activador}]` · `eq` equipos de VARIAS bailarinas en los juegos `[{g id del regalo del equipo, v monedas, b [ids], t reloj del juego, sr 1 = deja de unir gente cuando el juego termina}]` · `pr` precios del Buscador · `ac` anotando (1/0) · `ro` LIVE nuevo (al cambiar, nadie sigue con nadie) |
 | `carrera.html` | `ti` título · `j` integrantes `[{i id, n nombre, c color, g id del regalo, gn nombre del regalo, v monedas por regalo, m meta, img imagen}]` · `t` reloj `{e listo/corre/pausa, d segundos, fin hora de término, r ms restantes}` · `ro` ronda (al cambiar, puntos a 0) · `sr` solo cuenta con el reloj en marcha · `s` sonido |
 
 Además, el panel agrega `_v` (hora de guardado) a lo que sube a Supabase: si llegara tarde una versión
 vieja, el widget la ignora.
+
+**Módulos de los juegos (2026-11-24, ver 4.11).** `batalla.html`, `activacion.html` y `duelo.html` aceptan además `fu`
+qué suma (`regalos`, `mixto` o `likes`) · `lx` likes que valen 1 moneda · `ch` unirse escribiendo en el chat (1) y, por
+equipo, `k` (sus palabras para el chat); la batalla, `un` (`regalo` o `activador`) y `pr`. Todos los juegos que cuentan
+regalos aceptan `hf` (Hora feliz `{x, h}`). Sin estas claves, todo funciona como antes.
 
 **Fotos de las bailarinas (`f`).** Cada equipo de `activacion.html`, `duelo.html` y `batalla.html` (`eq`, `a`, `b`) y
 cada integrante de `carrera.html` y `marcador.html` (`j`) puede llevar `f`: los **ids** de las fotos de sus
@@ -583,12 +590,40 @@ los LIVE marcados, hasta 31 a la vez). Las cuentas están en `datos.ts` (con pru
 `src/panel/xlsx.ts` sin librerías (un ZIP sin comprimir con los XML de Office; fechas de verdad, títulos fijos con
 filtro). Probado en Excel y con openpyxl.
 
+### 4.11 Módulos de los juegos y Hora feliz
+
+Pedido del 2026-11-24: en vez de un widget nuevo por cada idea, los juegos que ya existen ganan opciones («sistema
+modular»). Las reglas comunes están en `src/nucleo/conteo.ts` (con pruebas en `conteo.test.ts`) y lo del panel en
+`src/panel/modulos.ts` y `src/panel/componentes/Modulos.tsx` («Cómo se juega», dentro del *Personalizar* de cada juego).
+Los ajustes nuevos son opcionales: sin tocarlos, la configuración y lo guardado quedan igual que antes (la paridad con
+la versión vieja sigue pasando).
+
+- **Qué suma** (Batalla, Barra de activación, Duelo VS): *Solo regalos* (como siempre) · *Regalos + tap tap* (los likes
+  de quien ya está en un equipo también suman: cada `lx` likes = 1 moneda; los sueltos se juntan) · *Solo tap tap*
+  (1 like = 1 punto; los regalos no suman, el activador sí une). Los likes de un mensaje se le anotan completos a quien lo
+  mandó: TikTok no entrega todos los mensajes de likes, pero cada uno trae lo que subió el total, así que repartirlo así
+  queda proporcional a lo que da cada equipo.
+- **Unirse escribiendo en el chat**: con likes es obligatorio (quien solo da tap tap no tiene otra forma de elegir).
+  Cada equipo tiene sus palabras (`k`): su letra, su número, su nombre y el de sus bailarinas; vale el mensaje exacto o
+  que empiece con la palabra, sin importar mayúsculas, tildes ni emojis («ana 💖»). Se reconoce a la persona por su
+  cuenta (`uid`): desde este día los eventos de chat y de likes también lo traen.
+- **Batalla: cómo suma un regalo**: *Al equipo de ese regalo* (como siempre) o *Activador y luego cualquier regalo*
+  (como la Barra de activación; los regalos sin precio valen el del Buscador). Quién está en cada equipo se guarda con
+  los puntos (`per`).
+- **Hora feliz** (Juegos → Potenciadores): `hf = {x, h}` se agrega a TODOS los juegos que cuentan regalos (carrera,
+  marcador, batalla, activación, duelo, jefe, bóveda, subathon y extensible, repertorio) y cada uno multiplica lo que
+  suma mientras `ahora < h`. Al empezarla o terminarla se sube ya a los widgets que tienen su URL copiada (no se crean
+  identificadores nuevos). El Registro de bailarinas sigue anotando las monedas reales.
+- **Racha** (`hora-feliz.html`, reglas en `src/widgets/horafeliz/motor.ts`): cuenta regalos seguidos (por cantidad)
+  mientras no pasen más de `rs` segundos sin ninguno; se ve desde `rm`; al terminar anuncia «¡Racha de N!» y guarda el
+  récord en el navegador de OBS (`live-tools:hora-feliz:<w>`).
+
 ## 5. Estructura de archivos
 
 ```
 live-tools/
 ├── index.html                       panel (lo monta src/panel/main.tsx)
-├── ruleta.html, meta.html, …        los 18 widgets: una página cada uno, con los MISMOS nombres de antes
+├── ruleta.html, meta.html, …        los 19 widgets: una página cada uno, con los MISMOS nombres de antes
 │                                    (las URLs ya pegadas en OBS siguen sirviendo). Cada una solo carga
 │                                    src/widgets/<widget>/main.tsx
 ├── src/
@@ -603,6 +638,7 @@ live-tools/
 │   │   ├── nube.ts                  Supabase: leer/guardar configuración, Realtime, cola de retos,
 │   │   │                            fotos y registro de las bailarinas
 │   │   ├── fotos.ts                 fotos de las bailarinas en los widgets (copia local + Supabase)
+│   │   ├── conteo.ts                módulos de los juegos: qué suma, unirse por el chat, likes y Hora feliz
 │   │   ├── reloj.ts                 reloj por rondas (guarda la hora de término)
 │   │   ├── juego.ts                 piezas de los juegos: modo prueba, guardado de la ronda, gracia del
 │   │   │                            reloj, cifras animadas, regalo → integrante, mandar retos
@@ -620,7 +656,7 @@ live-tools/
 │   │   └── panel.css                estilos del panel: diseño «Estudio Áureo» (Tailwind + las clases del panel)
 │   ├── widgets/<widget>/            uno por widget (ruleta, meta, alertas, carrera, batalla, activacion, duelo,
 │   │   │                            jefe, subathon (+ extensible), boveda, trono, marcador, repertorio,
-│   │   │                            cola, destacado, tragamonedas, registro):
+│   │   │                            cola, destacado, tragamonedas, registro, horafeliz):
 │   │   ├── main.tsx                 entrada de su .html (monta el componente)
 │   │   ├── <Widget>.tsx             lo que se ve
 │   │   ├── motor.ts                 sus reglas (sin React)
@@ -629,12 +665,13 @@ live-tools/
 │   └── panel/
 │       ├── main.tsx, App.tsx, rutas.ts, useRuta.ts, importarUrlVieja.ts, piezas.ts
 │       ├── bailarinas.ts            las bailarinas registradas y cómo completan equipos e integrantes
+│       ├── modulos.ts               módulos de los juegos y Hora feliz (lo que guarda el panel)
 │       ├── xlsx.ts                  archivos de Excel (.xlsx) sin librerías (el historial)
 │       ├── layout/                  barra superior, riel y menú
 │       ├── estado/                  almacen.ts (Zustand + Immer) · sincronizar.ts · envivo.ts
 │       ├── componentes/             ui.tsx · TarjetaWidget.tsx · EditorEstilo.tsx · piezasJuego.tsx ·
 │       │                            Bailarinas.tsx (palomitas) · EditorFoto.tsx (recorte de fotos)
-│       └── vistas/<vista>/          las 26 vistas: config.ts · Vista*.tsx · index.ts
+│       └── vistas/<vista>/          las 27 vistas: config.ts · Vista*.tsx · index.ts
 ├── pruebas/
 │   ├── unidad/                      pruebas diferenciales contra la versión original (Vitest)
 │   ├── paridad/                     escenarios de los widgets (JSON) para compararlos con la versión original

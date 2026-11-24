@@ -9,6 +9,7 @@ import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
 import type { ConfigJefe } from '../../../widgets/jefe/config';
 import { MONSTRUO_POR_DEFECTO, tipoMonstruo, type TipoMonstruo } from '../../../widgets/jefe/monstruos/catalogo';
+import { claveHoraFeliz } from '../../modulos';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { textoLimpio } from '../../piezas';
@@ -79,4 +80,4 @@ export function configJefe(estado: EstadoPanel): ConfigJefe {
   };
 }
 
-registrar(ID, { config: configJefe });
+registrar(ID, { config: (estado) => ({ ...configJefe(estado), ...claveHoraFeliz(estado) }) /* + Hora feliz (panel/modulos.ts) */ });

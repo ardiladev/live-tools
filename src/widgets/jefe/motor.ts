@@ -12,6 +12,7 @@
 // =============================================================================
 
 import { crearEstadoObservable, type Observable } from '../../hooks/useMotor';
+import { multiplicador, type HoraFeliz } from '../../nucleo/conteo';
 import { escribirGuardado, leerGuardado, prueba, relojCuenta } from '../../nucleo/juego';
 import { leerReloj } from '../../nucleo/reloj';
 import { sonar } from '../../nucleo/sonido';
@@ -90,8 +91,11 @@ export function crearMotorJefe(): MotorJefe {
     return { dano: Math.max(0, Number(guardado.d) || 0), restanteVictoria: guardado.rv ?? null };
   }
 
+  let horaFeliz: HoraFeliz | undefined; // la Hora feliz que manda el panel (cfg.hf)
+
   /** Aplica una configuración. Puede llegar en cualquier momento (cambios en vivo, reloj). */
   function aplicarConfig(cfg: ConfigJefe): void {
+    horaFeliz = cfg.hf;
     danoLike = Math.max(0, Number(cfg.dl ?? 1));
     danoRegalo = Math.max(0, Number(cfg.dr ?? 10));
     valorRegalo = Math.max(0, Number(cfg.v) || 1);
@@ -120,7 +124,7 @@ export function crearMotorJefe(): MotorJefe {
     if (evento.tipo === 'like') return Math.max(0, Number(evento.cantidad) || 0) * danoLike;
     if (evento.tipo === 'regalo') {
       // TikTok no siempre manda el precio: entonces vale lo configurado en el panel.
-      const monedas = (Number(evento.diamantes) || valorRegalo) * Math.max(1, Number(evento.cantidad) || 1);
+      const monedas = (Number(evento.diamantes) || valorRegalo) * Math.max(1, Number(evento.cantidad) || 1) * multiplicador(horaFeliz); // Hora feliz: x veces
       return monedas * danoRegalo;
     }
     return 0;

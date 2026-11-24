@@ -13,6 +13,9 @@ import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
 import { MAX_CARTEL, type ConfigDuelo, type EleccionEfecto } from '../../../widgets/duelo/config';
 import { claveFotos, completarParticipante } from '../../bailarinas';
+import {
+  claveConteo, claveHoraFeliz, clavePalabras, palabrasEquipo, type AjustesConteo,
+} from '../../modulos';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
@@ -48,7 +51,7 @@ export type AjustesDuelo = {
   /** Textos de los carteles ('' = los de siempre). */
   cartelPierde: string;
   cartelGana: string;
-};
+} & AjustesConteo;
 
 export const POR_DEFECTO: AjustesDuelo = {
   sonido: true,
@@ -93,6 +96,7 @@ export function configDuelo(estado: EstadoPanel): ConfigDuelo {
       c: b.color,
       img: catalogo[textoLimpio(b.giftId)]?.imagen || '', // la imagen sale del Buscador de regalos
       ...claveFotos(b.fotos),
+      ...clavePalabras(cfg, palabrasEquipo(i, b.nombre, b.miembros)),
     };
   });
   return {
@@ -105,6 +109,7 @@ export function configDuelo(estado: EstadoPanel): ConfigDuelo {
     am: cfg.enVivo ? 1 : 0,
     tp: textoLimpio(cfg.cartelPierde).slice(0, MAX_CARTEL),
     tg: textoLimpio(cfg.cartelGana).slice(0, MAX_CARTEL),
+    ...claveConteo(cfg), // módulos: solo si se cambiaron
   };
 }
 
@@ -120,4 +125,4 @@ export function problemas(a: AjustesDuelo, estado?: EstadoPanel): string[] {
   return lista;
 }
 
-registrar(ID, { config: configDuelo });
+registrar(ID, { config: (estado) => ({ ...configDuelo(estado), ...claveHoraFeliz(estado) }) /* + Hora feliz (panel/modulos.ts) */ });

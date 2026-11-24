@@ -48,7 +48,7 @@ export function Batalla() {
   const diferencia = formato.format(Math.abs(puntos[0] - puntos[1]));
   const ventaja = terminada
     ? (lider === null ? 'Terminó en empate' : `¡Ganó ${equipos[lider].nombre} por ${diferencia}!`)
-    : (lider === null ? (total ? 'Empate' : '¡Que empiece la batalla!') : `Gana ${equipos[lider].nombre} por ${diferencia}`);
+    : (lider === null ? (total ? 'Empate' : estado.invitacion || '¡Que empiece la batalla!') : `Gana ${equipos[lider].nombre} por ${diferencia}`);
   // Un equipo con puntos nunca muestra "0%"; la etiqueta de un lado muy angosto se oculta.
   const etiqueta = (i: 0 | 1) => {
     const parte = i ? 100 - parteA : parteA;

@@ -11,6 +11,9 @@ import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
 import type { ConfigActivacion } from '../../../widgets/activacion/config';
 import { claveFotos, completarParticipante } from '../../bailarinas';
+import {
+  claveConteo, claveHoraFeliz, clavePalabras, palabrasEquipo, type AjustesConteo,
+} from '../../modulos';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
@@ -43,7 +46,7 @@ export type AjustesActivacion = {
   reloj: RelojRonda;
   /** Los 4 equipos. */
   barras: EquipoAjustes[];
-};
+} & AjustesConteo;
 
 export const POR_DEFECTO: AjustesActivacion = {
   sonido: true,
@@ -90,9 +93,13 @@ export function configActivacion(estado: EstadoPanel): ConfigActivacion {
       c: b.color,
       img: catalogo[textoLimpio(b.giftId)]?.imagen || '', // la imagen sale del Buscador de regalos
       ...claveFotos(b.fotos),
+      ...clavePalabras(cfg, palabrasEquipo(i, b.nombre, b.miembros)),
     };
   });
-  return { eq, pr: preciosDelCatalogo(estado), ro: cfg.ronda, s: cfg.sonido ? 1 : 0, t: { ...cfg.reloj, d: duracionDe(cfg) } };
+  return {
+    eq, pr: preciosDelCatalogo(estado), ro: cfg.ronda, s: cfg.sonido ? 1 : 0, t: { ...cfg.reloj, d: duracionDe(cfg) },
+    ...claveConteo(cfg), // módulos: solo si se cambiaron
+  };
 }
 
 /** Problemas de la configuración (no impiden enviarla). */
@@ -109,4 +116,4 @@ export function problemas(a: AjustesActivacion, estado?: EstadoPanel): string[] 
   return lista;
 }
 
-registrar(ID, { config: configActivacion });
+registrar(ID, { config: (estado) => ({ ...configActivacion(estado), ...claveHoraFeliz(estado) }) /* + Hora feliz (panel/modulos.ts) */ });

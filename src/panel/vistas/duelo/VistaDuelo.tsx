@@ -10,8 +10,12 @@
 // =============================================================================
 
 import type { Draft } from 'immer';
+import { useRef } from 'react';
 import type { EventoRegalo } from '../../../tipos/eventos';
 import { DATOS_EFECTO, efectoDeRonda, MAX_CARTEL, type EleccionEfecto } from '../../../widgets/duelo/config';
+import { OpcionesConteo } from '../../componentes/Modulos';
+import { conChat, fuenteDe, palabrasEquipo } from '../../modulos';
+import type { EventoChat, EventoLike } from '../../../tipos/eventos';
 import { EditorEstilo } from '../../componentes/EditorEstilo';
 import {
   BotonesReloj, CampoDuracion, ListaRegalos, PanelReloj, useRelojDeRonda,
@@ -87,6 +91,7 @@ export function VistaDuelo() {
   const { estado } = reloj.lectura;
   const tocaEstaRonda = DATOS_EFECTO[efectoDeRonda(cfg.efecto, cfg.ronda)].nombre;
 
+  const siguienteChat = useRef(0);
   const pruebas: PruebaWidget[] = [
     { texto: `Unirme a ${textoLimpio(equipos[0]?.nombre) || 'Bailarina 1'}`, evento: (nombre) => activador(equipos[0], nombre) },
     { texto: `Unirme a ${textoLimpio(equipos[1]?.nombre) || 'Bailarina 2'}`, evento: (nombre) => activador(equipos[1], nombre) },
@@ -101,6 +106,17 @@ export function VistaDuelo() {
       ),
     },
   ];
+
+  // Pruebas de los módulos (solo si están encendidos): unirse por el chat y tap tap.
+  if (conChat(cfg)) {
+    pruebas.push({
+      texto: 'Escribir en el chat (unirme)',
+      evento: (nombre): EventoChat => ({ tipo: 'chat', usuario: nombre, texto: palabrasEquipo(siguienteChat.current % equipos.length, equipos[siguienteChat.current++ % equipos.length]?.nombre ?? '')[0] ?? 'A' }),
+    });
+  }
+  if (fuenteDe(cfg) !== 'regalos') {
+    pruebas.push({ texto: 'Tap tap ×50', evento: (nombre): EventoLike => ({ tipo: 'like', usuario: nombre, cantidad: 50, total: 0, propios: 50 }) });
+  }
 
   /** Termina la ronda ya (como si el reloj llegara a 0): a los 3 s quien pierde se queda atrapada. */
   function terminarAhora(): void {
@@ -126,6 +142,11 @@ export function VistaDuelo() {
         personalizar={(
           <>
             <Casilla texto="Sonidos (alguien se une, cambia quién va ganando, final y el efecto al caer)" marcada={cfg.sonido} alCambiar={(v) => cambiarCfg((a) => { a.sonido = v; })} />
+            <OpcionesConteo
+              ajustes={cfg}
+              cambiar={cambiarCfg}
+              palabras={equipos.map((e, i) => ({ equipo: `Bailarina ${i + 1}`, lista: palabrasEquipo(i, e.nombre, e.miembros) }))}
+            />
             <EditorEstilo id={ID} />
           </>
         )}

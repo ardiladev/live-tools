@@ -12,6 +12,14 @@
 // de gracia al final, por los combos que se cuentan tarde); unirse sí se puede antes de iniciar.
 // Al terminar, gana el equipo con más monedas.
 //
+// Módulos (2026-11-24, src/nucleo/conteo.ts): con `fu` = 'mixto' también suman los likes (tap tap)
+// de quien ya está en un equipo (cada `lx` likes = 1 moneda) y con 'likes' SOLO suman los likes
+// (1 like = 1 punto). Con `ch` (obligatorio con likes) también se une quien escribe en el chat
+// una de las palabras del equipo. Con Hora feliz (`hf`), todo lo que suma vale x veces.
+// Los likes de un mensaje se le anotan completos a quien lo mandó: TikTok no entrega todos los
+// mensajes de likes, pero cada uno trae lo que subió el total (ver contadorLikes), así que
+// repartirlo así sale proporcional a lo que da cada equipo.
+//
 // A cada persona se la reconoce por el id de su cuenta (`uid`); los regalos de prueba del panel
 // no lo traen y se reconocen por el nombre. La ronda (monedas, quién está en cada equipo y quién
 // aportó más) se guarda en este navegador (live-tools:activacion:<w>, o …:url sin `w`) como
@@ -24,11 +32,15 @@
 
 import { crearEstadoObservable, type Observable } from '../../hooks/useMotor';
 import {
+  cuentanLikes, cuentanRegalos, equipoPorChat, multiplicador, normalizarConteo, puntosDeLikes, unidadDe,
+  type Conteo, type HoraFeliz,
+} from '../../nucleo/conteo';
+import {
   enGracia, escribirGuardado, leerGuardado, prueba, relojCuenta, urlSegura,
 } from '../../nucleo/juego';
 import { leerReloj } from '../../nucleo/reloj';
 import { sonar } from '../../nucleo/sonido';
-import type { EventoLive, EventoRegalo } from '../../tipos/eventos';
+import type { EventoChat, EventoLike, EventoLive, EventoRegalo } from '../../tipos/eventos';
 import type { LecturaReloj, RelojRonda } from '../../tipos/reloj';
 import {
   MAX_EQUIPOS, MIN_EQUIPOS, normalizarEquipo,
@@ -43,6 +55,15 @@ export const AVISO_FINAL_S = 5;     // segundos finales con "tic" de aviso
 export const MAX_PERSONAS = 5000;   // personas que se recuerdan por ronda (el guardado no crece sin fin)
 
 const formato = new Intl.NumberFormat('es-CO');
+
+export const INVITACION_REGALO = 'Envía un regalo activador para unirte a un equipo';
+
+/** Cómo unirse, para el aviso de abajo (cambia con los módulos: chat, tap tap). */
+export function invitacionDe(c: Conteo): string {
+  if (c.fuente === 'likes') return 'Escribe el nombre de un equipo y dale tap tap';
+  if (c.chat) return 'Escribe el nombre de un equipo (o envía su activador) para unirte';
+  return INVITACION_REGALO;
+}
 
 /** "+25" flotante que sube desde la ficha de un equipo. */
 export interface SumaFlotante {
@@ -68,6 +89,10 @@ export interface EstadoActivacion {
   sumas: SumaFlotante[];
   /** Por equipo: cuántas veces sumó (reinicia el "golpe" de su ícono). */
   golpes: number[];
+  /** Lo que se cuenta: 'monedas', 'puntos' (regalos + likes) o 'likes'. */
+  unidad: string;
+  /** Cómo unirse, para el aviso de abajo cuando no pasa nada. */
+  invitacion: string;
 }
 
 export interface MotorActivacion extends Observable<EstadoActivacion> {
@@ -125,9 +150,9 @@ export function avisoDe(e: EstadoActivacion, lectura: LecturaReloj, ahora: numbe
   else if (lectura.estado === 'fin') {
     texto = lider === null
       ? (hayMonedas ? 'Terminó en empate' : 'Terminó la ronda')
-      : `¡Ganó ${e.equipos[lider]?.nombre} con ${formato.format(e.puntos[lider] ?? 0)} monedas!`;
+      : `¡Ganó ${e.equipos[lider]?.nombre} con ${formato.format(e.puntos[lider] ?? 0)} ${e.unidad}!`;
   } else if (lider !== null) texto = `Va ganando ${e.equipos[lider]?.nombre}`;
-  else texto = hayMonedas ? 'Empate' : 'Envía un regalo activador para unirte a un equipo';
+  else texto = hayMonedas ? 'Empate' : e.invitacion;
   return { texto, color: lider === null ? 'transparent' : (e.equipos[lider]?.color ?? 'transparent') };
 }
 
@@ -144,6 +169,7 @@ export function crearMotorActivacion(prefijo: string = CLAVE_RONDA): MotorActiva
   const estado = crearEstadoObservable<EstadoActivacion>({
     equipos: [], reloj: { e: 'listo', d: 180 }, puntos: [], miembros: [], mejores: [], avisoUnion: null,
     animarCifras: false, pintadas: 0, sumas: [], golpes: cuatro(),
+    unidad: 'monedas', invitacion: INVITACION_REGALO,
   });
 
   let equipos: EquipoActivacion[] = [];
@@ -151,6 +177,10 @@ export function crearMotorActivacion(prefijo: string = CLAVE_RONDA): MotorActiva
   let sonido = true;
   let ronda: number | null = null;
   let reloj: RelojRonda = { e: 'listo', d: 180 };
+  let conteo: Conteo = normalizarConteo(undefined);
+  let horaFeliz: HoraFeliz | undefined;
+  // Likes que todavía no alcanzan una moneda (modo mixto), por equipo. No se guardan: son sueltos.
+  let restoLikes: number[] = cuatro();
   let claveGuardado = '';
   // La ronda: monedas por equipo y, por persona, su equipo y lo que aportó a cada uno. Se llevan
   // siempre los 4 equipos, aunque haya menos en juego: así no se pierde nada si el panel quita
@@ -228,6 +258,8 @@ export function crearMotorActivacion(prefijo: string = CLAVE_RONDA): MotorActiva
     precios = cfg.pr && typeof cfg.pr === 'object' ? cfg.pr : {};
     sonido = cfg.s !== 0;
     reloj = cfg.t && typeof cfg.t === 'object' ? cfg.t : { e: 'listo', d: 180 };
+    conteo = normalizarConteo(cfg);
+    horaFeliz = cfg.hf;
     claveGuardado = `${prefijo}${cfg.w || 'url'}`;
 
     // Ronda nueva (el panel pulsó "Reiniciar" o "Nueva ronda"): todo vuelve a 0.
@@ -236,13 +268,14 @@ export function crearMotorActivacion(prefijo: string = CLAVE_RONDA): MotorActiva
       ronda = nuevaRonda;
       puntos = [];
       personas = new Map();
+      restoLikes = cuatro();
       restaurarRonda();
     }
     puntos = cuatro(puntos);
     for (const persona of personas.values()) persona.aportes = cuatro(persona.aportes);
 
     // Si cambia cuántos equipos hay, el original rehace las fichas: los "+N" que subían se van.
-    const cambios: Partial<EstadoActivacion> = { animarCifras: false };
+    const cambios: Partial<EstadoActivacion> = { animarCifras: false, unidad: unidadDe(conteo), invitacion: invitacionDe(conteo) };
     if (equipos.length !== cantidadAntes) cambios.sumas = [];
     publicar(cambios);
   }
@@ -264,9 +297,51 @@ export function crearMotorActivacion(prefijo: string = CLAVE_RONDA): MotorActiva
     return precio * Math.max(1, Number(evento.cantidad) || 1);
   }
 
+  /** La persona que manda un evento (por su cuenta; las pruebas del panel, por su nombre). */
+  const claveDe = (evento: { uid?: string; usuario?: string }): string => String(evento.uid || evento.usuario || '');
+
+  /**
+   * Une a la persona `clave` al equipo `i` (o la cambia). Devuelve la persona, o null si ya no
+   * caben más personas en la ronda. Avisa en pantalla y suena.
+   */
+  function unirse(clave: string, usuario: string, i: number): Persona | null {
+    let persona = personas.get(clave);
+    if (equipoDe(persona) === i) return persona ?? null;
+    if (!persona) {
+      if (personas.size >= MAX_PERSONAS) return null;
+      persona = { nombre: '', equipo: -1, aportes: cuatro() };
+      personas.set(clave, persona);
+    }
+    const cambio = equipoDe(persona) >= 0;
+    persona.equipo = i;
+    avisoUnion = {
+      texto: `${usuario || 'Alguien'} ${cambio ? 'se cambió a' : 'se unió a'} ${equipos[i]?.nombre}`,
+      hasta: Date.now() + AVISO_UNION_MS,
+    };
+    if (sonido) sonar({ frecuencia: 587, duracion: 0.2, subida: 1.3 });
+    return persona;
+  }
+
+  /** Suma al equipo de la persona (con la Hora feliz) y prepara el "+N" y el golpe de su ícono. */
+  function sumar(persona: Persona, base: number, cambios: Partial<EstadoActivacion>): void {
+    const i = persona.equipo;
+    const suma = Math.round(base * multiplicador(horaFeliz));
+    if (suma <= 0) return;
+    const liderAntes = quienGana(enJuego());
+    puntos[i] = (puntos[i] ?? 0) + suma;
+    persona.aportes[i] = (persona.aportes[i] ?? 0) + suma;
+    // "+25" que sube desde la ficha del equipo, y un golpe en su ícono.
+    const { sumas, golpes } = estado.obtener();
+    cambios.sumas = [...(cambios.sumas ?? sumas), { id: siguienteSuma++, equipo: i, suma }];
+    cambios.golpes = (cambios.golpes ?? golpes).map((g, j) => (j === i ? g + 1 : g));
+    // Sonido solo cuando cambia quién va ganando (una lluvia de rosas no debe sonar cada vez).
+    const lider = quienGana(enJuego());
+    if (sonido && lider !== liderAntes && lider !== null) sonar({ frecuencia: 660, duracion: 0.35 });
+  }
+
   function alRegalo(evento: EventoRegalo): void {
     if (rondaCerrada()) return;
-    const clave = String(evento.uid || evento.usuario || '');
+    const clave = claveDe(evento);
     if (!clave) return;
     const giftId = String(evento.giftId ?? '');
     const activado = equipos.findIndex((e) => e.giftId && e.giftId === giftId);
@@ -281,40 +356,41 @@ export function crearMotorActivacion(prefijo: string = CLAVE_RONDA): MotorActiva
     /** Lo que el original ya pintó antes de salir (solo la imagen aprendida). */
     const salir = (): void => { if (imagenNueva) publicar({}, { repintar: false }); };
 
-    let persona = personas.get(clave);
-    if (activado >= 0 && equipoDe(persona) !== activado) {
-      // Se une (o se cambia) al equipo de este activador.
-      if (!persona) {
-        if (personas.size >= MAX_PERSONAS) { salir(); return; }
-        persona = { nombre: '', equipo: -1, aportes: cuatro() };
-        personas.set(clave, persona);
-      }
-      const cambio = equipoDe(persona) >= 0;
-      persona.equipo = activado;
-      avisoUnion = {
-        texto: `${evento.usuario || 'Alguien'} ${cambio ? 'se cambió a' : 'se unió a'} ${equipos[activado]?.nombre}`,
-        hasta: Date.now() + AVISO_UNION_MS,
-      };
-      if (sonido) sonar({ frecuencia: 587, duracion: 0.2, subida: 1.3 });
-    }
+    // Con el activador, se une (o se cambia) a ese equipo.
+    const persona = activado >= 0 ? unirse(clave, evento.usuario, activado) : personas.get(clave);
     if (!persona || equipoDe(persona) < 0) { salir(); return; } // no se ha unido a ningún equipo en juego: no suma
     persona.nombre = String(evento.usuario || persona.nombre || 'Alguien').slice(0, 24);
 
     const cambios: Partial<EstadoActivacion> = { animarCifras: true };
-    if (cuentaAhora()) {
-      const i = persona.equipo;
-      const suma = monedasDe(evento, activado);
-      const liderAntes = quienGana(enJuego());
-      puntos[i] = (puntos[i] ?? 0) + suma;
-      persona.aportes[i] = (persona.aportes[i] ?? 0) + suma;
-      // "+25" que sube desde la ficha del equipo, y un golpe en su ícono.
-      const { sumas, golpes } = estado.obtener();
-      cambios.sumas = [...sumas, { id: siguienteSuma++, equipo: i, suma }];
-      cambios.golpes = golpes.map((g, j) => (j === i ? g + 1 : g));
-      // Sonido solo cuando cambia quién va ganando (una lluvia de rosas no debe sonar cada vez).
-      const lider = quienGana(enJuego());
-      if (sonido && lider !== liderAntes && lider !== null) sonar({ frecuencia: 660, duracion: 0.35 });
-    }
+    if (cuentaAhora() && cuentanRegalos(conteo)) sumar(persona, monedasDe(evento, activado), cambios);
+    guardarRonda();
+    publicar(cambios);
+  }
+
+  /** Unirse escribiendo una palabra del equipo (si el panel lo permite). */
+  function alChat(evento: EventoChat): void {
+    if (!conteo.chat || rondaCerrada()) return;
+    const clave = claveDe(evento);
+    const i = equipoPorChat(evento.texto, equipos.map((e) => e.palabras));
+    if (!clave || i < 0 || equipoDe(personas.get(clave)) === i) return;
+    const persona = unirse(clave, evento.usuario, i);
+    if (!persona) return;
+    persona.nombre = String(evento.usuario || persona.nombre || 'Alguien').slice(0, 24);
+    guardarRonda();
+    publicar({ animarCifras: true });
+  }
+
+  /** Tap tap de quien ya está en un equipo (modos mixto y solo likes). */
+  function alLike(evento: EventoLike): void {
+    if (!cuentanLikes(conteo) || rondaCerrada() || !cuentaAhora()) return;
+    const persona = personas.get(claveDe(evento));
+    if (!persona || equipoDe(persona) < 0) return;
+    const i = persona.equipo;
+    const [base, resto] = puntosDeLikes(Number(evento.cantidad) || 0, restoLikes[i] ?? 0, conteo);
+    restoLikes[i] = resto;
+    if (base <= 0) return;
+    const cambios: Partial<EstadoActivacion> = { animarCifras: true };
+    sumar(persona, base, cambios);
     guardarRonda();
     publicar(cambios);
   }
@@ -325,6 +401,8 @@ export function crearMotorActivacion(prefijo: string = CLAVE_RONDA): MotorActiva
     aplicarConfig,
     alEvento(evento) {
       if (evento.tipo === 'regalo') alRegalo(evento);
+      else if (evento.tipo === 'chat') alChat(evento);
+      else if (evento.tipo === 'like') alLike(evento);
     },
     quitarSuma(id) {
       estado.fijar((e) => ({ ...e, sumas: e.sumas.filter((s) => s.id !== id) }));

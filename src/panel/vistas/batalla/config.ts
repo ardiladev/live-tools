@@ -10,6 +10,9 @@ import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
 import type { ConfigBatalla } from '../../../widgets/batalla/config';
 import { claveFotos, completarParticipante } from '../../bailarinas';
+import {
+  claveConteo, claveHoraFeliz, clavePalabras, palabrasEquipo, type AjustesConteo,
+} from '../../modulos';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
@@ -43,6 +46,9 @@ export type AjustesBatalla = {
   /** Cambia al reiniciar las victorias: el widget las pone en 0. */
   rondaVictorias: number;
   equipos: EquipoAjustes[];
+} & AjustesConteo & {
+  /** Cómo suma un regalo (opcional): al equipo de ese regalo, o activador y luego cualquier regalo. */
+  union?: 'regalo' | 'activador';
 };
 
 export const POR_DEFECTO: AjustesBatalla = {
@@ -57,6 +63,15 @@ export const POR_DEFECTO: AjustesBatalla = {
     { nombre: 'Equipo B', giftId: '5487', regalo: 'Finger Heart', valor: 5, color: '#C9CDD4', avatar: '' },
   ],
 };
+
+/** Precios del Buscador de regalos { giftId: monedas } (con activador, para los demás regalos). */
+function preciosDelCatalogo(estado: EstadoPanel): Record<string, number> {
+  const precios: Record<string, number> = {};
+  for (const r of Object.values(estado.regalos)) {
+    if (r.giftId && Number(r.diamantes) > 0) precios[r.giftId] = Number(r.diamantes);
+  }
+  return precios;
+}
 
 export const duracionDe = (a: AjustesBatalla): number => acotarDuracion(a.duracion, POR_DEFECTO.duracion);
 export const urlValida = (texto: unknown): boolean => /^https?:\/\/\S+$/i.test(textoLimpio(texto));
@@ -74,11 +89,16 @@ export function configBatalla(estado: EstadoPanel): ConfigBatalla {
       av: urlValida(e.avatar) ? textoLimpio(e.avatar) : '',
       img: catalogo[textoLimpio(e.giftId)]?.imagen || '', // la imagen sale del Buscador de regalos
       ...claveFotos(e.fotos),
+      ...clavePalabras(cfg, palabrasEquipo(i, e.nombre, e.miembros)),
     };
   });
+  const activador = cfg.union === 'activador';
   return {
     a, b, ro: cfg.ronda, s: cfg.sonido ? 1 : 0,
     cr: cfg.conReloj ? 1 : 0, t: { ...cfg.reloj, d: duracionDe(cfg) }, rv: cfg.rondaVictorias,
+    // Módulos (solo si se cambiaron: si no, la configuración queda como siempre).
+    ...(activador ? { un: 'activador', pr: preciosDelCatalogo(estado) } : {}),
+    ...claveConteo(cfg),
   };
 }
 
@@ -94,4 +114,4 @@ export function problemas(equipos: readonly EquipoAjustes[]): string[] {
   return lista;
 }
 
-registrar(ID, { config: configBatalla });
+registrar(ID, { config: (estado) => ({ ...configBatalla(estado), ...claveHoraFeliz(estado) }) /* + Hora feliz (panel/modulos.ts) */ });

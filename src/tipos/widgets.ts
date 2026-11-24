@@ -9,6 +9,7 @@
 // La configuración propia de cada widget se describe en src/widgets/<pagina>/config.ts.
 // =============================================================================
 
+import type { HoraFeliz } from '../nucleo/conteo';
 import type { TemaEntrada } from './tema';
 
 /** Lo común a todas las configuraciones. */
@@ -23,6 +24,8 @@ export interface ConfigBase {
   est?: TemaEntrada;
   /** Hora en que el panel guardó esta versión (descarta versiones viejas que lleguen tarde). */
   _v?: number;
+  /** Hora feliz { x, h }: mientras dure, los regalos valen x veces (ver src/nucleo/conteo.ts). */
+  hf?: HoraFeliz;
 }
 
 /** Lo que trae el #c= de la URL: la configuración, o `{ error: true }` si viene dañado. */

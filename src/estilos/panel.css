@@ -1617,6 +1617,10 @@
   .integrante-fila.con-bailarina > .foto-bailarina { justify-self: center; }
   .integrante-fila.con-bailarina input:disabled { opacity: .75; }
 
+  /* «Cómo se juega» (componentes/Modulos.tsx), dentro de Personalizar. */
+  .opciones-conteo { display: grid; gap: 10px; margin-bottom: 14px; }
+  .opciones-conteo .subtitulo { margin: 4px 0 0; }
+
   /* Editor de foto: el círculo a la izquierda y los controles a la derecha. */
   .editor-foto-cuerpo { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 22px; align-items: start; }
   .editor-foto-marco {

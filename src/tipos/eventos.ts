@@ -37,6 +37,8 @@ export interface EventoRegalo {
 export interface EventoLike {
   tipo: 'like';
   usuario: string;
+  /** Id de la cuenta de TikTok (si viene): el mismo `uid` de sus regalos. */
+  uid?: string;
   cantidad: number;
   total: number;
   propios: number;
@@ -55,6 +57,8 @@ export interface EventoShare {
 export interface EventoChat {
   tipo: 'chat';
   usuario: string;
+  /** Id de la cuenta de TikTok (si viene): el mismo `uid` de sus regalos. */
+  uid?: string;
   texto: string;
 }
 

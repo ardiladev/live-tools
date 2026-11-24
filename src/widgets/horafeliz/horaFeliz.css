@@ -1,0 +1,133 @@
+/* ==========================================================================
+   horaFeliz.css — Widget "Hora feliz y racha" (hora-feliz.html → HoraFeliz.tsx)
+   Una columna centrada: la placa de la Hora feliz arriba y la de la racha abajo. Sin ninguna
+   de las dos, la fuente queda transparente. Medidas en --u (el menor entre 1 % del ancho y
+   2,6 % del alto): cabe en cualquier tamaño de fuente (recomendado 900 × 320).
+
+   Secciones: 1. Escena · 2. Hora feliz · 3. Racha · 4. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+:root { --u: min(1vw, 2.6vh); }
+.hora-feliz-escena {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 2);
+  box-sizing: border-box;
+}
+.hora-feliz-escena .vacio {
+  max-width: 60ch;
+  margin: 0;
+  color: var(--texto-sec);
+  font-size: calc(var(--u) * 2.2);
+  text-align: center;
+  opacity: .75;
+}
+
+
+/* ---------- 2. Hora feliz ---------- */
+.hora-feliz {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas: "titulo tiempo" "multi tiempo";
+  align-items: center;
+  column-gap: calc(var(--u) * 4);
+  padding: calc(var(--u) * 2) calc(var(--u) * 4);
+  overflow: hidden;
+  animation: entrar .5s cubic-bezier(.2, .8, .2, 1.2) both;
+}
+.hora-feliz .titulo {
+  grid-area: titulo;
+  background: linear-gradient(180deg, #FFF7DA, var(--activo) 50%, #C9992A);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 800;
+  font-size: calc(var(--u) * 6);
+  line-height: 1;
+  letter-spacing: var(--espaciado-widget);
+  text-transform: var(--mayus);
+  text-shadow: none; /* la sombra del cristal ensuciaría el degradado del texto */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .5));
+}
+.hora-feliz .multiplicador {
+  grid-area: multi;
+  margin-top: calc(var(--u) * .6);
+  color: var(--texto-sec);
+  font-weight: 700;
+  font-size: calc(var(--u) * 3);
+}
+.hora-feliz .tiempo {
+  grid-area: tiempo;
+  color: var(--oro-texto);
+  font-weight: 800;
+  font-size: calc(var(--u) * 5.4);
+  font-variant-numeric: tabular-nums;
+}
+/* Un brillo que cruza la placa cada pocos segundos. */
+.hora-feliz .destello {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 35%, rgba(255, 240, 200, .35) 50%, transparent 65%);
+  background-size: 250% 100%;
+  animation: brillo 3s linear infinite;
+  pointer-events: none;
+}
+
+
+/* ---------- 3. Racha ---------- */
+.racha,
+.racha-final {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 2.4);
+  padding: calc(var(--u) * 1.6) calc(var(--u) * 3.4) calc(var(--u) * 1.6) calc(var(--u) * 1.6);
+  animation: entrar .35s ease-out both;
+}
+.racha { position: relative; }
+.racha .anillo {
+  width: calc(var(--u) * 12);
+  height: calc(var(--u) * 12);
+  transform: rotate(-90deg);
+}
+.racha .anillo circle { fill: none; stroke-width: 7; }
+.racha .anillo .fondo { stroke: rgba(255, 255, 255, .12); }
+.racha .anillo .lleno { stroke: var(--activo); stroke-linecap: round; transition: stroke-dashoffset .2s linear; }
+.racha .cuenta {
+  position: absolute;
+  left: calc(var(--u) * 1.6);
+  width: calc(var(--u) * 12);
+  color: var(--texto-sec);
+  font-weight: 800;
+  font-size: calc(var(--u) * 4);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.racha .titulo,
+.racha-final .titulo {
+  color: var(--oro-texto);
+  font-weight: 800;
+  font-size: calc(var(--u) * 3.4);
+  letter-spacing: var(--espaciado-widget);
+  text-transform: var(--mayus);
+}
+.racha .detalle,
+.racha-final .detalle { color: var(--texto-sec); font-weight: 600; font-size: calc(var(--u) * 2.2); opacity: .85; }
+.racha-final { flex-direction: column; gap: calc(var(--u) * .6); padding: calc(var(--u) * 2) calc(var(--u) * 4); }
+.racha.golpe .cuenta { animation: golpe .3s ease-out; }
+
+
+/* ---------- 4. Animaciones ---------- */
+@keyframes entrar { from { opacity: 0; transform: translateY(calc(var(--u) * 2)) scale(.96); } }
+@keyframes brillo { from { background-position: 150% 0; } to { background-position: -100% 0; } }
+@keyframes golpe { 40% { transform: scale(1.18); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hora-feliz, .racha, .racha-final, .hora-feliz .destello, .racha.golpe .cuenta { animation: none; }
+}

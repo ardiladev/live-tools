@@ -12,6 +12,9 @@
 import type { Draft } from 'immer';
 import { useRef } from 'react';
 import type { EventoRegalo } from '../../../tipos/eventos';
+import { OpcionesConteo } from '../../componentes/Modulos';
+import { conChat, fuenteDe, palabrasEquipo } from '../../modulos';
+import type { EventoChat, EventoLike } from '../../../tipos/eventos';
 import { EditorEstilo } from '../../componentes/EditorEstilo';
 import {
   BotonesReloj, CampoDuracion, ListaRegalos, PanelReloj, useRelojDeRonda,
@@ -71,6 +74,7 @@ export function VistaActivacion() {
   const equipos = enJuego(cfg).map((e) => completarParticipante(estado, e, e.bailarinas));
   const avisosBailarinas = equipos.flatMap((e, i) => problemasEquipo(estado, `el equipo ${i + 1}`, e.giftId, e.bailarinas));
 
+  const siguienteChat = useRef(0);
   const pruebas: PruebaWidget[] = [
     { texto: 'Unirme al siguiente equipo', evento: (nombre) => activador(equipos[siguiente.current++ % cantidad], nombre) },
     { texto: 'Mi regalo de 25', evento: otroRegalo(1, 25) },
@@ -85,6 +89,17 @@ export function VistaActivacion() {
       ),
     },
   ];
+
+  // Pruebas de los módulos (solo si están encendidos): unirse por el chat y tap tap.
+  if (conChat(cfg)) {
+    pruebas.push({
+      texto: 'Escribir en el chat (unirme)',
+      evento: (nombre): EventoChat => ({ tipo: 'chat', usuario: nombre, texto: palabrasEquipo(siguienteChat.current % equipos.length, equipos[siguienteChat.current++ % equipos.length]?.nombre ?? '')[0] ?? 'A' }),
+    });
+  }
+  if (fuenteDe(cfg) !== 'regalos') {
+    pruebas.push({ texto: 'Tap tap ×50', evento: (nombre): EventoLike => ({ tipo: 'like', usuario: nombre, cantidad: 50, total: 0, propios: 50 }) });
+  }
 
   /** Monedas y equipos en 0 y reloj detenido con la duración completa. */
   function reiniciar(): void {
@@ -104,6 +119,11 @@ export function VistaActivacion() {
         personalizar={(
           <>
             <Casilla texto="Sonidos (alguien se une, cambia quién va ganando, final)" marcada={cfg.sonido} alCambiar={(v) => cambiarCfg((a) => { a.sonido = v; })} />
+            <OpcionesConteo
+              ajustes={cfg}
+              cambiar={cambiarCfg}
+              palabras={equipos.map((e, i) => ({ equipo: `Equipo ${i + 1}`, lista: palabrasEquipo(i, e.nombre, e.miembros) }))}
+            />
             <EditorEstilo id={ID} />
           </>
         )}

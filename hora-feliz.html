@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  hora-feliz.html — Widget "Hora feliz y racha" para OBS / TikTok LIVE Studio (900 × 320).
+  Anuncia la Hora feliz (los regalos valen ×2, ×3… en todos los juegos, con cuenta regresiva) y
+  muestra la racha de regalos seguidos. Sin ninguna de las dos, la fuente queda transparente.
+  La URL la genera el panel (index.html → Juegos → Potenciadores): #c= lleva usuario, clave e
+  identificador del widget, y la configuración llega en vivo desde Supabase.
+  Código (React + TypeScript): src/widgets/horafeliz/ · se compila con Vite (ver vite.config.ts).
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hora feliz y racha — overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+</head>
+<body>
+  <div id="raiz"></div>
+  <script type="module" src="/src/widgets/horafeliz/main.tsx"></script>
+</body>
+</html>

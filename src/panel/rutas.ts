@@ -35,6 +35,7 @@ import { regalos } from './vistas/regalos';
 import { repertorio } from './vistas/repertorio';
 import { ruletaNormal, ruletaPremium } from './vistas/ruleta';
 import { historial } from './vistas/historial';
+import { horaFeliz } from './vistas/horaFeliz';
 import { extensible, subathon } from './vistas/subathon';
 import type { DefinicionVista } from './vistas/tipos';
 import { tragamonedas } from './vistas/tragamonedas';
@@ -64,6 +65,8 @@ export const CATEGORIAS: Categoria[] = [
       { id: 'sorteos', titulo: 'Sorteos', vistas: [ruletaNormal, ruletaPremium, tragamonedas] },
       { id: 'competencias', titulo: 'Competencias', vistas: [carrera, marcador, batalla, activacion, duelo] },
       { id: 'retos', titulo: 'Retos del público', vistas: [cola, jefe, boveda, subathon, extensible, repertorio] },
+      // Lo que se suma a todos los juegos a la vez (2026-11-24).
+      { id: 'potenciadores', titulo: 'Potenciadores', vistas: [horaFeliz] },
     ],
   },
   {

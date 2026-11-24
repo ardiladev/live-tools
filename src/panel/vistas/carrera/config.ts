@@ -12,6 +12,7 @@ import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
 import { MAX_INTEGRANTES, type ConfigCarrera } from '../../../widgets/carrera/config';
 import { claveFotos, completarParticipante } from '../../bailarinas';
+import { claveHoraFeliz } from '../../modulos';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
@@ -122,4 +123,4 @@ export function problemasRegalos(lista: readonly IntegranteAjustes[]): string[] 
   return problemas;
 }
 
-registrar(ID, { config: configCarrera, validar: validarCarrera });
+registrar(ID, { config: (estado) => ({ ...configCarrera(estado), ...claveHoraFeliz(estado) }) /* + Hora feliz (panel/modulos.ts) */, validar: validarCarrera });

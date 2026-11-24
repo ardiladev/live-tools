@@ -16,6 +16,14 @@ export const nombreDe = (usuario?: UsuarioEuler | null): string =>
 export const imagenDe = (imagen?: ImagenEuler | null): string =>
   (Array.isArray(imagen?.url) ? imagen.url[0] : imagen?.urlList?.[0]) || '';
 
+/**
+ * `{ uid }` con el id de la cuenta de TikTok, o `{}` si no viene. Los likes y el chat lo llevan
+ * desde el 2026-11-24 (batallas de tap tap y unirse a un equipo escribiendo): así se reconoce a la
+ * misma persona que envía regalos, aunque cambie su apodo.
+ */
+const uidDe = (usuario?: UsuarioEuler | null): { uid?: string } =>
+  (usuario?.userId ? { uid: String(usuario.userId) } : {});
+
 /** Convierte un mensaje de Euler Stream (que no sea un regalo) en un evento normalizado, o `null`. */
 export function normalizar({ type, data }: MensajeEuler): EventoLive | null {
   if (!data) return null;
@@ -24,6 +32,7 @@ export function normalizar({ type, data }: MensajeEuler): EventoLive | null {
       return {
         tipo: 'like',
         usuario: nombreDe(data.user),
+        ...uidDe(data.user),
         cantidad: Number(data.likeCount) || 1,
         total: Number(data.totalLikeCount) || 0,
         propios: Number(data.likeCount) || 1, // los que dio esta persona (para mostrarlos)
@@ -37,7 +46,7 @@ export function normalizar({ type, data }: MensajeEuler): EventoLive | null {
       return null;
     }
     case 'WebcastChatMessage':
-      return { tipo: 'chat', usuario: nombreDe(data.user), texto: String(data.comment || '') };
+      return { tipo: 'chat', usuario: nombreDe(data.user), ...uidDe(data.user), texto: String(data.comment || '') };
     case 'WebcastRoomUserSeqMessage':
       return { tipo: 'espectadores', cantidad: Number(data.viewerCount) || 0 };
     default:

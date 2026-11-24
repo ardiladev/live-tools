@@ -11,23 +11,33 @@
 //   - Puntos en live-tools:batalla:<w> como { ro, p: [A, B] }; `ro` nueva = puntos en 0.
 //   - Sonidos: cambio de líder (660 Hz), "tic" en los últimos 5 s, campana al terminar y
 //     fanfarria al ganar una ronda.
+//   - Módulos (2026-11-24, src/nucleo/conteo.ts): con `un` = 'activador', el regalo de un equipo
+//     une a la persona y desde ahí CUALQUIER regalo suyo le suma; con `ch`, también se une quien
+//     escribe una palabra del equipo; con `fu` = 'mixto' o 'likes', suman los likes de quien ya
+//     está en un equipo. Quién está en cada equipo se guarda con los puntos ({ ro, p, per }).
+//     Con Hora feliz (`hf`), todo lo que suma vale x veces.
 // (Port de legado/js/widgets/batalla.js.)
 // =============================================================================
 
 import { crearEstadoObservable, type Observable } from '../../hooks/useMotor';
 import {
+  cuentanLikes, cuentanRegalos, equipoPorChat, multiplicador, normalizarConteo, puntosDeLikes,
+  type Conteo, type HoraFeliz,
+} from '../../nucleo/conteo';
+import {
   enGracia, escribirGuardado, leerGuardado, prueba, relojCuenta, urlSegura,
 } from '../../nucleo/juego';
 import { leerReloj } from '../../nucleo/reloj';
 import { sonar } from '../../nucleo/sonido';
-import type { EventoLive, EventoRegalo } from '../../tipos/eventos';
+import type { EventoChat, EventoLike, EventoLive, EventoRegalo } from '../../tipos/eventos';
 import type { LecturaReloj, RelojRonda } from '../../tipos/reloj';
-import { normalizarEquipo, type ConfigBatalla, type EquipoBatalla } from './config';
+import { normalizarEquipo, type ConfigBatalla, type EquipoBatalla, type ModoUnion } from './config';
 
 export const CLAVE_PUNTOS = 'live-tools:batalla:';
 export const CLAVE_VICTORIAS = 'live-tools:batalla-victorias:';
 export const AVISO_FINAL_S = 5;      // segundos finales con "tic" de aviso
 export const MAX_RESULTADOS = 500;   // rondas que se recuerdan para contar victorias
+export const MAX_PERSONAS = 5000;    // personas unidas que se recuerdan por ronda
 
 /** [ronda, ganador]: 0 = A, 1 = B, -1 = empate. */
 export type ResultadoRonda = [number, number];
@@ -56,6 +66,8 @@ export interface EstadoBatalla {
   golpes: [number, number];
   /** Por equipo: cuántas victorias nuevas (reinicia la animación "estrena" de su contador). */
   estrenas: [number, number];
+  /** Cómo unirse, para el aviso de abajo antes de que alguien sume ('' = el de siempre). */
+  invitacion: string;
 }
 
 export interface MotorBatalla extends Observable<EstadoBatalla> {
@@ -87,7 +99,16 @@ export function crearMotorBatalla(): MotorBatalla {
     equipos: [normalizarEquipo(undefined, 0), normalizarEquipo(undefined, 1)],
     sonido: true, conReloj: false, reloj: { e: 'listo', d: 180 }, ronda: null, rondaVictorias: null,
     puntos: [0, 0], resultados: [], animarPuntos: false, pintadas: 0, sumas: [], golpes: [0, 0], estrenas: [0, 0],
+    invitacion: '',
   });
+  let union: ModoUnion = 'regalo';
+  let conteo: Conteo = normalizarConteo(undefined);
+  let horaFeliz: HoraFeliz | undefined;
+  let precios: Record<string, unknown> = {};
+  // Quién está en cada equipo (por su cuenta o, en las pruebas del panel, por su nombre): 0 = A, 1 = B.
+  let personas = new Map<string, 0 | 1>();
+  // Likes que todavía no alcanzan una moneda (modo mixto), por equipo.
+  let restoLikes: [number, number] = [0, 0];
   let claveGuardado = '';
   let claveVictorias = '';
   let siguienteSuma = 1;
@@ -95,11 +116,23 @@ export function crearMotorBatalla(): MotorBatalla {
   let ultimoTic: number | null = null;
 
   function restaurarPuntos(ronda: number): [number, number] {
-    const guardado = leerGuardado<{ ro: number; p: unknown[] }>(claveGuardado);
+    const guardado = leerGuardado<{ ro: number; p: unknown[]; per: unknown[] }>(claveGuardado);
     const puntos: [number, number] = [0, 0];
+    personas = new Map();
+    restoLikes = [0, 0];
     if (guardado?.ro !== ronda || !Array.isArray(guardado.p)) return puntos; // la batalla empieza en 0
     guardado.p.slice(0, 2).forEach((valor, i) => { puntos[i as 0 | 1] = Math.max(0, Number(valor) || 0); });
+    if (Array.isArray(guardado.per)) {
+      for (const fila of guardado.per.slice(-MAX_PERSONAS)) {
+        if (Array.isArray(fila) && fila[0] && (fila[1] === 0 || fila[1] === 1)) personas.set(String(fila[0]), fila[1]);
+      }
+    }
     return puntos;
+  }
+
+  /** Guarda los puntos (y, si hay, quién está en cada equipo). */
+  function guardarPuntos(ronda: number | null, puntos: [number, number]): void {
+    escribirGuardado(claveGuardado, personas.size ? { ro: ronda, p: puntos, per: [...personas] } : { ro: ronda, p: puntos });
   }
 
   function restaurarVictorias(rondaVictorias: number): ResultadoRonda[] {
@@ -123,6 +156,13 @@ export function crearMotorBatalla(): MotorBatalla {
     claveVictorias = `${CLAVE_VICTORIAS}${cfg.w || 'url'}`;
     const equipos: [EquipoBatalla, EquipoBatalla] = [normalizarEquipo(cfg.a, 0), normalizarEquipo(cfg.b, 1)];
     pintarColores(equipos);
+    union = cfg.un === 'activador' ? 'activador' : 'regalo';
+    conteo = normalizarConteo(cfg);
+    horaFeliz = cfg.hf;
+    precios = cfg.pr && typeof cfg.pr === 'object' ? cfg.pr : {};
+    const [palabraA, palabraB] = equipos.map((x, i) => (x.palabras[0] || 'ab'[i] || '').toUpperCase());
+    const invitacion = conteo.fuente === 'likes' ? `Escribe ${palabraA} o ${palabraB} y dale tap tap`
+      : conteo.chat ? `Escribe ${palabraA} o ${palabraB} para unirte` : '';
     estado.fijar((e) => {
       // Ronda nueva (el panel pulsó "Reiniciar batalla" o "Nueva ronda"): los puntos vuelven a 0.
       const nuevaRonda = Number(cfg.ro) || 0;
@@ -142,6 +182,7 @@ export function crearMotorBatalla(): MotorBatalla {
         resultados: victoriasNuevas ? restaurarVictorias(nuevasVictorias) : e.resultados,
         animarPuntos: false,
         pintadas: e.pintadas + 1,
+        invitacion,
       };
     });
   }
@@ -149,34 +190,88 @@ export function crearMotorBatalla(): MotorBatalla {
   /** ¿Cuenta un regalo que llega ahora? Con cronómetro, solo con el reloj en marcha (y la gracia final). */
   const cuentaAhora = (e: EstadoBatalla): boolean => prueba || !e.conReloj || relojCuenta(e.reloj);
 
-  function alRegalo(evento: EventoRegalo): void {
+  /** La persona que manda un evento (por su cuenta; las pruebas del panel, por su nombre). */
+  const claveDe = (evento: { uid?: string; usuario?: string }): string => String(evento.uid || evento.usuario || '');
+
+  /** Une a la persona a un equipo (o la cambia). false si ya no caben más personas. */
+  function unirse(clave: string, lado: 0 | 1): boolean {
+    if (!clave) return false;
+    if (!personas.has(clave) && personas.size >= MAX_PERSONAS) return false;
+    personas.set(clave, lado);
+    return true;
+  }
+
+  /** Suma al equipo (con la Hora feliz): puntos, "+N", golpe del avatar y sonido si cambia el líder. */
+  function sumar(lado: 0 | 1, base: number, equipos?: [EquipoBatalla, EquipoBatalla]): void {
     const e = estado.obtener();
-    const i = e.equipos.findIndex((x) => x.giftId && x.giftId === String(evento.giftId ?? ''));
-    if (i < 0 || !cuentaAhora(e)) return;
-    const lado = i as 0 | 1;
-
-    // Si el panel no tenía la imagen del regalo y TikTok la manda, se usa desde ya.
-    let equipos = e.equipos;
-    if (evento.imagen && !equipos[lado].imagen) {
-      equipos = [...equipos] as [EquipoBatalla, EquipoBatalla];
-      equipos[lado] = { ...equipos[lado], imagen: urlSegura(evento.imagen) };
+    const suma = Math.round(base * multiplicador(horaFeliz));
+    if (suma <= 0) {
+      if (equipos) estado.fijar({ ...e, equipos });
+      return;
     }
-
-    // TikTok no siempre manda el precio: entonces vale lo configurado en el panel.
-    const suma = (Number(evento.diamantes) || equipos[lado].valor || 1) * Math.max(1, Number(evento.cantidad) || 1);
     const liderAntes = quienGana(e.puntos);
     const puntos: [number, number] = [...e.puntos];
     puntos[lado] += suma;
-    escribirGuardado(claveGuardado, { ro: e.ronda, p: puntos });
+    guardarPuntos(e.ronda, puntos);
     const golpes: [number, number] = [...e.golpes];
     golpes[lado] += 1;
     estado.fijar({
-      ...e, equipos, puntos, animarPuntos: true, pintadas: e.pintadas + 1, golpes,
+      ...e, equipos: equipos ?? e.equipos, puntos, animarPuntos: true, pintadas: e.pintadas + 1, golpes,
       sumas: [...e.sumas, { id: siguienteSuma++, lado, suma }],
     });
     // Sonido solo cuando cambia quién va ganando (una lluvia de rosas no debe sonar cada vez).
     const lider = quienGana(puntos);
     if (e.sonido && lider !== liderAntes && lider !== null) sonar({ frecuencia: 660, duracion: 0.35 });
+  }
+
+  function alRegalo(evento: EventoRegalo): void {
+    const e = estado.obtener();
+    const i = e.equipos.findIndex((x) => x.giftId && x.giftId === String(evento.giftId ?? ''));
+    const clave = claveDe(evento);
+
+    // Con activador (o si la persona ya se unió escribiendo), el regalo del equipo la une a él.
+    if (i >= 0 && (union === 'activador' || conteo.chat) && personas.get(clave) !== i) {
+      if (unirse(clave, i as 0 | 1)) guardarPuntos(e.ronda, e.puntos);
+    }
+    // A qué equipo suma: con 'regalo', al del regalo; con 'activador', al de la persona.
+    const lado = union === 'activador' ? personas.get(clave) : (i >= 0 ? i as 0 | 1 : undefined);
+    if (lado === undefined || !cuentanRegalos(conteo) || !cuentaAhora(e)) return;
+
+    // Si el panel no tenía la imagen del regalo y TikTok la manda, se usa desde ya.
+    let equipos = e.equipos;
+    if (i === lado && evento.imagen && !equipos[lado].imagen) {
+      equipos = [...equipos] as [EquipoBatalla, EquipoBatalla];
+      equipos[lado] = { ...equipos[lado], imagen: urlSegura(evento.imagen) };
+    }
+
+    // TikTok no siempre manda el precio: entonces vale lo configurado en el panel (el del equipo si
+    // es su regalo; si no, el del Buscador de regalos; si no, 1).
+    const precio = Number(evento.diamantes)
+      || (i === lado ? equipos[lado].valor : 0)
+      || Number(precios[String(evento.giftId ?? '')])
+      || 1;
+    sumar(lado, precio * Math.max(1, Number(evento.cantidad) || 1), equipos === e.equipos ? undefined : equipos);
+  }
+
+  /** Unirse escribiendo una palabra del equipo (si el panel lo permite). */
+  function alChat(evento: EventoChat): void {
+    if (!conteo.chat) return;
+    const e = estado.obtener();
+    const i = equipoPorChat(evento.texto, e.equipos.map((x) => x.palabras));
+    const clave = claveDe(evento);
+    if (i < 0 || personas.get(clave) === i) return;
+    if (unirse(clave, i as 0 | 1)) guardarPuntos(e.ronda, e.puntos);
+  }
+
+  /** Tap tap de quien ya está en un equipo (modos mixto y solo likes). */
+  function alLike(evento: EventoLike): void {
+    if (!cuentanLikes(conteo)) return;
+    const e = estado.obtener();
+    const lado = personas.get(claveDe(evento));
+    if (lado === undefined || !cuentaAhora(e)) return;
+    const [base, resto] = puntosDeLikes(Number(evento.cantidad) || 0, restoLikes[lado], conteo);
+    restoLikes[lado] = resto;
+    if (base > 0) sumar(lado, base);
   }
 
   /**
@@ -203,6 +298,8 @@ export function crearMotorBatalla(): MotorBatalla {
     aplicarConfig,
     alEvento(evento) {
       if (evento.tipo === 'regalo') alRegalo(evento);
+      else if (evento.tipo === 'chat') alChat(evento);
+      else if (evento.tipo === 'like') alLike(evento);
     },
     quitarSuma(id) {
       estado.fijar((e) => ({ ...e, sumas: e.sumas.filter((s) => s.id !== id) }));

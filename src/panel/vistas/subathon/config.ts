@@ -11,6 +11,7 @@ import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
 import type { FormaVistaPrevia } from '../../../tipos/widgets';
 import type { ConfigSubathon } from '../../../widgets/subathon/config';
+import { claveHoraFeliz } from '../../modulos';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 
@@ -118,5 +119,5 @@ export function configSubathon(id: IdSubathon, estado: EstadoPanel): ConfigSubat
 }
 
 for (const id of ['subathon', 'extensible'] as const) {
-  registrar(id, { config: (estado) => configSubathon(id, estado) });
+  registrar(id, { config: (estado) => ({ ...configSubathon(id, estado), ...claveHoraFeliz(estado) }) }); // + Hora feliz (panel/modulos.ts)
 }

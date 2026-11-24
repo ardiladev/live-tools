@@ -9,6 +9,7 @@
 // =============================================================================
 
 import { crearEstadoObservable, type Observable } from '../../hooks/useMotor';
+import { multiplicador, type HoraFeliz } from '../../nucleo/conteo';
 import { escribirGuardado, leerGuardado } from '../../nucleo/juego';
 import { sonar } from '../../nucleo/sonido';
 import type { EventoLive, EventoRegalo } from '../../tipos/eventos';
@@ -60,8 +61,11 @@ export function crearMotorBoveda(): MotorBoveda {
     return abierta;
   }
 
+  let horaFeliz: HoraFeliz | undefined; // la Hora feliz que manda el panel (cfg.hf)
+
   /** Aplica una configuración. Puede llegar en cualquier momento (cambios en vivo, órdenes del panel). */
   function aplicarConfig(cfg: ConfigBoveda): void {
+    horaFeliz = cfg.hf;
     valorRegalo = Math.max(0, Number(cfg.v) || 1);
     sonido = cfg.s !== 0;
     claveGuardado = `${CLAVE_GUARDADO}${cfg.w || 'url'}`;
@@ -95,7 +99,7 @@ export function crearMotorBoveda(): MotorBoveda {
     let e = estado.obtener();
     if (e.abierta) return;
     // TikTok no siempre manda el precio: entonces vale lo configurado en el panel.
-    const suma = (Number(evento.diamantes) || valorRegalo) * Math.max(1, Number(evento.cantidad) || 1);
+    const suma = (Number(evento.diamantes) || valorRegalo) * Math.max(1, Number(evento.cantidad) || 1) * multiplicador(horaFeliz); // Hora feliz: x veces
     if (!suma) return;
     e = { ...e, monedas: e.monedas + suma, animarCifras: true, golpes: e.golpes + 1 };
     guardar(e);

@@ -12,6 +12,7 @@ import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
 import { MAX_INTEGRANTES, type ConfigMarcador } from '../../../widgets/marcador/config';
 import { claveFotos, completarParticipante } from '../../bailarinas';
+import { claveHoraFeliz } from '../../modulos';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
@@ -103,4 +104,4 @@ export function problemasRegalos(lista: readonly IntegranteMarcadorAjustes[]): s
   return problemas;
 }
 
-registrar(ID, { config: configMarcador, validar: validarMarcador });
+registrar(ID, { config: (estado) => ({ ...configMarcador(estado), ...claveHoraFeliz(estado) }) /* + Hora feliz (panel/modulos.ts) */, validar: validarMarcador });

@@ -17,6 +17,7 @@
 // =============================================================================
 
 import { crearEstadoObservable, type Observable } from '../../hooks/useMotor';
+import { multiplicador, type HoraFeliz } from '../../nucleo/conteo';
 import { escribirGuardado, leerGuardado, prueba } from '../../nucleo/juego';
 import { formatoReloj } from '../../nucleo/reloj';
 import { sonar } from '../../nucleo/sonido';
@@ -180,8 +181,11 @@ export function crearMotorSubathon(): MotorSubathon {
     return [sumado, nuevo - ahora];
   }
 
+  let horaFeliz: HoraFeliz | undefined; // la Hora feliz que manda el panel (cfg.hf)
+
   /** Aplica una configuración. Puede llegar en cualquier momento (cambios en vivo, reloj, +5 min). */
   function aplicarConfig(cfg: ConfigSubathon): void {
+    horaFeliz = cfg.hf;
     segPorLikes = Math.max(0, Number(cfg.sl ?? 5));
     segPorMoneda = Math.max(0, Number(cfg.sd ?? 10));
     valorRegalo = Math.max(0, Number(cfg.v) || 1);
@@ -226,7 +230,7 @@ export function crearMotorSubathon(): MotorSubathon {
     }
     if (evento.tipo === 'regalo') {
       // TikTok no siempre manda el precio: entonces vale lo configurado en el panel.
-      const valor = (Number(evento.diamantes) || valorRegalo) * Math.max(1, Number(evento.cantidad) || 1);
+      const valor = (Number(evento.diamantes) || valorRegalo) * Math.max(1, Number(evento.cantidad) || 1) * multiplicador(horaFeliz); // Hora feliz: x veces
       const [anotado, monedas] = monedasQueSuman(e, valor);
       return [anotado, monedas * segPorMoneda];
     }

@@ -10,8 +10,12 @@
 //        precio (si tampoco está ahí, el regalo suma 1)
 //   ro = ronda (al cambiar, las monedas y los equipos vuelven a 0) · s = sonido (1/0)
 //   t = reloj { e, d, fin, r } (ver src/nucleo/reloj.ts) · est = estilo visual (lo aplica useWidget)
+//   fu, lx, ch, hf = qué suma (regalos, regalos + tap tap o solo tap tap), likes por moneda, unirse
+//        escribiendo en el chat y Hora feliz (ver src/nucleo/conteo.ts); cada equipo lleva entonces
+//        `k`: sus palabras para unirse por el chat. Sin ellas, como siempre: solo regalos.
 // =============================================================================
 
+import { normalizarPalabras, type ConfigConteo } from '../../nucleo/conteo';
 import { normalizarFotos } from '../../nucleo/fotos';
 import { urlSegura } from '../../nucleo/juego';
 import type { RelojRonda } from '../../tipos/reloj';
@@ -29,9 +33,10 @@ export interface EquipoConfigActivacion {
   c?: string;
   img?: string;
   f?: string[];
+  k?: string[];
 }
 
-export interface ConfigActivacion extends ConfigBase {
+export interface ConfigActivacion extends ConfigBase, ConfigConteo {
   eq?: EquipoConfigActivacion[];
   pr?: Record<string, number>;
   ro?: number;
@@ -50,6 +55,8 @@ export interface EquipoActivacion {
   imagen: string;
   /** Ids de las fotos de sus bailarinas ([] = sin fotos: se ve la imagen del regalo). */
   fotos: string[];
+  /** Palabras para unirse escribiendo en el chat (ya limpias). */
+  palabras: string[];
 }
 
 export function normalizarEquipo(e: EquipoConfigActivacion | undefined, i: number): EquipoActivacion {
@@ -60,5 +67,6 @@ export function normalizarEquipo(e: EquipoConfigActivacion | undefined, i: numbe
     color: /^#[0-9a-f]{6}$/i.test(String(e?.c)) ? String(e?.c) : (COLORES[i] ?? '#D4AF37'),
     imagen: urlSegura(e?.img),
     fotos: normalizarFotos(e?.f),
+    palabras: normalizarPalabras(e?.k),
   };
 }

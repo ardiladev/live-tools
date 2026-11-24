@@ -8,8 +8,15 @@
 //   ro = ronda (al cambiar, los puntos vuelven a 0) · s = sonido (1/0)
 //   cr = con cronómetro (1/0; sin `cr`, URLs viejas, funciona como antes: sin reloj)
 //   t  = reloj { e, d, fin, r } · rv = ronda de victorias (al cambiar, las victorias vuelven a 0)
+//   un = cómo suma un regalo (2026-11-24): 'regalo' (por defecto: el regalo de cada equipo le suma a
+//        ese equipo) · 'activador' (el regalo del equipo une a la persona y desde ahí CUALQUIER
+//        regalo suyo le suma, como en la Barra de activación; `pr` = precios del Buscador)
+//   fu, lx, ch, hf = qué suma (regalos, regalos + tap tap o solo tap tap), likes por moneda, unirse
+//        escribiendo en el chat (cada equipo con sus palabras `k`) y Hora feliz: ver
+//        src/nucleo/conteo.ts. Sin ellas, como siempre.
 // =============================================================================
 
+import { normalizarPalabras, type ConfigConteo } from '../../nucleo/conteo';
 import { normalizarFotos } from '../../nucleo/fotos';
 import { urlSegura } from '../../nucleo/juego';
 import type { RelojRonda } from '../../tipos/reloj';
@@ -23,9 +30,14 @@ export interface EquipoConfigBatalla {
   av?: string;
   img?: string;
   f?: string[];
+  k?: string[];
 }
 
-export interface ConfigBatalla extends ConfigBase {
+export type ModoUnion = 'regalo' | 'activador';
+
+export interface ConfigBatalla extends ConfigBase, ConfigConteo {
+  un?: string;
+  pr?: Record<string, number>;
   a?: EquipoConfigBatalla;
   b?: EquipoConfigBatalla;
   ro?: number;
@@ -46,6 +58,8 @@ export interface EquipoBatalla {
   imagen: string;
   /** Ids de las fotos de sus bailarinas. */
   fotos: string[];
+  /** Palabras para unirse escribiendo en el chat (ya limpias). */
+  palabras: string[];
 }
 
 export function normalizarEquipo(e: EquipoConfigBatalla | undefined, i: number): EquipoBatalla {
@@ -57,5 +71,6 @@ export function normalizarEquipo(e: EquipoConfigBatalla | undefined, i: number):
     avatar: urlSegura(e?.av),
     imagen: urlSegura(e?.img),
     fotos: normalizarFotos(e?.f),
+    palabras: normalizarPalabras(e?.k),
   };
 }

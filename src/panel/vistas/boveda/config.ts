@@ -7,6 +7,7 @@
 
 import type { EstadoPanel } from '../../../tipos/panel';
 import type { ConfigBoveda } from '../../../widgets/boveda/config';
+import { claveHoraFeliz } from '../../modulos';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { textoLimpio } from '../../piezas';
@@ -53,4 +54,4 @@ export function configBoveda(estado: EstadoPanel): ConfigBoveda {
   };
 }
 
-registrar(ID, { config: configBoveda });
+registrar(ID, { config: (estado) => ({ ...configBoveda(estado), ...claveHoraFeliz(estado) }) /* + Hora feliz (panel/modulos.ts) */ });
