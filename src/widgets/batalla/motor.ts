@@ -24,6 +24,7 @@ import {
   cuentanLikes, cuentanRegalos, equipoPorChat, multiplicador, normalizarConteo, puntosDeLikes,
   type Conteo, type HoraFeliz,
 } from '../../nucleo/conteo';
+import { normalizarFinal, type Final } from '../../nucleo/final';
 import {
   enGracia, escribirGuardado, leerGuardado, prueba, relojCuenta, urlSegura,
 } from '../../nucleo/juego';
@@ -68,6 +69,10 @@ export interface EstadoBatalla {
   estrenas: [number, number];
   /** Cómo unirse, para el aviso de abajo antes de que alguien sume ('' = el de siempre). */
   invitacion: string;
+  /** Al terminar: corona, castigos y Cola de retos (src/nucleo/final.ts). */
+  final: Final;
+  /** El `w` del widget (para anotar el resultado de cada ronda). */
+  widget: string;
 }
 
 export interface MotorBatalla extends Observable<EstadoBatalla> {
@@ -99,7 +104,7 @@ export function crearMotorBatalla(): MotorBatalla {
     equipos: [normalizarEquipo(undefined, 0), normalizarEquipo(undefined, 1)],
     sonido: true, conReloj: false, reloj: { e: 'listo', d: 180 }, ronda: null, rondaVictorias: null,
     puntos: [0, 0], resultados: [], animarPuntos: false, pintadas: 0, sumas: [], golpes: [0, 0], estrenas: [0, 0],
-    invitacion: '',
+    invitacion: '', final: normalizarFinal(undefined), widget: '',
   });
   let union: ModoUnion = 'regalo';
   let conteo: Conteo = normalizarConteo(undefined);
@@ -183,6 +188,8 @@ export function crearMotorBatalla(): MotorBatalla {
         animarPuntos: false,
         pintadas: e.pintadas + 1,
         invitacion,
+        final: normalizarFinal(cfg),
+        widget: String(cfg.w || ''),
       };
     });
   }

@@ -20,7 +20,7 @@
 // Los hooks useConfigEnVivo y useRetos (src/hooks/) envuelven las suscripciones de aquí.
 // (Port 1:1 de legado/js/nube.js; la librería ahora sale de npm, misma versión 2.117.2.)
 // Secciones: 1. Proyecto · 2. Identificadores · 3. Leer y guardar · 4. Escuchar cambios
-//            5. Cola de retos · 6. Bailarinas
+//            5. Cola de retos · 6. Bailarinas · 7. Resultados de las rondas
 // =============================================================================
 
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
@@ -296,3 +296,29 @@ export const leerRegistro = (registro: string, secreto: string, sesiones: readon
 /** Borra un LIVE completo del registro. Pide el secreto. Devuelve cuántas filas borró. */
 export const borrarSesion = (registro: string, secreto: string, sesion: string): Promise<number> =>
   llamar<number>('borrar_sesion', { p_registro: registro, p_secreto: secreto, p_sesion: sesion });
+
+
+// -----------------------------------------------------------------------------
+// 7. Resultados de las rondas (ver supabase/resultados.sql)
+// -----------------------------------------------------------------------------
+// El widget anota quién ganó cada ronda (el panel no ve los puntos); el Torneo por llaves lo lee.
+
+/** El resultado de una ronda: g = ganador (índice del equipo, -1 = empate) · p = puntos de cada uno. */
+export interface DatosResultado {
+  g: number;
+  p: number[];
+}
+
+export interface Resultado {
+  ronda: number;
+  datos: DatosResultado;
+  creado: string;
+}
+
+/** Anota (o reemplaza) el resultado de la ronda `ronda` del widget `widget`. Lo llama el widget en OBS. */
+export const anotarResultado = (widget: string, ronda: number, datos: DatosResultado): Promise<unknown> =>
+  llamar('anotar_resultado', { p_widget: widget, p_ronda: ronda, p_datos: datos });
+
+/** Los últimos resultados del widget (hasta 50), del más nuevo al más viejo. */
+export const leerResultados = (widget: string): Promise<Resultado[]> =>
+  llamar<Resultado[] | null>('leer_resultados', { p_widget: widget }).then((r) => r || []);

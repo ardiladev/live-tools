@@ -11,6 +11,7 @@ import type { Draft } from 'immer';
 import { useRef } from 'react';
 import type { EventoRegalo } from '../../../tipos/eventos';
 import { OpcionesConteo } from '../../componentes/Modulos';
+import { OpcionesFinal } from '../../componentes/OpcionesFinal';
 import { conChat, fuenteDe, palabrasEquipo } from '../../modulos';
 import type { EventoChat, EventoLike } from '../../../tipos/eventos';
 import { EditorEstilo } from '../../componentes/EditorEstilo';
@@ -110,6 +111,7 @@ export function VistaBatalla() {
               palabras={equipos.map((e, i) => ({ equipo: `Equipo ${LETRAS[i]}`, lista: palabrasEquipo(i, e.nombre, e.miembros) }))}
               union={{ valor: cfg.union === 'activador' ? 'activador' : 'regalo', alCambiar: (v) => cambiarCfg((a) => { a.union = v; }) }}
             />
+            <OpcionesFinal ajustes={cfg} cambiar={cambiarCfg} nota="En la batalla, solo con cronómetro (sin reloj no hay final)." />
             <EditorEstilo id={ID} />
           </>
         )}

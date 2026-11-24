@@ -14,8 +14,9 @@ import type { RelojRonda } from '../../../tipos/reloj';
 import { MAX_CARTEL, type ConfigDuelo, type EleccionEfecto } from '../../../widgets/duelo/config';
 import { claveFotos, completarParticipante } from '../../bailarinas';
 import {
-  claveConteo, claveHoraFeliz, clavePalabras, palabrasEquipo, type AjustesConteo,
+  claveConteo, claveFinal, claveHoraFeliz, clavePalabras, palabrasEquipo, type AjustesConteo, type AjustesFinal,
 } from '../../modulos';
+import { idColaDe } from '../cola/compartido';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
@@ -51,7 +52,7 @@ export type AjustesDuelo = {
   /** Textos de los carteles ('' = los de siempre). */
   cartelPierde: string;
   cartelGana: string;
-} & AjustesConteo;
+} & AjustesConteo & AjustesFinal;
 
 export const POR_DEFECTO: AjustesDuelo = {
   sonido: true,
@@ -110,6 +111,7 @@ export function configDuelo(estado: EstadoPanel): ConfigDuelo {
     tp: textoLimpio(cfg.cartelPierde).slice(0, MAX_CARTEL),
     tg: textoLimpio(cfg.cartelGana).slice(0, MAX_CARTEL),
     ...claveConteo(cfg), // módulos: solo si se cambiaron
+    ...claveFinal(cfg, cfg.castigoACola ? idColaDe(estado) : ''),
   };
 }
 

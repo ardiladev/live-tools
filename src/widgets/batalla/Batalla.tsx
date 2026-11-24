@@ -9,6 +9,7 @@
 // =============================================================================
 
 import { useEffect, useRef } from 'react';
+import { FinalJuego } from '../../componentes/FinalJuego';
 import { conFotos, Fotos } from '../../componentes/Fotos';
 import { PildoraEstado } from '../../componentes/PildoraEstado';
 import { useCifraAnimada } from '../../hooks/useCifraAnimada';
@@ -74,7 +75,7 @@ export function Batalla() {
 
         {/* Equipo A · barra · Equipo B */}
         <div className="batalla cristal" id="batalla">
-          <Equipo estado={estado} motor={motor} lado={0} gana={lider === 0} />
+          <Equipo estado={estado} motor={motor} lado={0} gana={lider === 0} corona={terminada && lider === 0 && estado.final.corona} />
           <div className="cuerda" id="cuerda">
             <div className="lado-a" id="lado-a" style={{ width: `${visible}%` }} />
             <div className="centro" aria-hidden="true" />
@@ -83,12 +84,18 @@ export function Batalla() {
             {/* El frente: la línea dorada donde se encuentran los dos equipos */}
             <div className="frente filo-oro" id="frente" style={{ left: `${visible}%` }} />
           </div>
-          <Equipo estado={estado} motor={motor} lado={1} gana={lider === 1} />
+          <Equipo estado={estado} motor={motor} lado={1} gana={lider === 1} corona={terminada && lider === 1 && estado.final.corona} />
         </div>
 
         {/* Quién va ganando y por cuánto */}
         <div className="ventaja" id="ventaja" role="status" aria-live="polite" data-lado={lider === null ? '' : 'ab'[lider]}>{ventaja}</div>
       </main>
+      {conReloj ? (
+        <FinalJuego
+          reloj={estado.reloj} lectura={lectura} puntos={puntos} equipos={equipos}
+          final={estado.final} ronda={estado.ronda ?? 0} widget={estado.widget} sonido={estado.sonido}
+        />
+      ) : null}
       <PildoraEstado widget={widget} />
     </>
   );
@@ -122,7 +129,7 @@ function Victorias({ estado, lado }: { estado: EstadoBatalla; lado: 0 | 1 }) {
 // 3. Un equipo: avatar (foto, imagen del regalo o inicial), nombre y puntos
 // -----------------------------------------------------------------------------
 
-function Equipo({ estado, motor, lado, gana }: { estado: EstadoBatalla; motor: MotorBatalla; lado: 0 | 1; gana: boolean }) {
+function Equipo({ estado, motor, lado, gana, corona = false }: { estado: EstadoBatalla; motor: MotorBatalla; lado: 0 | 1; gana: boolean; corona?: boolean }) {
   const nodo = useRef<HTMLDivElement>(null);
   const e = estado.equipos[lado];
   const golpes = estado.golpes[lado];
@@ -136,11 +143,12 @@ function Equipo({ estado, motor, lado, gana }: { estado: EstadoBatalla; motor: M
 
   return (
     <div className={clases} id={`equipo-${'ab'[lado]}`} ref={nodo}>
-      <div className={bailarinas ? 'avatar con-fotos' : 'avatar'}>
+      <div className={['avatar', bailarinas && 'con-fotos', corona && 'con-corona'].filter(Boolean).join(' ')}>
         <img className="foto" alt="" src={foto || undefined} hidden={!foto} />
         <span className="inicial" aria-hidden="true">{foto ? '' : e.nombre.charAt(0).toUpperCase()}</span>
         <Fotos ids={e.fotos} />
         <img className="insignia" alt="" src={insignia || undefined} hidden={!insignia} />
+        {corona ? <span className="corona-final" aria-hidden="true">♛</span> : null}
       </div>
       <div className="datos">
         <div className="nombre">{e.nombre}</div>

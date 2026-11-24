@@ -11,8 +11,9 @@ import type { RelojRonda } from '../../../tipos/reloj';
 import type { ConfigBatalla } from '../../../widgets/batalla/config';
 import { claveFotos, completarParticipante } from '../../bailarinas';
 import {
-  claveConteo, claveHoraFeliz, clavePalabras, palabrasEquipo, type AjustesConteo,
+  claveConteo, claveFinal, claveHoraFeliz, clavePalabras, palabrasEquipo, type AjustesConteo, type AjustesFinal,
 } from '../../modulos';
+import { idColaDe } from '../cola/compartido';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
@@ -46,7 +47,7 @@ export type AjustesBatalla = {
   /** Cambia al reiniciar las victorias: el widget las pone en 0. */
   rondaVictorias: number;
   equipos: EquipoAjustes[];
-} & AjustesConteo & {
+} & AjustesConteo & AjustesFinal & {
   /** Cómo suma un regalo (opcional): al equipo de ese regalo, o activador y luego cualquier regalo. */
   union?: 'regalo' | 'activador';
 };
@@ -99,6 +100,7 @@ export function configBatalla(estado: EstadoPanel): ConfigBatalla {
     // Módulos (solo si se cambiaron: si no, la configuración queda como siempre).
     ...(activador ? { un: 'activador', pr: preciosDelCatalogo(estado) } : {}),
     ...claveConteo(cfg),
+    ...claveFinal(cfg, cfg.castigoACola ? idColaDe(estado) : ''),
   };
 }
 

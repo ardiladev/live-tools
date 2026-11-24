@@ -12,8 +12,9 @@ import type { RelojRonda } from '../../../tipos/reloj';
 import type { ConfigActivacion } from '../../../widgets/activacion/config';
 import { claveFotos, completarParticipante } from '../../bailarinas';
 import {
-  claveConteo, claveHoraFeliz, clavePalabras, palabrasEquipo, type AjustesConteo,
+  claveConteo, claveFinal, claveHoraFeliz, clavePalabras, palabrasEquipo, type AjustesConteo, type AjustesFinal,
 } from '../../modulos';
+import { idColaDe } from '../cola/compartido';
 import { ajustesDe } from '../../estado/almacen';
 import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
@@ -46,7 +47,7 @@ export type AjustesActivacion = {
   reloj: RelojRonda;
   /** Los 4 equipos. */
   barras: EquipoAjustes[];
-} & AjustesConteo;
+} & AjustesConteo & AjustesFinal;
 
 export const POR_DEFECTO: AjustesActivacion = {
   sonido: true,
@@ -99,6 +100,7 @@ export function configActivacion(estado: EstadoPanel): ConfigActivacion {
   return {
     eq, pr: preciosDelCatalogo(estado), ro: cfg.ronda, s: cfg.sonido ? 1 : 0, t: { ...cfg.reloj, d: duracionDe(cfg) },
     ...claveConteo(cfg), // módulos: solo si se cambiaron
+    ...claveFinal(cfg, cfg.castigoACola ? idColaDe(estado) : ''),
   };
 }
 

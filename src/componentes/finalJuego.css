@@ -1,0 +1,115 @@
+/* ==========================================================================
+   finalJuego.css — «Al terminar»: la ruleta de castigos (componentes/FinalJuego.tsx)
+   Se pone encima de todo el widget, centrada: la ruleta y, al lado (o debajo en una fuente
+   vertical), la tarjeta con el castigo. Mide según la fuente: cabe en una franja (1600 × 300)
+   y en pantalla completa vertical (1080 × 1920). Colores del estilo del widget.
+   ========================================================================== */
+
+.final-juego {
+  --d: min(64vh, 34vw);
+  --rueda-a: var(--activo, #F3DFA2);
+  --rueda-b: #2A2418;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--d) * .12);
+  padding: 2vmin;
+  box-sizing: border-box;
+  background: radial-gradient(circle at center, rgba(0, 0, 0, .55), rgba(0, 0, 0, .15) 70%);
+  animation: final-entrar .4s ease-out both;
+}
+/* Fuente vertical (el Duelo VS): la tarjeta debajo de la ruleta. */
+@media (max-aspect-ratio: 1/1) {
+  .final-juego { --d: min(46vh, 70vw); flex-direction: column; }
+}
+
+.rueda-castigos { position: relative; flex: none; width: var(--d); height: var(--d); }
+.rueda-disco {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 calc(var(--d) * .025) var(--borde-color, #D4AF37), 0 0 calc(var(--d) * .12) rgba(212, 175, 55, .55);
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(.12, .7, .1, 1);
+}
+.rueda-etiqueta {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.rueda-etiqueta > span {
+  margin-top: calc(var(--d) * .07);
+  writing-mode: vertical-rl;
+  max-height: calc(var(--d) * .4);
+  overflow: hidden;
+  color: #fff;
+  font: 700 calc(var(--d) * .05)/1 var(--fuente, sans-serif);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .85);
+  white-space: nowrap;
+}
+/* En los sectores claros, el texto oscuro se lee mejor. */
+.rueda-etiqueta.sobre-claro > span { color: #1B1508; text-shadow: none; }
+.rueda-flecha {
+  position: absolute;
+  top: calc(var(--d) * -.06);
+  left: 50%;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: calc(var(--d) * .06) solid transparent;
+  border-right: calc(var(--d) * .06) solid transparent;
+  border-top: calc(var(--d) * .12) solid #fff;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .7));
+}
+
+.final-juego-tarjeta {
+  max-width: calc(var(--d) * 1.5);
+  padding: calc(var(--d) * .07) calc(var(--d) * .1);
+  box-shadow: inset calc(var(--d) * .02) 0 0 var(--color), var(--resplandor);
+}
+.final-juego-quien {
+  color: var(--oro-texto, #F3DFA2);
+  font: 700 calc(var(--d) * .07)/1.2 var(--fuente, sans-serif);
+  letter-spacing: var(--espaciado-widget, .04em);
+  text-transform: var(--mayus, none);
+}
+.final-juego-texto {
+  margin-top: calc(var(--d) * .03);
+  color: var(--texto-sec, #fff);
+  font: 800 calc(var(--d) * .1)/1.15 var(--fuente, sans-serif);
+}
+.final-juego[data-fase="resultado"] .final-juego-texto { animation: final-golpe .5s ease-out; }
+
+@keyframes final-entrar { from { opacity: 0; } }
+@keyframes final-golpe { 40% { transform: scale(1.08); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .final-juego, .final-juego-texto { animation: none !important; }
+  .rueda-disco { transition-duration: 0ms !important; }
+}
+
+
+/* Corona de la ganadora: sobre el círculo de su equipo (lleva la clase con-corona). Mide según
+   ese círculo (unidades de contenedor), así sirve en cualquier widget. */
+.con-corona { position: relative; overflow: visible; container-type: inline-size; }
+.corona-final {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  z-index: 3;
+  color: #FFD76A;
+  font-size: 62cqw;
+  line-height: 1;
+  transform: translate(-50%, -78%) rotate(-12deg);
+  text-shadow: 0 0 .25em rgba(255, 215, 106, .9), 0 .05em .08em rgba(0, 0, 0, .7);
+  animation: corona-caer .7s cubic-bezier(.2, .8, .2, 1.3) both;
+  pointer-events: none;
+}
+@keyframes corona-caer { from { opacity: 0; transform: translate(-50%, -220%) rotate(-40deg); } }
+@media (prefers-reduced-motion: reduce) { .corona-final { animation: none; } }

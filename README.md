@@ -33,7 +33,7 @@ nada de eso: GitHub Actions arma la versión publicada. Para desarrollar, ver la
 1. [Qué se necesita](#1-qué-se-necesita)
 2. [Guía rápida](#2-guía-rápida)
 3. [Qué hace cada sección del panel](#3-qué-hace-cada-sección-del-panel)
-4. [Cómo funciona por dentro](#4-cómo-funciona-por-dentro) (bailarinas: [4.10](#410-bailarinas-registro-palomitas-y-registro-de-regalos) · módulos y Hora feliz: [4.11](#411-módulos-de-los-juegos-y-hora-feliz))
+4. [Cómo funciona por dentro](#4-cómo-funciona-por-dentro) (bailarinas: [4.10](#410-bailarinas-registro-palomitas-y-registro-de-regalos) · módulos y Hora feliz: [4.11](#411-módulos-de-los-juegos-y-hora-feliz) · al terminar y torneo: [4.12](#412-al-terminar-corona-castigo-y-torneo-por-llaves))
 5. [Estructura de archivos](#5-estructura-de-archivos)
 6. [Agregar una función nueva](#6-agregar-una-función-nueva)
 7. [Publicación en GitHub Pages](#7-publicación-en-github-pages)
@@ -106,6 +106,7 @@ las URLs de OBS y lo guardado siguen igual.
 |  |  | Batalla de regalos | Tira y afloja entre dos equipos: cada uno tiene su regalo, monedas por regalo, color y foto opcional. La barra central empieza en 50 % y se corre hacia el equipo que lleva más monedas. Botón **Reiniciar batalla** que pone los puntos en 0 en OBS al instante. **Con cronómetro** (opción en *Personalizar*, encendida por defecto): los regalos solo suman con el reloj en marcha (Iniciar / Pausar / Nueva ronda, duración en segundos) y, al llegar a 0, el equipo con más monedas gana la ronda; arriba se ven las victorias de cada equipo y la racha («🔥 2 seguidas») cuando uno gana 2 o más rondas seguidas. Botón **Reiniciar victorias**. |
 |  |  | Barra de activación | Una sola barra repartida en 2, 3 o 4 cuadrantes (selector *Equipos*), uno por equipo; cada equipo tiene nombre, regalo activador, monedas del activador y color. Quien envía el activador de un equipo **se une** a él y desde ahí **cualquier** regalo suyo le suma; si envía el activador de otro, se cambia (lo sumado se queda donde estaba). Los regalos de quien no se ha unido no suman. Cada cuadrante ocupa de la barra el **porcentaje de monedas** de su equipo (al empezar, todos miden lo mismo). Reloj de la ronda (Iniciar / Pausar / Nueva ronda / **Reiniciar ronda**): unirse se puede antes de iniciar, pero las monedas solo suman con el reloj en marcha; al llegar a 0 gana el equipo con más monedas. Debajo de la barra, cada equipo muestra sus monedas, cuántas personas tiene (👥) y quién aportó más (⭐). |
 |  |  | Duelo VS | Para dos bailarinas en **pantalla completa**: cada una en su mitad, con una **línea divisoria** de oro en el centro y el «VS» sobre ella. Arriba, el reloj, una **barra de activación de 2 cuadrantes** (las mismas reglas de la Barra de activación: quien envía el activador de una se une a su equipo y desde ahí todos sus regalos le suman) y la ficha de cada una. **Durante todo el duelo, la mitad de quien va perdiendo se ve atrapada** con el efecto elegido (si la pasa, se libera y el efecto cae sobre la otra); al acabarse el tiempo (o con **Terminar ahora**) se cuentan los últimos regalos 3 s y quien perdió se queda así con su cartel. Efectos: **Celda** (bajan barrotes, travesaños y un candado), **Invierno** (escarcha, carámbanos, nieve y un bloque de hielo), **Telaraña** (telarañas y una araña que baja) o **Tormenta** (nube negra, lluvia, rayos y charco); o **Al azar** (uno distinto cada ronda; el panel dice cuál tocará). La mitad de quien ganó se ilumina con destellos. Carteles editables («¡Atrapada!», «¡Ganadora!»; salen al final), opción de que el efecto caiga solo al final y sonido para cada efecto. Queda así hasta **Nueva ronda** o **Reiniciar duelo**; si empatan, nadie queda atrapada. |
+|  |  | Torneo por llaves | De 2 a 8 bailarinas (con palomitas) en un cuadro de eliminación: **Armar el cuadro** (en el orden marcado o al azar; si no son 2, 4 u 8, las primeras pasan directo). **Jugar este duelo** pone a las dos en el Duelo VS con una ronda nueva y desde la misma vista se maneja su reloj; al terminar, la ganadora **pasa sola** al cruce siguiente (el widget del duelo anota el resultado en Supabase y la vista lo lee) o se elige a mano. Su widget (`torneo.html`, 1920 × 1080) muestra el cuadro, el cruce en juego y la campeona con corona. |
 |  | Retos del público | Cola de retos | Fila de retos pendientes para hacerlos con calma cuando llegan muchos regalos seguidos. En OBS se ve el reto de **Ahora** y los siguientes («+N más en espera»). Los retos llegan de la **ruleta** y el **tragamonedas** (casilla *Mandar a la Cola de retos* en su *Personalizar*; en la ruleta se elige qué premios van), de los **retos por regalo** (regalo → reto fijo; un combo es un solo reto «×5») y **a mano**. El panel muestra la cola real: **Hecho**, **Deshacer**, **Vaciar la cola** (pide un segundo clic). Necesita Supabase. |
 |  |  | Jefe del LIVE | Reto cooperativo (boss raid): el chat le quita vida a un jefe con likes y regalos antes de que se acabe el tiempo. Un **monstruo** se va rompiendo a medida que baja la barra (grietas, cuernos rotos, ojo morado, ojos en espiral), retrocede con cada golpe y, al vencerlo, cae noqueado y su núcleo estalla en monedas; si se acaba el tiempo se burla y en pausa se duerme. Nombre, vida total, tiempo límite, texto de victoria y daño por like y por moneda. Raid con **Iniciar / Pausar / Reiniciar** que llegan a OBS al instante. En 0 muestra «Reto desbloqueado» con brillo dorado; si se acaba el tiempo, «Tiempo agotado». Se acomoda solo a la forma de la fuente: franja (monstruo a un lado) o escenario (monstruo en grande). **Cinco monstruos para elegir**, del menos al más amenazante: Gelatón (travieso), Bestia de obsidiana (gruñón, el de siempre), Gólem de piedra (peligroso), Dragón de brasas (temible) y Rey del abismo (legendario); cada uno se rompe a su manera. |
 |  |  | Bóveda dorada | Caja sorpresa: los regalos llenan una barra hacia una meta de monedas; el premio queda oculto hasta llegar. Entonces el candado se abre y aparece el **texto secreto** en letras de oro. Meta, texto secreto, título y pista. **Cerrar y reiniciar** y **Abrir ahora** llegan a OBS al instante. |
@@ -228,6 +229,7 @@ documenta, con su interfaz TypeScript, en `src/widgets/<widget>/config.ts`):
 | `repertorio.html` | `ti` título · `c` canciones `[{i id, n nombre, m meta}]` · `a` id de la activa · `h` ids hechas · `mx` cuántas se ven (3 a 5) · `v` monedas de un regalo sin precio · `ro` ronda (al cambiar, todo a 0) · `s` sonido |
 | `destacado.html` | `um` umbral VIP en monedas · `d` segundos en pantalla · `ti` etiqueta · `tx` agradecimiento si no escribió · `v` monedas de un regalo sin precio · `lp` quitar el mensaje actual · `pr` probar en OBS · `s` sonido |
 | `tragamonedas.html` | `g` id del regalo · `r` texto en pantalla · `rd` rodillos `[{t título, i [textos]}]` (3) · `max` tope por combo · `oc` ocultar sin giros · `pr` probar en OBS · `s` sonido |
+| `torneo.html` | `ti` título · `r` rondas `[[{a, b, g}]]` con cada lugar `{n nombre, c color, f fotos}` (o null) y `g` 0/1 = quién ganó · `ac` `[ronda, cruce]` en juego |
 | `hora-feliz.html` | `hf` Hora feliz `{x, h}` · `mr` mostrar la racha (1/0) · `rs` segundos máximos entre regalos · `rm` regalos para que aparezca · `s` sonido |
 | `registro.html` | `bl` bailarinas `[{i id, n nombre, g id del activador, v monedas del activador}]` · `eq` equipos de VARIAS bailarinas en los juegos `[{g id del regalo del equipo, v monedas, b [ids], t reloj del juego, sr 1 = deja de unir gente cuando el juego termina}]` · `pr` precios del Buscador · `ac` anotando (1/0) · `ro` LIVE nuevo (al cambiar, nadie sigue con nadie) |
 | `carrera.html` | `ti` título · `j` integrantes `[{i id, n nombre, c color, g id del regalo, gn nombre del regalo, v monedas por regalo, m meta, img imagen}]` · `t` reloj `{e listo/corre/pausa, d segundos, fin hora de término, r ms restantes}` · `ro` ronda (al cambiar, puntos a 0) · `sr` solo cuenta con el reloj en marcha · `s` sonido |
@@ -238,7 +240,8 @@ vieja, el widget la ignora.
 **Módulos de los juegos (2026-11-24, ver 4.11).** `batalla.html`, `activacion.html` y `duelo.html` aceptan además `fu`
 qué suma (`regalos`, `mixto` o `likes`) · `lx` likes que valen 1 moneda · `ch` unirse escribiendo en el chat (1) y, por
 equipo, `k` (sus palabras para el chat); la batalla, `un` (`regalo` o `activador`) y `pr`. Todos los juegos que cuentan
-regalos aceptan `hf` (Hora feliz `{x, h}`). Sin estas claves, todo funciona como antes.
+regalos aceptan `hf` (Hora feliz `{x, h}`). Al terminar (ver 4.12), los tres aceptan `co` (corona), `cs` (castigos) y `rc`
+(Cola de retos). Sin estas claves, todo funciona como antes.
 
 **Fotos de las bailarinas (`f`).** Cada equipo de `activacion.html`, `duelo.html` y `batalla.html` (`eq`, `a`, `b`) y
 cada integrante de `carrera.html` y `marcador.html` (`j`) puede llevar `f`: los **ids** de las fotos de sus
@@ -618,12 +621,33 @@ la versión vieja sigue pasando).
   mientras no pasen más de `rs` segundos sin ninguno; se ve desde `rm`; al terminar anuncia «¡Racha de N!» y guarda el
   récord en el navegador de OBS (`live-tools:hora-feliz:<w>`).
 
+### 4.12 Al terminar: corona, castigo y Torneo por llaves
+
+Fase 2 del plan del 2026-11-24. Reglas en `src/nucleo/final.ts` (con pruebas) y el componente común
+`src/componentes/FinalJuego.tsx` (+ `finalJuego.css`); en el panel, «Al terminar» dentro del *Personalizar* de la Batalla
+(solo con cronómetro), la Barra de activación y el Duelo VS (`panel/componentes/OpcionesFinal.tsx`, claves en
+`panel/modulos.ts` → `claveFinal`).
+
+- **Corona** (`co`): al terminar, la ganadora lleva una corona sobre su círculo (mide con unidades de contenedor, `cqw`).
+- **Ruleta de castigos** (`cs`, hasta 8): cuando la ronda termina del todo (pasada la gracia), gira sola para el último
+  lugar (con empate abajo, nadie) y muestra el castigo 12 s. El castigo sale de la ronda (`castigoDeRonda`): el mismo en la
+  vista previa y en OBS. Solo gira si se VIO terminar la ronda (al recargar OBS después, no vuelve a salir). Con `rc`
+  (id de la Cola de retos), se manda allá una vez por ronda (`unaVezPorRonda`, guardado en el navegador de OBS).
+- **Resultado de cada ronda**: todo widget con `w` anota quién ganó en Supabase (`anotar_resultado`, tabla `resultados`,
+  `supabase/resultados.sql`), una vez por ronda y con reintentos. Nunca desde la vista previa.
+- **Torneo por llaves** (`src/panel/vistas/torneo/`, cuadro en `cuadro.ts` con pruebas): el cruce i de la primera ronda
+  enfrenta al lugar i con el lugar tamaño − 1 − i (los pases libres nunca quedan juntos); `propagar` lleva a cada ganadora
+  al cruce siguiente y borra lo que dependía de una ganadora corregida. «Jugar este duelo» escribe las dos bailarinas en
+  los equipos del Duelo VS, le da una ronda nueva y guarda esa ronda en el cruce; mientras hay un cruce en juego, la vista
+  lee `leer_resultados` cada 4 s y toma el primer resultado con ronda ≥ la del cruce (sirve aunque se haya pulsado «Nueva
+  ronda»). Empate: hay que repetir o elegir a mano.
+
 ## 5. Estructura de archivos
 
 ```
 live-tools/
 ├── index.html                       panel (lo monta src/panel/main.tsx)
-├── ruleta.html, meta.html, …        los 19 widgets: una página cada uno, con los MISMOS nombres de antes
+├── ruleta.html, meta.html, …        los 20 widgets: una página cada uno, con los MISMOS nombres de antes
 │                                    (las URLs ya pegadas en OBS siguen sirviendo). Cada una solo carga
 │                                    src/widgets/<widget>/main.tsx
 ├── src/
@@ -639,6 +663,7 @@ live-tools/
 │   │   │                            fotos y registro de las bailarinas
 │   │   ├── fotos.ts                 fotos de las bailarinas en los widgets (copia local + Supabase)
 │   │   ├── conteo.ts                módulos de los juegos: qué suma, unirse por el chat, likes y Hora feliz
+│   │   ├── final.ts                 al terminar: corona, castigos y resultado de cada ronda
 │   │   ├── reloj.ts                 reloj por rondas (guarda la hora de término)
 │   │   ├── juego.ts                 piezas de los juegos: modo prueba, guardado de la ronda, gracia del
 │   │   │                            reloj, cifras animadas, regalo → integrante, mandar retos
@@ -656,7 +681,7 @@ live-tools/
 │   │   └── panel.css                estilos del panel: diseño «Estudio Áureo» (Tailwind + las clases del panel)
 │   ├── widgets/<widget>/            uno por widget (ruleta, meta, alertas, carrera, batalla, activacion, duelo,
 │   │   │                            jefe, subathon (+ extensible), boveda, trono, marcador, repertorio,
-│   │   │                            cola, destacado, tragamonedas, registro, horafeliz):
+│   │   │                            cola, destacado, tragamonedas, registro, horafeliz, torneo):
 │   │   ├── main.tsx                 entrada de su .html (monta el componente)
 │   │   ├── <Widget>.tsx             lo que se ve
 │   │   ├── motor.ts                 sus reglas (sin React)
@@ -671,7 +696,7 @@ live-tools/
 │       ├── estado/                  almacen.ts (Zustand + Immer) · sincronizar.ts · envivo.ts
 │       ├── componentes/             ui.tsx · TarjetaWidget.tsx · EditorEstilo.tsx · piezasJuego.tsx ·
 │       │                            Bailarinas.tsx (palomitas) · EditorFoto.tsx (recorte de fotos)
-│       └── vistas/<vista>/          las 27 vistas: config.ts · Vista*.tsx · index.ts
+│       └── vistas/<vista>/          las 28 vistas: config.ts · Vista*.tsx · index.ts
 ├── pruebas/
 │   ├── unidad/                      pruebas diferenciales contra la versión original (Vitest)
 │   ├── paridad/                     escenarios de los widgets (JSON) para compararlos con la versión original
@@ -680,6 +705,7 @@ live-tools/
 │   └── e2e/todas.mjs                todas las comparaciones juntas (npm run e2e)
 ├── supabase/esquema.sql             tabla, funciones y permisos de Supabase (se ejecuta una vez)
 ├── supabase/bailarinas.sql          fotos y registro de regalos de las bailarinas (se ejecuta después)
+├── supabase/resultados.sql          resultado de cada ronda de los juegos (para el Torneo por llaves)
 ├── vite.config.ts                   build de varias páginas (una por widget + el panel)
 ├── tsconfig*.json, package.json     TypeScript estricto y dependencias con versión exacta
 └── .github/workflows/pages.yml      arma (npm ci + pruebas + build) y publica dist/
@@ -819,7 +845,7 @@ las otras, así ninguna borra lo de las demás.
   la conexión del panel (Actividad) hace lo mismo a los 1,5 s y pone en 0 los contadores de la sesión.
 
 Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard → **SQL Editor** → pegar
-`supabase/esquema.sql` → **Run**, luego lo mismo con `supabase/bailarinas.sql`, y poner la URL y la clave pública del proyecto nuevo en `src/nucleo/nube.ts`.
+`supabase/esquema.sql` → **Run**, luego lo mismo con `supabase/bailarinas.sql` y `supabase/resultados.sql`, y poner la URL y la clave pública del proyecto nuevo en `src/nucleo/nube.ts`.
 
 ### 8.3 Lo que conviene saber
 

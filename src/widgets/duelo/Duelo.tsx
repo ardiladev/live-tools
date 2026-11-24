@@ -13,6 +13,7 @@
 // =============================================================================
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { FinalJuego } from '../../componentes/FinalJuego';
 import { conFotos, Fotos } from '../../componentes/Fotos';
 import { PildoraEstado } from '../../componentes/PildoraEstado';
 import { useCifraAnimada } from '../../hooks/useCifraAnimada';
@@ -130,7 +131,7 @@ export function Duelo() {
 
           <div className="fichas">
             {equipos.map((e, i) => (
-              <Ficha key={i} equipo={e} indice={i} lado={LADOS[i] ?? 'izq'} estado={estado} motor={motor} gana={lider === i} />
+              <Ficha key={i} equipo={e} indice={i} lado={LADOS[i] ?? 'izq'} estado={estado} motor={motor} gana={lider === i} corona={duelo.fase === 'atrapada' && duelo.ganador === i && estado.final.corona} />
             ))}
             <span className="vs" aria-hidden="true">VS</span>
           </div>
@@ -140,6 +141,10 @@ export function Duelo() {
           {aviso.texto}
         </div>
       </main>
+      <FinalJuego
+        reloj={estado.reloj} lectura={lectura} puntos={estado.puntos} equipos={estado.equipos}
+        final={estado.final} ronda={estado.ronda} widget={estado.widget} sonido={estado.sonido}
+      />
       <PildoraEstado widget={widget} />
     </>
   );
@@ -211,9 +216,11 @@ interface PropsFicha {
   estado: EstadoDuelo;
   motor: MotorDuelo;
   gana: boolean;
+  /** Corona de la ganadora (al terminar, si el panel la activó). */
+  corona?: boolean;
 }
 
-function Ficha({ equipo: e, indice: i, lado, estado, motor, gana }: PropsFicha) {
+function Ficha({ equipo: e, indice: i, lado, estado, motor, gana, corona = false }: PropsFicha) {
   const nodo = useRef<HTMLDivElement>(null);
   const golpe = useReiniciarAnimacion(nodo, 'golpe', estado.golpes[i] ?? 0);
   const mostrado = useCifraAnimada(estado.puntos[i] ?? 0, { ms: CONTEO_MS, animar: estado.animarCifras, pintada: estado.pintadas });
@@ -222,10 +229,11 @@ function Ficha({ equipo: e, indice: i, lado, estado, motor, gana }: PropsFicha) 
 
   return (
     <div className={clases} style={coloresDe(e.color)} ref={nodo}>
-      <div className={conFotos(e.fotos) ? 'icono con-fotos' : 'icono'}>
+      <div className={['icono', conFotos(e.fotos) && 'con-fotos', corona && 'con-corona'].filter(Boolean).join(' ')}>
         <img className="regalo" alt="" src={e.imagen || undefined} hidden={!e.imagen} />
         <span className="inicial" aria-hidden="true">{e.imagen ? '' : e.nombre.charAt(0).toUpperCase()}</span>
         <Fotos ids={e.fotos} />
+        {corona ? <span className="corona-final" aria-hidden="true">♛</span> : null}
       </div>
       <div className="datos">
         <div className="nombre">{e.nombre}</div>

@@ -49,8 +49,6 @@ export interface EstadoDuelo extends EstadoActivacion {
   enVivo: boolean;
   cartelPierde: string;
   cartelGana: string;
-  /** La ronda (`ro`): las animaciones del efecto vuelven a empezar con cada ronda. */
-  ronda: number;
   /** Sonidos encendidos (`s`). */
   sonido: boolean;
 }
@@ -94,7 +92,7 @@ export function crearMotorDuelo(): MotorDuelo {
   const base = crearMotorActivacion(CLAVE_DUELO);
   let propio: Omit<EstadoDuelo, keyof EstadoActivacion> = {
     eleccion: 'azar', efecto: efectoDeRonda('azar', 0), enVivo: true,
-    cartelPierde: DATOS_EFECTO[efectoDeRonda('azar', 0)].cartel, cartelGana: CARTEL_GANA, ronda: 0, sonido: true,
+    cartelPierde: DATOS_EFECTO[efectoDeRonda('azar', 0)].cartel, cartelGana: CARTEL_GANA, sonido: true,
   };
   const estado = crearEstadoObservable<EstadoDuelo>({ ...base.obtener(), ...propio });
   base.suscribir(() => estado.fijar({ ...base.obtener(), ...propio }));
@@ -113,7 +111,6 @@ export function crearMotorDuelo(): MotorDuelo {
         enVivo: cfg.am !== 0,
         cartelPierde: textoCartel(cfg.tp, DATOS_EFECTO[efecto].cartel),
         cartelGana: textoCartel(cfg.tg, CARTEL_GANA),
-        ronda,
         sonido: cfg.s !== 0,
       };
       // Solo 2 equipos (si llegaran más, sobran). El motor publica y la suscripción une todo.

@@ -1,0 +1,22 @@
+<!doctype html>
+<!--
+  torneo.html — Widget "Torneo por llaves" para OBS / TikTok LIVE Studio (1920 × 1080).
+  El cuadro de eliminación de las bailarinas: cada cruce es un Duelo VS y la ganadora pasa sola
+  al siguiente hasta la final; a la derecha, la campeona con su corona. Solo pinta: el cuadro lo
+  maneja el panel (index.html → Juegos → Competencias → Torneo por llaves) y llega en vivo por
+  Supabase.
+  Código (React + TypeScript): src/widgets/torneo/ · se compila con Vite (ver vite.config.ts).
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Torneo por llaves — overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+</head>
+<body>
+  <div id="raiz"></div>
+  <script type="module" src="/src/widgets/torneo/main.tsx"></script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+/* ==========================================================================
+   torneo.css — Widget "Torneo por llaves" (torneo.html → Torneo.tsx)
+   Una columna por ronda y la campeona a la derecha; los cruces de cada ronda se reparten a lo
+   alto, así cada uno queda a la altura de los dos que lo alimentan. Medidas en --u (el menor
+   entre 1 % del ancho y 1,8 % del alto): recomendado 1920 × 1080.
+
+   Secciones: 1. Escena · 2. Cruces · 3. Campeona · 4. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+:root { --u: min(1vw, 1.8vh); }
+.torneo {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 3);
+  box-sizing: border-box;
+}
+.torneo .titulo {
+  margin: 0;
+  background: linear-gradient(180deg, #FFF7DA, var(--activo) 55%, #C9992A);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 800;
+  font-size: calc(var(--u) * 4.4);
+  letter-spacing: var(--espaciado-widget);
+  text-align: center;
+  text-transform: var(--mayus);
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .6));
+}
+.torneo .vacio { margin: auto; color: var(--texto-sec); font-size: calc(var(--u) * 2.4); opacity: .75; }
+.cuadro {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--rondas), minmax(0, 1fr));
+  gap: calc(var(--u) * 3);
+  min-height: 0;
+}
+.ronda { display: flex; flex-direction: column; min-height: 0; }
+.ronda h2 {
+  margin: 0 0 calc(var(--u) * 1.2);
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 1.9);
+  letter-spacing: var(--espaciado-widget);
+  text-align: center;
+  text-transform: var(--mayus);
+}
+.cruces { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: calc(var(--u) * 1.2); }
+
+
+/* ---------- 2. Cruces ---------- */
+.cruce {
+  position: relative;
+  display: grid;
+  gap: calc(var(--u) * .5);
+  padding: calc(var(--u) * 1) calc(var(--u) * 1.2);
+}
+.cruce.en-juego { box-shadow: 0 0 0 calc(var(--u) * .25) var(--activo), 0 0 calc(var(--u) * 3) rgba(212, 175, 55, .6); animation: latir 1.6s ease-in-out infinite; }
+.etiqueta-juego {
+  position: absolute;
+  top: calc(var(--u) * -1.2);
+  right: calc(var(--u) * 1);
+  z-index: 3;
+  padding: calc(var(--u) * .2) calc(var(--u) * .8);
+  border-radius: 999px;
+  background: var(--activo);
+  color: #1B1508;
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.2);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.lugar {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1);
+  min-width: 0;
+  padding-left: calc(var(--u) * .6);
+  border-left: calc(var(--u) * .35) solid var(--color);
+  transition: opacity .4s ease;
+}
+.lugar .nombre {
+  overflow: hidden;
+  color: var(--texto-sec);
+  font-weight: 700;
+  font-size: calc(var(--u) * 1.9);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lugar.gano .nombre { color: var(--oro-texto); }
+.lugar.perdio { opacity: .4; }
+.lugar.perdio .nombre { text-decoration: line-through; text-decoration-thickness: 2px; }
+
+.circulo {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: calc(var(--u) * 4);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--cristal-claro);
+  box-shadow: 0 0 0 calc(var(--u) * .25) var(--color);
+}
+.circulo .inicial { color: var(--texto-sec); font-weight: 800; font-size: calc(var(--u) * 1.8); }
+.circulo.grande { width: calc(var(--u) * 14); }
+.circulo.grande .inicial { font-size: calc(var(--u) * 6); }
+
+
+/* ---------- 3. Campeona ---------- */
+.campeona {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: calc(var(--u) * 1.4);
+  padding: calc(var(--u) * 4) calc(var(--u) * 2) calc(var(--u) * 2.4);
+}
+.campeona .nombre { color: var(--texto-sec); font-weight: 800; font-size: calc(var(--u) * 2.8); text-align: center; }
+.campeona .corona {
+  position: absolute;
+  top: calc(var(--u) * -1.5);
+  color: rgba(255, 255, 255, .25);
+  font-size: calc(var(--u) * 6);
+  line-height: 1;
+}
+.campeona.coronada { box-shadow: 0 0 0 calc(var(--u) * .3) var(--activo), 0 0 calc(var(--u) * 5) rgba(212, 175, 55, .7); }
+.campeona.coronada .corona { color: #FFD76A; text-shadow: 0 0 .3em rgba(255, 215, 106, .9); animation: corona-caer .8s cubic-bezier(.2, .8, .2, 1.3) both; }
+.campeona.coronada .nombre { color: var(--oro-texto); }
+
+
+/* ---------- 4. Animaciones ---------- */
+@keyframes latir { 50% { box-shadow: 0 0 0 calc(var(--u) * .25) var(--activo), 0 0 calc(var(--u) * 5) rgba(212, 175, 55, .85); } }
+@keyframes corona-caer { from { opacity: 0; transform: translateY(-120%) rotate(-30deg); } }
+@media (prefers-reduced-motion: reduce) { .cruce.en-juego, .campeona.coronada .corona { animation: none; } }

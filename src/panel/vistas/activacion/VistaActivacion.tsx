@@ -13,6 +13,7 @@ import type { Draft } from 'immer';
 import { useRef } from 'react';
 import type { EventoRegalo } from '../../../tipos/eventos';
 import { OpcionesConteo } from '../../componentes/Modulos';
+import { OpcionesFinal } from '../../componentes/OpcionesFinal';
 import { conChat, fuenteDe, palabrasEquipo } from '../../modulos';
 import type { EventoChat, EventoLike } from '../../../tipos/eventos';
 import { EditorEstilo } from '../../componentes/EditorEstilo';
@@ -124,6 +125,7 @@ export function VistaActivacion() {
               cambiar={cambiarCfg}
               palabras={equipos.map((e, i) => ({ equipo: `Equipo ${i + 1}`, lista: palabrasEquipo(i, e.nombre, e.miembros) }))}
             />
+            <OpcionesFinal ajustes={cfg} cambiar={cambiarCfg} />
             <EditorEstilo id={ID} />
           </>
         )}

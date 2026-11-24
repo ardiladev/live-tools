@@ -14,6 +14,7 @@ import { useRef } from 'react';
 import type { EventoRegalo } from '../../../tipos/eventos';
 import { DATOS_EFECTO, efectoDeRonda, MAX_CARTEL, type EleccionEfecto } from '../../../widgets/duelo/config';
 import { OpcionesConteo } from '../../componentes/Modulos';
+import { OpcionesFinal } from '../../componentes/OpcionesFinal';
 import { conChat, fuenteDe, palabrasEquipo } from '../../modulos';
 import type { EventoChat, EventoLike } from '../../../tipos/eventos';
 import { EditorEstilo } from '../../componentes/EditorEstilo';
@@ -147,6 +148,7 @@ export function VistaDuelo() {
               cambiar={cambiarCfg}
               palabras={equipos.map((e, i) => ({ equipo: `Bailarina ${i + 1}`, lista: palabrasEquipo(i, e.nombre, e.miembros) }))}
             />
+            <OpcionesFinal ajustes={cfg} cambiar={cambiarCfg} />
             <EditorEstilo id={ID} />
           </>
         )}

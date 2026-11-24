@@ -14,9 +14,11 @@
 //   fu, lx, ch, hf = qué suma (regalos, regalos + tap tap o solo tap tap), likes por moneda, unirse
 //        escribiendo en el chat (cada equipo con sus palabras `k`) y Hora feliz: ver
 //        src/nucleo/conteo.ts. Sin ellas, como siempre.
+//   co, cs, rc = al terminar: corona, ruleta de castigos y Cola de retos (ver src/nucleo/final.ts)
 // =============================================================================
 
 import { normalizarPalabras, type ConfigConteo } from '../../nucleo/conteo';
+import type { ConfigFinal } from '../../nucleo/final';
 import { normalizarFotos } from '../../nucleo/fotos';
 import { urlSegura } from '../../nucleo/juego';
 import type { RelojRonda } from '../../tipos/reloj';
@@ -35,7 +37,7 @@ export interface EquipoConfigBatalla {
 
 export type ModoUnion = 'regalo' | 'activador';
 
-export interface ConfigBatalla extends ConfigBase, ConfigConteo {
+export interface ConfigBatalla extends ConfigBase, ConfigConteo, ConfigFinal {
   un?: string;
   pr?: Record<string, number>;
   a?: EquipoConfigBatalla;

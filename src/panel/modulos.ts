@@ -7,12 +7,15 @@
 //      las claves fu, lx, ch y, por equipo, k (ver src/nucleo/conteo.ts).
 //   2. Hora feliz: un multiplicador para TODOS los juegos que cuentan regalos, con hora de
 //      término. Se maneja en Juegos → Potenciadores (vistas/horaFeliz) y viaja como `hf`.
+//   3. Al terminar (fase 2): corona de la ganadora, ruleta de castigos para quien pierde y
+//      mandar el castigo a la Cola de retos (claves co, cs, rc; ver src/nucleo/final.ts).
 // Los ajustes nuevos son OPCIONALES (no están en el POR_DEFECTO de cada juego): sin tocarlos,
 // lo guardado y la configuración de los widgets quedan exactamente como antes.
-// Secciones: 1. Qué suma · 2. Palabras para unirse por el chat · 3. Hora feliz
+// Secciones: 1. Qué suma · 2. Palabras para unirse por el chat · 3. Hora feliz · 4. Al terminar
 // =============================================================================
 
 import { FUENTES, LIKES_POR_MONEDA, type ConfigConteo, type Fuente, type HoraFeliz } from '../nucleo/conteo';
+import { MAX_CASTIGOS, type ConfigFinal } from '../nucleo/final';
 import type { EstadoPanel } from '../tipos/panel';
 import type { Bailarina } from './bailarinas';
 import { ajustesDe } from './estado/almacen';
@@ -108,3 +111,27 @@ export function claveHoraFeliz(estado: EstadoPanel): { hf?: HoraFeliz } {
 export const JUEGOS_HORA_FELIZ = [
   'carrera', 'marcador', 'batalla', 'activacion', 'duelo', 'jefe', 'boveda', 'subathon', 'extensible', 'repertorio', ID_HORA_FELIZ,
 ] as const;
+
+
+// -----------------------------------------------------------------------------
+// 4. Al terminar (Batalla, Barra de activación, Duelo VS): corona, castigos y Cola de retos
+// -----------------------------------------------------------------------------
+
+export type AjustesFinal = {
+  /** La ganadora lleva corona. */
+  corona?: boolean;
+  /** Ruleta de castigos para quien pierde (vacía = sin castigo). */
+  castigos?: string[];
+  /** El castigo también va a la Cola de retos. */
+  castigoACola?: boolean;
+};
+
+/** Las claves co, cs y rc (solo las que se usan: sin tocar nada, la configuración queda igual). */
+export function claveFinal(a: AjustesFinal, idCola: string): ConfigFinal {
+  const castigos = (a.castigos || []).map((t) => textoLimpio(t).slice(0, 80)).filter(Boolean).slice(0, MAX_CASTIGOS);
+  return {
+    ...(a.corona ? { co: 1 } : {}),
+    ...(castigos.length ? { cs: castigos } : {}),
+    ...(castigos.length && a.castigoACola && idCola ? { rc: idCola } : {}),
+  };
+}

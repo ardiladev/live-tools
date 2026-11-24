@@ -35,6 +35,7 @@ import {
   cuentanLikes, cuentanRegalos, equipoPorChat, multiplicador, normalizarConteo, puntosDeLikes, unidadDe,
   type Conteo, type HoraFeliz,
 } from '../../nucleo/conteo';
+import { normalizarFinal, type Final } from '../../nucleo/final';
 import {
   enGracia, escribirGuardado, leerGuardado, prueba, relojCuenta, urlSegura,
 } from '../../nucleo/juego';
@@ -93,6 +94,12 @@ export interface EstadoActivacion {
   unidad: string;
   /** Cómo unirse, para el aviso de abajo cuando no pasa nada. */
   invitacion: string;
+  /** La ronda (`ro`). */
+  ronda: number;
+  /** Al terminar: corona, castigos y Cola de retos (src/nucleo/final.ts). */
+  final: Final;
+  /** El `w` del widget (para anotar el resultado de cada ronda). */
+  widget: string;
 }
 
 export interface MotorActivacion extends Observable<EstadoActivacion> {
@@ -169,7 +176,7 @@ export function crearMotorActivacion(prefijo: string = CLAVE_RONDA): MotorActiva
   const estado = crearEstadoObservable<EstadoActivacion>({
     equipos: [], reloj: { e: 'listo', d: 180 }, puntos: [], miembros: [], mejores: [], avisoUnion: null,
     animarCifras: false, pintadas: 0, sumas: [], golpes: cuatro(),
-    unidad: 'monedas', invitacion: INVITACION_REGALO,
+    unidad: 'monedas', invitacion: INVITACION_REGALO, ronda: 0, final: normalizarFinal(undefined), widget: '',
   });
 
   let equipos: EquipoActivacion[] = [];
@@ -275,7 +282,10 @@ export function crearMotorActivacion(prefijo: string = CLAVE_RONDA): MotorActiva
     for (const persona of personas.values()) persona.aportes = cuatro(persona.aportes);
 
     // Si cambia cuántos equipos hay, el original rehace las fichas: los "+N" que subían se van.
-    const cambios: Partial<EstadoActivacion> = { animarCifras: false, unidad: unidadDe(conteo), invitacion: invitacionDe(conteo) };
+    const cambios: Partial<EstadoActivacion> = {
+      animarCifras: false, unidad: unidadDe(conteo), invitacion: invitacionDe(conteo),
+      ronda: ronda ?? 0, final: normalizarFinal(cfg), widget: String(cfg.w || ''),
+    };
     if (equipos.length !== cantidadAntes) cambios.sumas = [];
     publicar(cambios);
   }
