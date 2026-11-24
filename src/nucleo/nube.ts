@@ -13,14 +13,16 @@
 //
 // Bailarinas (sección 6): el panel guarda sus fotos (guardar_foto, con el secreto) y los widgets
 // las leen (leer_fotos); el widget registro.html anota sus regalos (anotar_regalos) y el panel
-// lee el registro (leer_sesiones / leer_registro, con el secreto).
+// lee el registro (leer_sesiones / leer_registro, con el secreto). Los widgets «Bailarinas en
+// pantalla» y «Créditos finales» leen solo el resumen del LIVE actual (leer_pantalla, sin secreto).
 //
-// La base de datos está descrita en supabase/esquema.sql y supabase/bailarinas.sql. Si SUPABASE_URL o SUPABASE_CLAVE
+// La base de datos está descrita en supabase/esquema.sql, bailarinas.sql, resultados.sql y pantalla.sql. Si SUPABASE_URL o SUPABASE_CLAVE
 // están vacíos, todo funciona como antes (configuración completa en la URL).
 // Los hooks useConfigEnVivo y useRetos (src/hooks/) envuelven las suscripciones de aquí.
 // (Port 1:1 de legado/js/nube.js; la librería ahora sale de npm, misma versión 2.117.2.)
 // Secciones: 1. Proyecto · 2. Identificadores · 3. Leer y guardar · 4. Escuchar cambios
 //            5. Cola de retos · 6. Bailarinas · 7. Resultados de las rondas
+//            8. Bailarinas en pantalla
 // =============================================================================
 
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
@@ -322,3 +324,30 @@ export const anotarResultado = (widget: string, ronda: number, datos: DatosResul
 /** Los últimos resultados del widget (hasta 50), del más nuevo al más viejo. */
 export const leerResultados = (widget: string): Promise<Resultado[]> =>
   llamar<Resultado[] | null>('leer_resultados', { p_widget: widget }).then((r) => r || []);
+
+
+// -----------------------------------------------------------------------------
+// 8. Bailarinas en pantalla (ver supabase/pantalla.sql)
+// -----------------------------------------------------------------------------
+// Lo que se ve en pantalla del LIVE actual del registro: no pide el secreto.
+
+/** Una bailarina en el LIVE actual: b = id · m = monedas · p = personas · f = [[apodo, monedas]] (sus mayores apoyos). */
+export interface BailarinaEnPantalla {
+  b: string;
+  m: number;
+  p: number;
+  f: [string, number][];
+}
+
+/** El LIVE actual del registro (la sesión del último regalo). Horas en ms; `ahora` = la del servidor. */
+export interface LiveEnPantalla {
+  sesion: string;
+  desde: number;
+  hasta: number;
+  ahora: number;
+  bailarinas: BailarinaEnPantalla[];
+}
+
+/** El LIVE actual del registro con hasta `personas` apoyos por bailarina (0 a 300). Lo llaman los widgets en OBS. */
+export const leerPantalla = (registro: string, personas: number): Promise<LiveEnPantalla | null> =>
+  llamar<LiveEnPantalla | null>('leer_pantalla', { p_registro: registro, p_personas: personas });

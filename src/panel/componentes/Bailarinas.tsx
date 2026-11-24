@@ -56,15 +56,17 @@ export interface PropsSelector {
   nota?: ReactNode;
   /** Aviso (p. ej. «ya hay 6 integrantes»). */
   aviso?: ReactNode;
+  /** Título de la tarjeta (por defecto, «Bailarinas en juego»). */
+  titulo?: string;
 }
 
 /** La tarjeta para elegir con una palomita quién juega (y en qué equipo). */
-export function SelectorBailarinas({ columnas, columnaDe, alElegir, nota, aviso }: PropsSelector) {
+export function SelectorBailarinas({ columnas, columnaDe, alElegir, nota, aviso, titulo = 'Bailarinas en juego' }: PropsSelector) {
   const bailarinas = useBailarinasActivas();
   if (!bailarinas.length) return null;
 
   return (
-    <Tarjeta titulo="Bailarinas en juego" ancha>
+    <Tarjeta titulo={titulo} ancha>
       <div className="contenedor-tabla">
         <table className="tabla tabla-bailarinas">
           <thead>

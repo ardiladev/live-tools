@@ -1535,7 +1535,7 @@
 }
 
 
-/* ---------- 18. Bailarinas (registro, palomitas en los juegos, editor de foto, historial) ---------- */
+/* ---------- 18. Bailarinas (registro, palomitas en los juegos, editor de foto, historial, resumen) ---------- */
 @layer components {
   /* Foto de una bailarina en un círculo; sin foto, su inicial sobre su color. */
   .foto-bailarina {
@@ -1658,6 +1658,89 @@
   .editor-foto-marco canvas:active { cursor: grabbing; }
   .editor-foto-vacio { height: auto; padding: 12px; border: 0; background: none; box-shadow: none; text-transform: none; letter-spacing: 0; }
   .editor-foto-controles { display: grid; gap: 14px; }
+
+  /* Resumen del LIVE: cifras con su cambio frente al LIVE anterior. */
+  .cifras-resumen { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr)); gap: 12px; }
+  .cifra-resumen {
+    display: grid;
+    gap: 4px;
+    padding: 14px 16px;
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    background: rgba(0, 0, 0, .22);
+  }
+  .cifra-resumen .titulo-cifra { color: var(--suave); font-size: 12px; font-weight: 500; }
+  .cifra-resumen strong { color: var(--oro-texto); font: 800 24px/1.15 var(--fuente); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .cambio { color: var(--tenue); font-size: 11.5px; }
+  .cambio.sube { color: var(--verde); }
+  .cambio.baja { color: var(--mal); }
+
+  /* Gráfico de barras (una sola serie): eje a la izquierda, rejilla tenue, tooltip al pasar. */
+  .grafico-tramos { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; margin-top: 16px; }
+  .eje-y {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 220px;
+    color: var(--tenue);
+    font: 500 11px/1 var(--fuente-mono);
+    text-align: right;
+  }
+  .barras {
+    display: grid;
+    grid-template-columns: repeat(var(--tramos), minmax(0, 1fr));
+    gap: 2px;
+    height: 220px;
+    border-bottom: 1px solid var(--hilo-oro);
+    background:
+      linear-gradient(var(--hilo), var(--hilo)) 0 0 / 100% 1px no-repeat,
+      linear-gradient(var(--hilo), var(--hilo)) 0 50% / 100% 1px no-repeat;
+  }
+  .columna-tramo { position: relative; display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; }
+  .barra-tramo {
+    display: block;
+    min-height: 1px;
+    border-radius: 4px 4px 0 0;
+    background: linear-gradient(180deg, #F3DFA2, var(--oro) 70%);
+    transition: filter .15s;
+  }
+  .hora-tramo {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    color: var(--tenue);
+    font-size: 10.5px;
+    white-space: nowrap;
+  }
+  .grafico-tramos { padding-bottom: 22px; }
+  .columna-tramo:hover .barra-tramo { filter: brightness(1.2); }
+  /* El tooltip sale del atributo data-tip (texto de diseño: no entra en el texto de la vista). */
+  .columna-tramo:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    top: 4px;
+    left: 50%;
+    z-index: 2;
+    padding: 6px 10px;
+    border: 1px solid var(--borde-hover);
+    border-radius: 8px;
+    background: rgba(10, 10, 13, .96);
+    color: var(--texto);
+    font-size: 12px;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  .columna-tramo:hover { cursor: default; }
+  /* En las orillas, el tooltip se apoya hacia adentro para no salirse de la tarjeta. */
+  .columna-tramo:nth-child(-n + 2):hover::after { left: 0; transform: none; }
+  .columna-tramo:nth-last-child(-n + 2):hover::after { right: 0; left: auto; transform: none; }
+
+  /* Momentos pico. */
+  .lista-picos { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+  .lista-picos li { display: grid; gap: 2px; padding-left: 12px; border-left: 3px solid var(--oro); }
+  .lista-picos .cifra-pico { color: var(--oro-texto); font-weight: 700; }
+  .lista-picos small { color: var(--suave); font-size: 12px; }
 
   @media (max-width: 760px) {
     .bailarina-fila { grid-template-columns: 56px minmax(0, 1fr) 52px 38px; }

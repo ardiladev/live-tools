@@ -31,8 +31,10 @@ import { duelo } from './vistas/duelo';
 import { jefe } from './vistas/jefe';
 import { marcador } from './vistas/marcador';
 import { metaCompartidos, metaLikes, metaMonedas, metaSeguidores } from './vistas/metas';
+import { creditos, pantalla } from './vistas/pantalla';
 import { regalos } from './vistas/regalos';
 import { repertorio } from './vistas/repertorio';
+import { resumen } from './vistas/resumen';
 import { ruletaNormal, ruletaPremium } from './vistas/ruleta';
 import { historial } from './vistas/historial';
 import { horaFeliz } from './vistas/horaFeliz';
@@ -72,13 +74,15 @@ export const CATEGORIAS: Categoria[] = [
   },
   {
     // Las bailarinas del LIVE: se registran una vez y se eligen con una palomita en los juegos;
-    // el widget invisible registro.html anota sus regalos (2026-11-24).
+    // el widget invisible registro.html anota sus regalos (2026-11-24). En pantalla: sus metas,
+    // top fans y créditos finales, con lo que anota el registro; Resumen del LIVE (fase 3).
     id: 'bailarinas',
     titulo: 'Bailarinas',
     corto: 'Bailarinas',
     icono: 'persona',
     grupos: [
-      { id: 'equipo', titulo: 'Equipo', vistas: [bailarinas, historial] },
+      { id: 'equipo', titulo: 'Equipo', vistas: [bailarinas, historial, resumen] },
+      { id: 'en-pantalla', titulo: 'En pantalla', vistas: [pantalla, creditos] },
     ],
   },
   {

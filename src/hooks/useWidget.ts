@@ -20,8 +20,9 @@
 //   4. Mensajes del panel (postMessage del mismo origen): simular → alEvento;
 //      tema → solo el estilo; config → la configuración completa (sin recargar).
 //      Si cambia el #c= de la URL, recarga la página (lo más seguro es empezar de cero).
-//   5. Se conecta al LIVE con useTikTokLive (salvo en prueba o si faltan usuario o clave) y
-//      avisa el estado a la vista previa del panel (avisarPadre).
+//   5. Se conecta al LIVE con useTikTokLive (salvo en prueba, si faltan usuario o clave, o si el
+//      widget no lo necesita: `conLive: false`) y avisa el estado a la vista previa del panel
+//      (avisarPadre). Sin conexión innecesaria no se gasta el límite de conexiones de Euler.
 // `alConfig` debe poder llamarse muchas veces: aplica la configuración nueva sin perder el
 // estado del widget. Los eventos de prueba y los reales llegan por el mismo `alEvento`.
 // =============================================================================
@@ -46,6 +47,7 @@ export const MENSAJES_WIDGET = {
   danada: 'La configuración de la URL está dañada. Cópiala de nuevo desde el panel.',
   prueba: 'Modo prueba: sin conexión a TikTok',
   faltan: 'Falta el usuario de TikTok o la clave de Euler Stream en la URL.',
+  sinLive: 'Este widget no se conecta al LIVE: solo lee lo que anota el Registro de bailarinas.',
 } as const;
 
 export interface OpcionesWidget<C extends ConfigBase = ConfigWidget> {
@@ -53,6 +55,8 @@ export interface OpcionesWidget<C extends ConfigBase = ConfigWidget> {
   alConfig: (config: C) => void;
   /** Eventos del LIVE y de prueba. */
   alEvento: (evento: EventoLive) => void;
+  /** false = no se conecta al LIVE (el widget solo lee Supabase); los eventos de prueba sí llegan. */
+  conLive?: boolean;
 }
 
 export interface EstadoWidget {
@@ -140,7 +144,7 @@ function prepararArranque(): Arranque {
 // Hook
 // -----------------------------------------------------------------------------
 
-export function useWidget<C extends ConfigBase = ConfigWidget>({ alConfig, alEvento }: OpcionesWidget<C>): EstadoWidget {
+export function useWidget<C extends ConfigBase = ConfigWidget>({ alConfig, alEvento, conLive = true }: OpcionesWidget<C>): EstadoWidget {
   const [arranque] = useState(prepararArranque);
   const manejadores = useRef({ alConfig, alEvento });
   manejadores.current = { alConfig, alEvento };
@@ -208,11 +212,12 @@ export function useWidget<C extends ConfigBase = ConfigWidget>({ alConfig, alEve
   const conexion = useTikTokLive({
     usuario,
     clave: String(arranque.cfgUrl?.k || ''),
-    activo: arranque.puedeConectar,
+    activo: arranque.puedeConectar && conLive,
     alEvento: (evento) => manejadores.current.alEvento(evento),
   });
   const estado = arranque.danada ? { ok: false, mensaje: MENSAJES_WIDGET.danada }
     : arranque.prueba ? { ok: true, mensaje: MENSAJES_WIDGET.prueba }
+      : !conLive ? { ok: true, mensaje: MENSAJES_WIDGET.sinLive }
       : !arranque.puedeConectar ? { ok: false, mensaje: MENSAJES_WIDGET.faltan }
         : conexion;
 

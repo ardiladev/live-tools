@@ -20,6 +20,8 @@ import { ajustesDe } from './estado/almacen';
 import { textoLimpio } from './piezas';
 
 export const ID_REGISTRO = 'registro';
+/** Los widgets que muestran lo que anota el registro (vistas/pantalla). */
+export const ID_PANTALLAS = ['pantalla', 'creditos'] as const;
 export const MAX_NOMBRE_BAILARINA = 24;
 export const COLORES_BAILARINAS = ['#E8508A', '#3FA9E8', '#D4AF37', '#8FB9A8', '#B388FF', '#FF8A65', '#4FC3F7', '#81C784'];
 
@@ -54,6 +56,8 @@ export type AjustesRegistro = {
   anotando: boolean;
   /** Cambia con «Empezar un LIVE nuevo»: el widget olvida quién activó a quién. */
   ronda: number;
+  /** Hora (ms) del último «Empezar un LIVE nuevo» (los widgets de pantalla vuelven a 0). */
+  rondaHora?: number;
 };
 
 export const POR_DEFECTO_REGISTRO: AjustesRegistro = {

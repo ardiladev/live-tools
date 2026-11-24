@@ -17,7 +17,7 @@ import { guardarFotoLocal, olvidarFotoLocal } from '../../../nucleo/fotos';
 import { borrarFoto, guardarFoto, idAleatorio, nubeActiva } from '../../../nucleo/nube';
 import type { EventoRegalo } from '../../../tipos/eventos';
 import {
-  COLORES_BAILARINAS, ID_REGISTRO, MAX_NOMBRE_BAILARINA, POR_DEFECTO_REGISTRO,
+  COLORES_BAILARINAS, ID_PANTALLAS, ID_REGISTRO, MAX_NOMBRE_BAILARINA, POR_DEFECTO_REGISTRO,
   type AjustesRegistro, type Bailarina,
 } from '../../bailarinas';
 import { FotoBailarina } from '../../componentes/Bailarinas';
@@ -27,7 +27,7 @@ import { ListaRegalos } from '../../componentes/piezasJuego';
 import { TarjetaWidget, type PruebaWidget } from '../../componentes/TarjetaWidget';
 import { Aviso, Casilla, EntradaNumero, Nota, numero, Tarjeta, useAviso } from '../../componentes/ui';
 import {
-  asegurarIdNube, asegurarSecreto, cambiarWidget, nombreRegalo, obtener, useAjustesWidget, usarAlmacen,
+  asegurarIdNube, asegurarSecreto, cambiarWidget, nombreRegalo, obtener, tieneIdNube, useAjustesWidget, usarAlmacen,
 } from '../../estado/almacen';
 import { subir } from '../../estado/sincronizar';
 import { textoLimpio } from '../../piezas';
@@ -177,8 +177,10 @@ export function VistaBailarinas() {
   }
 
   function liveNuevo(): void {
-    cambiarCfg((a) => { a.ronda = (Number(a.ronda) || 0) + 1; });
+    cambiarCfg((a) => { a.ronda = (Number(a.ronda) || 0) + 1; a.rondaHora = Date.now(); });
     void subir(ID_REGISTRO);
+    // Las tarjetas de las bailarinas en pantalla vuelven a 0 ya (no esperan al primer regalo).
+    for (const id of ID_PANTALLAS) if (tieneIdNube(obtener(), id)) void subir(id);
     avisar('Listo: desde ahora es otro LIVE. Para que un regalo cuente, hay que volver a enviar el activador.');
   }
 

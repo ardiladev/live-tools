@@ -1,0 +1,23 @@
+<!doctype html>
+<!--
+  pantalla.html — Widget "Bailarinas en pantalla" para OBS / TikTok LIVE Studio.
+  Dos modos, cada uno con su URL desde el panel (index.html → Bailarinas → En pantalla):
+    · Tarjetas: cada bailarina con su foto, lo que lleva en el LIVE, la barra de su meta de la
+      noche y sus mayores apoyos (columna 420 × 1200 o fila 1920 × 380).
+    · Créditos finales: los nombres de quienes regalaron ruedan agrupados por bailarina (1080 × 1920).
+  No se conecta al LIVE: lee lo que anota el widget registro.html en Supabase.
+  Código (React + TypeScript): src/widgets/pantalla/ · se compila con Vite (ver vite.config.ts).
+-->
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bailarinas en pantalla — overlay</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;500;600;700;800&display=swap">
+</head>
+<body>
+  <div id="raiz"></div>
+  <script type="module" src="/src/widgets/pantalla/main.tsx"></script>
+</body>
+</html>

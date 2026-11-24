@@ -33,7 +33,7 @@ nada de eso: GitHub Actions arma la versión publicada. Para desarrollar, ver la
 1. [Qué se necesita](#1-qué-se-necesita)
 2. [Guía rápida](#2-guía-rápida)
 3. [Qué hace cada sección del panel](#3-qué-hace-cada-sección-del-panel)
-4. [Cómo funciona por dentro](#4-cómo-funciona-por-dentro) (bailarinas: [4.10](#410-bailarinas-registro-palomitas-y-registro-de-regalos) · módulos y Hora feliz: [4.11](#411-módulos-de-los-juegos-y-hora-feliz) · al terminar y torneo: [4.12](#412-al-terminar-corona-castigo-y-torneo-por-llaves))
+4. [Cómo funciona por dentro](#4-cómo-funciona-por-dentro) (bailarinas: [4.10](#410-bailarinas-registro-palomitas-y-registro-de-regalos) · módulos y Hora feliz: [4.11](#411-módulos-de-los-juegos-y-hora-feliz) · al terminar y torneo: [4.12](#412-al-terminar-corona-castigo-y-torneo-por-llaves) · bailarinas en pantalla y resumen: [4.13](#413-bailarinas-en-pantalla-créditos-y-resumen-del-live))
 5. [Estructura de archivos](#5-estructura-de-archivos)
 6. [Agregar una función nueva](#6-agregar-una-función-nueva)
 7. [Publicación en GitHub Pages](#7-publicación-en-github-pages)
@@ -92,7 +92,7 @@ nada de eso: GitHub Actions arma la versión publicada. Para desarrollar, ver la
 El panel se organiza como TikFinity: **categorías** (íconos de la izquierda) → **grupos
 desplegables** (menú) → **vistas** (contenido). Desde el 2026-10-13 se ordena por propósito:
 **Juegos** (la persona en vivo y el público juegan), **Bailarinas** (desde el 2026-11-24: registro de
-bailarinas y el historial de sus regalos), **Superposiciones** (lo que acompaña el LIVE sin ser un juego),
+bailarinas, el historial y el resumen de sus regalos, y lo que se muestra de ellas en pantalla), **Superposiciones** (lo que acompaña el LIVE sin ser un juego),
 **Actividad** y **Ajustes**. Los ids de las vistas (`#/ruleta`, `#/carrera`…) no cambiaron, así que
 las URLs de OBS y lo guardado siguen igual.
 
@@ -114,6 +114,9 @@ las URLs de OBS y lo guardado siguen igual.
 |  |  | Repertorio | Playlist o menú de bailes: lista de canciones, cada una con meta de monedas. Los regalos llenan la **activa**; al llegar a su meta queda «Desbloqueada · Sonando». **Activar**, **Hecha y siguiente**, **Deshacer**, ordenar y **Reiniciar repertorio** en vivo. |
 | Bailarinas | Equipo | Registro de bailarinas | Cada bailarina con **nombre, color, regalo activador** (y sus monedas, si TikTok no manda el precio), **foto** (se sube y se encuadra: arrastrar, acercar, girar y brillo) y si está **activa**. Las activas aparecen con una **palomita** en la Barra de activación, el Duelo VS, la Batalla, la Carrera y el Marcador. Aquí va también la URL del widget **invisible** «Registro de bailarinas» (`registro.html`), que anota en Supabase los regalos de cada una: quien envía su activador **queda con ella** y todos sus regalos siguientes se le anotan (aunque no haya juego), hasta que active a otra. **Anotar / pausa** y **Empezar un LIVE nuevo**. Ver [4.10](#410-bailarinas-registro-palomitas-y-registro-de-regalos). |
 |  |  | Historial de regalos | Los LIVE anotados (uno por fila, con su total). Se marcan uno o varios con una palomita y se ve el **total de cada bailarina** (monedas, regalos, personas, activaciones), **quién la apoyó** y el **detalle** de cada regalo. **Exportar a Excel** (.xlsx con 4 hojas: Resumen, Por LIVE, Apoyos, Detalle) y **Borrar** un LIVE (por ejemplo, el de las pruebas). Solo desde el navegador del panel (pide su secreto). |
+|  |  | Resumen del LIVE | El tablero de un LIVE comparado con el anterior: **monedas, monedas por hora, personas, personas nuevas** (las que no regalaron en el LIVE anterior), **regalos y duración**, cada una con su ▲/▼; **gráfico de monedas** cada 15 min, 30 min o 1 hora (con tooltip y «Ver como tabla»), **momentos pico** (los 5 minutos con más monedas, con quién más regaló y el regalo más grande), **mejores regalos**, **mejores apoyos** y **cada bailarina** frente al LIVE anterior. Ver [4.13](#413-bailarinas-en-pantalla-créditos-y-resumen-del-live). |
+|  | En pantalla | Bailarinas en pantalla | Widget (`pantalla.html`) con una **tarjeta por bailarina**: su foto, lo que lleva en el LIVE, la **barra de su meta de la noche** (una meta para todas o una propia por bailarina; opción de que al cumplirla **suba otro tanto**) y sus **top fans** (de 1 a 5, con o sin monedas). Cada parte se enciende o apaga; **en columna o en fila**; la que más lleva primero (opcional); al cumplir la meta brilla con «¡Meta cumplida!» y una campanita. Se llena solo con lo que anota el Registro de bailarinas. |
+|  |  | Créditos finales | El mismo widget en modo créditos (otra URL): al cerrar el LIVE ruedan **como en una película** el título, cada bailarina con su foto y los nombres de quienes la apoyaron (de mayor a menor, hasta 300), y el texto de despedida. Velocidad, en bucle o detenerse en la despedida, con o sin monedas y **Volver a pasar**. |
 |  | Potenciadores | Hora feliz y racha | **Hora feliz**: durante los minutos elegidos, los regalos valen ×2, ×3 o ×5 en **todos** los juegos que cuentan regalos a la vez (Empezar / Terminar ahora). Su widget (`hora-feliz.html`) la anuncia con cuenta regresiva y muestra la **racha** de regalos seguidos («×40», con un anillo que se vacía si no llega otro; al terminar, «¡Racha de N!» y el récord del LIVE). |
 | Superposiciones | Metas | Likes · Seguidores · Compartidos · Monedas | Barra de progreso con meta, título, color propio opcional (si no, el acento del estilo) y acción al alcanzarla (duplicar, volver a empezar o dejarla llena). |
 |  | Alertas | Alertas de eventos | Aviso animado por regalos, seguidores y compartidos, en fila, con sonido y mínimo de monedas. |
@@ -230,6 +233,7 @@ documenta, con su interfaz TypeScript, en `src/widgets/<widget>/config.ts`):
 | `destacado.html` | `um` umbral VIP en monedas · `d` segundos en pantalla · `ti` etiqueta · `tx` agradecimiento si no escribió · `v` monedas de un regalo sin precio · `lp` quitar el mensaje actual · `pr` probar en OBS · `s` sonido |
 | `tragamonedas.html` | `g` id del regalo · `r` texto en pantalla · `rd` rodillos `[{t título, i [textos]}]` (3) · `max` tope por combo · `oc` ocultar sin giros · `pr` probar en OBS · `s` sonido |
 | `torneo.html` | `ti` título · `r` rondas `[[{a, b, g}]]` con cada lugar `{n nombre, c color, f fotos}` (o null) y `g` 0/1 = quién ganó · `ac` `[ronda, cruce]` en juego |
+| `pantalla.html` | `mo` `ta` tarjetas · `cr` créditos · `rg` id del registro · `dsd` hora del último «LIVE nuevo» · `b` bailarinas `[{i, n, c, f, g, m meta propia}]` · tarjetas: `me` meta 1/0, `mt` meta, `ms` escalonada, `tf` top fans (0–5), `mf` con monedas, `om` ordenar, `di` `v`/`h`, `s` sonido · créditos: `ti` título, `fi` texto final, `vc` velocidad 1–3, `bu` bucle, `ro` volver a pasar |
 | `hora-feliz.html` | `hf` Hora feliz `{x, h}` · `mr` mostrar la racha (1/0) · `rs` segundos máximos entre regalos · `rm` regalos para que aparezca · `s` sonido |
 | `registro.html` | `bl` bailarinas `[{i id, n nombre, g id del activador, v monedas del activador}]` · `eq` equipos de VARIAS bailarinas en los juegos `[{g id del regalo del equipo, v monedas, b [ids], t reloj del juego, sr 1 = deja de unir gente cuando el juego termina}]` · `pr` precios del Buscador · `ac` anotando (1/0) · `ro` LIVE nuevo (al cambiar, nadie sigue con nadie) |
 | `carrera.html` | `ti` título · `j` integrantes `[{i id, n nombre, c color, g id del regalo, gn nombre del regalo, v monedas por regalo, m meta, img imagen}]` · `t` reloj `{e listo/corre/pausa, d segundos, fin hora de término, r ms restantes}` · `ro` ronda (al cambiar, puntos a 0) · `sr` solo cuenta con el reloj en marcha · `s` sonido |
@@ -642,6 +646,36 @@ Fase 2 del plan del 2026-11-24. Reglas en `src/nucleo/final.ts` (con pruebas) y 
   lee `leer_resultados` cada 4 s y toma el primer resultado con ronda ≥ la del cruce (sirve aunque se haya pulsado «Nueva
   ronda»). Empate: hay que repetir o elegir a mano.
 
+### 4.13 Bailarinas en pantalla, créditos y resumen del LIVE
+
+Fase 3 del plan del 2026-11-24. Las tres usan lo que ya anota el widget invisible `registro.html` (ver 4.10): no
+cuentan nada por su cuenta, así que siempre coinciden con el historial y el Excel.
+
+- **Un solo widget, dos modos** (`src/widgets/pantalla/`, página `pantalla.html`): `mo = 'ta'` tarjetas
+  (`Tarjetas.tsx`) o `mo = 'cr'` créditos (`Creditos.tsx`). En el panel son dos vistas de la misma fábrica
+  (`src/panel/vistas/pantalla/`, ids `pantalla` y `creditos`), cada una con su URL y sus ajustes. Claves en
+  `src/widgets/pantalla/config.ts`; cuentas puras en `motor.ts` (con pruebas).
+- **De dónde salen los datos**: el widget **no se conecta al LIVE** (`useWidget({ conLive: false })`, así no gasta el
+  límite de conexiones de Euler). Lee cada 4 s (tarjetas) o 30 s (créditos) `leer_pantalla(registro, personas)`
+  (`supabase/pantalla.sql`): el LIVE del último regalo anotado, con el total, las personas y los mayores apoyos de cada
+  bailarina. **No pide el secreto** (es lo mismo que se ve en pantalla; no devuelve horas, regalos ni ids de cuentas), solo
+  el id del registro (`rg` en la configuración). Si Supabase falla, se queda con lo último que leyó.
+- **Cuándo vuelve a 0**: con «Empezar un LIVE nuevo» (el registro guarda la hora, `rondaHora`, y estos widgets la
+  reciben como `dsd`: un LIVE cuyo último regalo es anterior no cuenta) o tras 2 horas sin regalos (los créditos lo
+  aceptan hasta 12 horas, porque se pasan al cerrar).
+- **Meta** (`progresoMeta`): sin escalonar, la barra se llena y se queda llena; escalonada, al cumplirla la meta sube otro
+  tanto (1.000 → 2.000…). La celebración solo sale cuando la meta se cumple **mientras el widget está abierto** (al abrirlo a
+  mitad del LIVE, o al cambiar de LIVE, solo se anota).
+- **Créditos**: los datos se congelan al empezar cada pasada (si cambiaran a mitad, el texto daría saltos); el rollo se
+  mueve con `requestAnimationFrame` y `translateY`. Con más de 12 nombres, la lista va en varias columnas.
+- **Vista previa**: sin un LIVE anotado, muestra datos de ejemplo (`liveDeEjemplo`); los botones de prueba («+100 a Ana»)
+  suman encima, solo ahí.
+- **Resumen del LIVE** (`src/panel/vistas/resumen/`, cuentas en `datos.ts` con pruebas): lee el LIVE elegido y el anterior
+  con `leer_registro` (pide el secreto, como el historial). Un regalo de equipo está anotado una vez por bailarina: para
+  contar regalos se vuelve a juntar (misma persona, regalo, hora y total). Los tramos del gráfico van alineados al reloj e
+  incluyen los vacíos; los picos son los tramos de 5 minutos con más monedas. Los seguidores nuevos no se anotan, así que
+  «personas nuevas» = las que regalaron en este LIVE y no en el anterior.
+
 ## 5. Estructura de archivos
 
 ```
@@ -681,7 +715,8 @@ live-tools/
 │   │   └── panel.css                estilos del panel: diseño «Estudio Áureo» (Tailwind + las clases del panel)
 │   ├── widgets/<widget>/            uno por widget (ruleta, meta, alertas, carrera, batalla, activacion, duelo,
 │   │   │                            jefe, subathon (+ extensible), boveda, trono, marcador, repertorio,
-│   │   │                            cola, destacado, tragamonedas, registro, horafeliz, torneo):
+│   │   │                            cola, destacado, tragamonedas, registro, horafeliz, torneo,
+│   │   │                            pantalla = bailarinas en pantalla y créditos):
 │   │   ├── main.tsx                 entrada de su .html (monta el componente)
 │   │   ├── <Widget>.tsx             lo que se ve
 │   │   ├── motor.ts                 sus reglas (sin React)
@@ -706,6 +741,7 @@ live-tools/
 ├── supabase/esquema.sql             tabla, funciones y permisos de Supabase (se ejecuta una vez)
 ├── supabase/bailarinas.sql          fotos y registro de regalos de las bailarinas (se ejecuta después)
 ├── supabase/resultados.sql          resultado de cada ronda de los juegos (para el Torneo por llaves)
+├── supabase/pantalla.sql            lo que leen las tarjetas y los créditos de las bailarinas (después de bailarinas.sql)
 ├── vite.config.ts                   build de varias páginas (una por widget + el panel)
 ├── tsconfig*.json, package.json     TypeScript estricto y dependencias con versión exacta
 └── .github/workflows/pages.yml      arma (npm ci + pruebas + build) y publica dist/
@@ -835,6 +871,7 @@ las otras, así ninguna borra lo de las demás.
 | Tabla `regalos_bailarinas` | Una fila por regalo y por bailarina: `id` (lo pone el widget) · `registro` · `sesion` (el LIVE) · `bailarina` · `nombre` · `usuario` · `uid` · `gift_id` · `regalo` · `cantidad` · `monedas` (su parte) · `total` · `partes` · `origen` (`activador`, `equipo` o `apoyo`) · `hora` |
 | `anotar_regalos(registro, filas)` | **Sin secreto** (lo llama el widget en OBS), solo a un registro que exista, hasta 200 filas; una fila con un id ya guardado no se repite; la hora no puede ser del futuro ni de hace más de 2 días. |
 | `leer_sesiones(registro, secreto)` · `leer_registro(registro, secreto, sesiones)` · `borrar_sesion(registro, secreto, sesion)` | Los LIVE (hasta 300), sus filas (hasta 31 LIVE y 60.000 filas) y borrar un LIVE. Piden el secreto. |
+| `leer_pantalla(registro, personas)` (`supabase/pantalla.sql`) | El LIVE del último regalo anotado: por bailarina, sus monedas, cuántas personas y sus mayores apoyos `[apodo, monedas]` (0 a 300). **Sin secreto** (es lo que se ve en pantalla). Lo leen las tarjetas y los créditos. |
 
 - **RLS activo y sin políticas**, y sin permisos sobre la tabla: con la clave pública **no se puede leer ni
   listar la tabla**, solo usar las dos funciones (`security definer`).
@@ -845,7 +882,7 @@ las otras, así ninguna borra lo de las demás.
   la conexión del panel (Actividad) hace lo mismo a los 1,5 s y pone en 0 los contadores de la sesión.
 
 Si algún día hay que rehacer la base (otro proyecto, por ejemplo): Dashboard → **SQL Editor** → pegar
-`supabase/esquema.sql` → **Run**, luego lo mismo con `supabase/bailarinas.sql` y `supabase/resultados.sql`, y poner la URL y la clave pública del proyecto nuevo en `src/nucleo/nube.ts`.
+`supabase/esquema.sql` → **Run**, luego lo mismo con `supabase/bailarinas.sql`, `supabase/resultados.sql` y `supabase/pantalla.sql`, y poner la URL y la clave pública del proyecto nuevo en `src/nucleo/nube.ts`.
 
 ### 8.3 Lo que conviene saber
 
