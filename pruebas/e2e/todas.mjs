@@ -18,7 +18,7 @@
 
 import { spawnSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
-
+ 
 const nuevo = (process.env.E2E_NUEVO || 'http://localhost:5173').replace(/\/$/, '');
 const ESTADO = ['--estado', 'pruebas/panel/estado.json'];
 
