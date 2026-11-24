@@ -5,15 +5,20 @@
 // de monedas; al llegar, el candado se abre y aparece el texto secreto. El progreso y si está
 // abierta se guardan en live-tools:boveda:<w> como { ro, m, a }. Órdenes del panel: `ro` nueva =
 // cerrar y volver a 0; `ab` = 1 = abrir aunque no se llegue a la meta.
+// Mapa de aventura (`md: 'mapa'`): las mismas monedas mueven una ficha por un camino de casillas
+// (una cada `pc` monedas); la meta es llegar al tesoro, después de la última casilla. Al caer en
+// una casilla, `llegada` la muestra unos segundos y, con `rc`, los retos y trampas van a la Cola
+// de retos (una vez por casilla y ronda).
 // (Port de legado/js/widgets/boveda.js.)
 // =============================================================================
 
 import { crearEstadoObservable, type Observable } from '../../hooks/useMotor';
 import { multiplicador, type HoraFeliz } from '../../nucleo/conteo';
-import { escribirGuardado, leerGuardado } from '../../nucleo/juego';
+import { unaVezPorRonda } from '../../nucleo/final';
+import { escribirGuardado, leerGuardado, mandarReto } from '../../nucleo/juego';
 import { sonar } from '../../nucleo/sonido';
 import type { EventoLive, EventoRegalo } from '../../tipos/eventos';
-import type { ConfigBoveda } from './config';
+import { normalizarCasillas, type Casilla, type ConfigBoveda } from './config';
 
 export const CLAVE_GUARDADO = 'live-tools:boveda:';
 
@@ -32,18 +37,34 @@ export interface EstadoBoveda {
   animarCifras: boolean;
   /** Cuántos regalos (reinicia la animación "golpe"). */
   golpes: number;
+  /** 'mapa' = Mapa de aventura. */
+  modo: 'boveda' | 'mapa';
+  casillas: Casilla[];
+  /** Monedas por casilla (mapa). */
+  porCasilla: number;
+  /** La casilla en la que acaba de caer la ficha (1 … casillas) o null; `clave` reinicia el cartel. */
+  llegada: { casilla: number; clave: number } | null;
 }
+
+/** En qué casilla va la ficha: 0 = salida, 1 … n = casillas, n + 1 = tesoro. */
+export const casillaDe = (e: Pick<EstadoBoveda, 'monedas' | 'porCasilla' | 'casillas' | 'abierta'>): number =>
+  (e.abierta ? e.casillas.length + 1 : Math.min(e.casillas.length + 1, Math.floor(e.monedas / Math.max(1, e.porCasilla))));
 
 export interface MotorBoveda extends Observable<EstadoBoveda> {
   aplicarConfig(cfg: ConfigBoveda): void;
   alEvento(evento: EventoLive): void;
+  /** El cartel de la casilla ya se mostró. */
+  quitarLlegada(clave: number): void;
 }
 
 export function crearMotorBoveda(): MotorBoveda {
   const estado = crearEstadoObservable<EstadoBoveda>({
     titulo: '', pista: '', secreto: '', meta: 1000, ronda: null, monedas: 0, abierta: false,
-    abriendo: false, animarCifras: false, golpes: 0,
+    abriendo: false, animarCifras: false, golpes: 0, modo: 'boveda', casillas: [], porCasilla: 100, llegada: null,
   });
+  let siguienteLlegada = 1;
+  let cola = '';
+  let widgetId = '';
   let valorRegalo = 1;
   let sonido = true;
   let claveGuardado = '';
@@ -69,13 +90,22 @@ export function crearMotorBoveda(): MotorBoveda {
     valorRegalo = Math.max(0, Number(cfg.v) || 1);
     sonido = cfg.s !== 0;
     claveGuardado = `${CLAVE_GUARDADO}${cfg.w || 'url'}`;
+    cola = String(cfg.rc || '');
+    widgetId = String(cfg.w || '');
+    const mapa = cfg.md === 'mapa';
+    const casillas = mapa ? normalizarCasillas(cfg.cs) : [];
+    const porCasilla = Math.max(1, Math.round(Number(cfg.pc) || 100));
     let e: EstadoBoveda = {
       ...estado.obtener(),
       titulo: String(cfg.ti ?? 'Bóveda dorada').slice(0, 40),
       pista: String(cfg.pi ?? 'Premio secreto').slice(0, 60),
       secreto: String(cfg.sec || '').slice(0, 80),
-      meta: Math.max(1, Math.round(Number(cfg.o) || 1000)),
+      // En el mapa, la meta es llegar al tesoro: una casilla más que las del camino.
+      meta: mapa ? (casillas.length + 1) * porCasilla : Math.max(1, Math.round(Number(cfg.o) || 1000)),
       animarCifras: false,
+      modo: mapa ? 'mapa' : 'boveda',
+      casillas,
+      porCasilla,
     };
     // Ronda nueva (el panel pulsó "Cerrar y reiniciar"): bóveda cerrada y progreso en 0.
     const nuevaRonda = Number(cfg.ro) || 0;
@@ -101,8 +131,21 @@ export function crearMotorBoveda(): MotorBoveda {
     // TikTok no siempre manda el precio: entonces vale lo configurado en el panel.
     const suma = (Number(evento.diamantes) || valorRegalo) * Math.max(1, Number(evento.cantidad) || 1) * multiplicador(horaFeliz); // Hora feliz: x veces
     if (!suma) return;
+    const antes = casillaDe(e);
     e = { ...e, monedas: e.monedas + suma, animarCifras: true, golpes: e.golpes + 1 };
     guardar(e);
+    // Mapa: ¿cayó en una casilla nueva del camino?
+    const ahora = casillaDe(e);
+    if (e.modo === 'mapa' && ahora > antes && ahora <= e.casillas.length) {
+      e = { ...e, llegada: { casilla: ahora, clave: siguienteLlegada++ } };
+      const c = e.casillas[ahora - 1];
+      if (sonido) sonar({ frecuencia: c?.tipo === 't' ? 220 : 660, duracion: 0.35, subida: c?.tipo === 't' ? 0.6 : 1.5 });
+      if (c && c.tipo !== 'p' && cola) {
+        unaVezPorRonda(`mapa${ahora}`, widgetId, Number(e.ronda) || 0, () => {
+          void mandarReto(cola, { texto: `${c.tipo === 't' ? 'Trampa' : 'Reto'}: ${c.texto}`, usuario: evento.usuario || '', origen: 'Mapa de aventura' });
+        });
+      }
+    }
     // Al abrirse, las cifras saltan al valor final (en el original, abrir repinta sin animar).
     if (e.monedas >= e.meta) e = abrir(e);
     estado.fijar(e);
@@ -114,6 +157,9 @@ export function crearMotorBoveda(): MotorBoveda {
     aplicarConfig,
     alEvento(evento) {
       if (evento.tipo === 'regalo') alRegalo(evento);
+    },
+    quitarLlegada(clave) {
+      estado.fijar((e) => (e.llegada?.clave === clave ? { ...e, llegada: null } : e));
     },
   };
 }

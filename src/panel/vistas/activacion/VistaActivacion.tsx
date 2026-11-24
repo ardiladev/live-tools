@@ -6,6 +6,8 @@
 // precio) y color. Iniciar/Pausar/Reiniciar cambian el reloj (`t`) o la ronda (`ro`) y se suben
 // a Supabase al instante. Se guardan siempre los 4 equipos; los que no están en juego se ocultan.
 // (Port de la sección 3 de legado/js/panel/vistas/activacion.js.)
+// Modo «Subasta de canciones» (fase 4, en Personalizar): las mismas reglas, pero cada equipo es una
+// canción y el widget se ve como un tablero de subasta.
 // Secciones: 1. Pruebas · 2. Vista · 3. Tarjeta de un equipo
 // =============================================================================
 
@@ -28,11 +30,12 @@ import { nombreRegalo, obtener, useAjustesWidget, usarAlmacen } from '../../esta
 import { textoLimpio, type TextosReloj } from '../../piezas';
 import {
   CANTIDADES, cantidadDe, duracionDe, enJuego, ID, MAX_NOMBRE, POR_DEFECTO, problemas,
-  type AjustesActivacion, type EquipoAjustes,
+  esSubasta, TITULO_SUBASTA, type AjustesActivacion, type EquipoAjustes,
 } from './config';
 
 const LISTA_REGALOS = 'regalos-activacion';
 const OPCIONES_CANTIDAD = CANTIDADES.map((n) => [n, String(n)] as const);
+const MODOS = [['barra', 'Barra de activación'], ['subasta', 'Subasta de canciones']] as const;
 
 const TEXTOS: TextosReloj = {
   listo: ['Lista: ya se pueden unir, pero los regalos aún no suman', 'Iniciar'],
@@ -69,6 +72,7 @@ export function VistaActivacion() {
   const [avisoReinicio, avisarReinicio] = useAviso();
   const siguiente = useRef(0); // «Unirme al siguiente equipo» va rotando mientras la vista está abierta
   const cantidad = cantidadDe(cfg);
+  const subasta = esSubasta(cfg);
   const estado = usarAlmacen((e) => e);
   const registradas = useBailarinasActivas();
   // Con bailarinas, el equipo toma sus datos (los mismos que van al widget).
@@ -112,20 +116,37 @@ export function VistaActivacion() {
     <>
       <TarjetaWidget
         id={ID}
-        titulo="Barra de activación"
+        titulo={subasta ? 'Subasta de canciones' : 'Barra de activación'}
         archivo="activacion.html"
-        forma="horizontal"
+        forma={subasta ? 'cuadrado' : 'horizontal'}
         // El reinicio y el reloj llegan a la vista previa sin recargarla.
         sinRecargar={['ro', 't']}
         personalizar={(
           <>
+            <div className="opciones-conteo">
+              <h3 className="subtitulo">Modo de juego</h3>
+              <Segmentado
+                etiqueta="Cómo se ve:"
+                opciones={MODOS}
+                valor={subasta ? 'subasta' : 'barra'}
+                alCambiar={(v) => cambiarCfg((a) => { a.modo = v; })}
+              />
+              {subasta ? (
+                <Campo etiqueta="Título del tablero:" valor={cfg.tituloSubasta ?? TITULO_SUBASTA} maxLength={40} alCambiar={(v) => cambiarCfg((a) => { a.tituloSubasta = v; })} />
+              ) : null}
+              <Nota className="sin-margen">
+                {subasta
+                  ? 'Subasta de canciones: cada equipo es una canción (ponle su nombre). El público puja con regalos (su activador, o escribiendo su nombre si unirse por el chat está encendido) y al acabarse el tiempo gana la que más monedas juntó: «¡Se baila!».'
+                  : 'Barra de activación: una barra repartida entre los equipos. Prueba la «Subasta de canciones»: las mismas reglas, con un tablero de subasta.'}
+              </Nota>
+            </div>
             <Casilla texto="Sonidos (alguien se une, cambia quién va ganando, final)" marcada={cfg.sonido} alCambiar={(v) => cambiarCfg((a) => { a.sonido = v; })} />
             <OpcionesConteo
               ajustes={cfg}
               cambiar={cambiarCfg}
               palabras={equipos.map((e, i) => ({ equipo: `Equipo ${i + 1}`, lista: palabrasEquipo(i, e.nombre, e.miembros) }))}
             />
-            <OpcionesFinal ajustes={cfg} cambiar={cambiarCfg} />
+            {subasta ? null : <OpcionesFinal ajustes={cfg} cambiar={cambiarCfg} />}
             <EditorEstilo id={ID} />
           </>
         )}
@@ -163,7 +184,7 @@ export function VistaActivacion() {
 
       {cfg.barras.map((b, i) => (
         // key = posición: los 4 equipos son fijos, cada uno en su lugar
-        <TarjetaEquipo key={i} b={b} i={i} oculta={i >= cantidad} miembros={bailarinasDe(estado, b.bailarinas)} cambiarCfg={cambiarCfg} />
+        <TarjetaEquipo key={i} b={b} i={i} oculta={i >= cantidad} miembros={bailarinasDe(estado, b.bailarinas)} cambiarCfg={cambiarCfg} nombre={subasta ? 'Canción' : 'Equipo'} />
       ))}
       <ListaRegalos id={LISTA_REGALOS} />
 
@@ -182,8 +203,10 @@ export function VistaActivacion() {
 // 3. Tarjeta de un equipo: nombre · ID del activador · monedas · color
 // -----------------------------------------------------------------------------
 
-function TarjetaEquipo({ b, i, oculta, miembros, cambiarCfg }: {
+function TarjetaEquipo({ b, i, oculta, miembros, cambiarCfg, nombre = 'Equipo' }: {
   b: EquipoAjustes; i: number; oculta: boolean;
+  /** «Equipo» o, en la subasta, «Canción». */
+  nombre?: string;
   /** Sus bailarinas (con una, el equipo es ella: no hay nada que editar aquí). */
   miembros: Bailarina[];
   cambiarCfg: (receta: (a: Draft<AjustesActivacion>) => void) => void;
@@ -193,14 +216,14 @@ function TarjetaEquipo({ b, i, oculta, miembros, cambiarCfg }: {
 
   if (miembros.length === 1) {
     return (
-      <Tarjeta titulo={`Equipo ${i + 1}`} oculta={oculta}>
+      <Tarjeta titulo={`${nombre} ${i + 1}`} oculta={oculta}>
         <MiembrosEquipo miembros={miembros} />
       </Tarjeta>
     );
   }
 
   return (
-    <Tarjeta titulo={`Equipo ${i + 1}`} oculta={oculta}>
+    <Tarjeta titulo={`${nombre} ${i + 1}`} oculta={oculta}>
       <MiembrosEquipo miembros={miembros} />
       <div className="campos">
         <Campo etiqueta="Nombre:" valor={b.nombre} maxLength={MAX_NOMBRE} alCambiar={(v) => cambiarEste((x) => { x.nombre = v; })} />

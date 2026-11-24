@@ -4,6 +4,8 @@
 // Configura el widget tragamonedas.html: tres rodillos con sus textos, el regalo que lo activa,
 // "Probar en OBS" (orden que se sube a Supabase sin la espera habitual) y la Cola de retos.
 // (Port de la sección 3 de legado/js/panel/vistas/tragamonedas.js.)
+// Modo «Dado del reto» (fase 4, en Personalizar): el mismo widget, pero un dado que rueda y elige
+// una de seis opciones (estilo, canción o dificultad del siguiente baile).
 // =============================================================================
 
 import type { Draft } from 'immer';
@@ -12,18 +14,26 @@ import { nubeActiva } from '../../../nucleo/nube';
 import type { EventoRegalo } from '../../../tipos/eventos';
 import { EditorEstilo } from '../../componentes/EditorEstilo';
 import { TarjetaWidget, type PruebaWidget } from '../../componentes/TarjetaWidget';
-import { Aviso, Campo, Casilla, Nota, Tarjeta, useAviso } from '../../componentes/ui';
+import { Aviso, Campo, Casilla, Nota, Segmentado, Tarjeta, useAviso } from '../../componentes/ui';
 import { obtener, useAjustesWidget } from '../../estado/almacen';
 import { subir } from '../../estado/sincronizar';
 import { textoLimpio } from '../../piezas';
 import { asegurarCola, idColaDe } from '../cola/compartido';
-import { ID, MAX_TEXTO, MAX_TEXTOS, POR_DEFECTO, type AjustesTragamonedas, type RodilloAjustes } from './config';
+import {
+  dadoDe, esDado, ID, MAX_TEXTO, MAX_TEXTOS, POR_DEFECTO, POR_DEFECTO_DADO, type AjustesDado, type AjustesTragamonedas,
+  type RodilloAjustes,
+} from './config';
+
+const MODOS = [['maquina', 'Tragamonedas'], ['dado', 'Dado del reto']] as const;
 
 type CambiarTragamonedas = (receta: (a: Draft<AjustesTragamonedas>) => void) => void;
 
 export function VistaTragamonedas() {
   const [cfg, cambiarCfg] = useAjustesWidget(ID, POR_DEFECTO);
   const [aviso, avisar] = useAviso();
+  const dado = esDado(cfg);
+  const d = dadoDe(cfg);
+  const cambiarDado = (cambios: Partial<AjustesDado>): void => cambiarCfg((a) => { a.dado = { ...POR_DEFECTO_DADO, ...(a.dado || {}), ...cambios }; });
 
   // Con la cola activada, la cola tiene que existir en Supabase para aceptar los resultados.
   useEffect(() => {
@@ -34,7 +44,7 @@ export function VistaTragamonedas() {
     tipo: 'regalo', usuario: nombre, giftId: textoLimpio(cfg.giftId), nombre: '', cantidad, diamantes: 0, imagen: '',
   });
   const pruebas: PruebaWidget[] = [
-    { texto: 'Probar giro', evento: regaloDePrueba(1) },
+    { texto: dado ? 'Probar tiro' : 'Probar giro', evento: regaloDePrueba(1) },
     { texto: 'Combo de 3', evento: regaloDePrueba(3) },
   ];
 
@@ -48,13 +58,27 @@ export function VistaTragamonedas() {
     <>
       <TarjetaWidget
         id={ID}
-        titulo="Tragamonedas"
+        titulo={dado ? 'Dado del reto' : 'Tragamonedas'}
         archivo="tragamonedas.html"
         forma="horizontal"
         // "Probar en OBS" llega a la vista previa sin recargarla.
         sinRecargar={['pr']}
         personalizar={(
           <>
+            <div className="opciones-conteo">
+              <h3 className="subtitulo">Modo de juego</h3>
+              <Segmentado
+                etiqueta="Cómo se juega:"
+                opciones={MODOS}
+                valor={dado ? 'dado' : 'maquina'}
+                alCambiar={(v) => cambiarCfg((a) => { a.modo = v; })}
+              />
+              <Nota className="sin-margen">
+                {dado
+                  ? 'Dado del reto: un dado grande que rueda con el regalo y elige una de seis opciones (estilo, canción o dificultad del siguiente baile).'
+                  : 'Tragamonedas: tres rodillos que se detienen uno tras otro. Prueba el «Dado del reto»: el mismo widget con un dado de seis opciones.'}
+              </Nota>
+            </div>
             <Casilla
               texto="Mandar cada resultado a la Cola de retos (para hacerlos con calma)"
               marcada={cfg.aCola}
@@ -76,19 +100,37 @@ export function VistaTragamonedas() {
           <button className="principal" onClick={probarEnObs} title="Hace girar el widget real en OBS una vez">Probar en OBS</button>
         </div>
         <Aviso aviso={aviso} />
-        <Nota>
-          Cada regalo da un giro (un combo, tantos giros como regalos, hasta el tope). Los giros hacen fila.{' '}
-          Cada rodillo elige uno de sus textos al azar, con la misma probabilidad para todos.
-        </Nota>
+        {dado ? (
+          <Nota>Cada regalo da un tiro (un combo, tantos tiros como regalos, hasta el tope). Los tiros hacen fila. Todas las caras con texto tienen la misma probabilidad.</Nota>
+        ) : (
+          <Nota>
+            Cada regalo da un giro (un combo, tantos giros como regalos, hasta el tope). Los giros hacen fila.{' '}
+            Cada rodillo elige uno de sus textos al azar, con la misma probabilidad para todos.
+          </Nota>
+        )}
       </Tarjeta>
 
-      {cfg.rodillos.slice(0, 3).map((r, i) => (
+      {dado ? (
+        <Tarjeta titulo="Caras del dado" ancha>
+          <div className="campos">
+            <Campo etiqueta="Título (arriba de la lista):" valor={d.titulo} maxLength={30} alCambiar={(v) => cambiarDado({ titulo: v })} />
+            {d.caras.map((texto, i) => (
+              // Las caras son siempre seis: se identifican por su número.
+              // eslint-disable-next-line react/no-array-index-key
+              <Campo key={i} etiqueta={`Cara ${i + 1}:`} valor={texto} maxLength={MAX_TEXTO} placeholder="(vacía: no sale)" alCambiar={(v) => cambiarDado({ caras: d.caras.map((x, j) => (j === i ? v : x)) })} />
+            ))}
+          </div>
+          <Nota>Estilo, canción o dificultad del siguiente baile… Una cara vacía no sale nunca (el dado vuelve a caer en otra).</Nota>
+        </Tarjeta>
+      ) : null}
+
+      {dado ? null : cfg.rodillos.slice(0, 3).map((r, i) => (
         // Los rodillos son siempre tres, en orden: se identifican por su posición.
         // eslint-disable-next-line react/no-array-index-key
         <TarjetaRodillo key={i} rodillo={r} indice={i} cambiarCfg={cambiarCfg} />
       ))}
 
-      <Tarjeta titulo="Regalo que activa la máquina" ancha>
+      <Tarjeta titulo={dado ? 'Regalo que tira el dado' : 'Regalo que activa la máquina'} ancha>
         <div className="campos">
           <Campo etiqueta="ID del regalo:" valor={cfg.giftId} inputMode="numeric" alCambiar={(v) => cambiarCfg((a) => { a.giftId = v.trim(); })} />
           <Campo etiqueta="Texto en pantalla:" valor={cfg.regalo} maxLength={30} alCambiar={(v) => cambiarCfg((a) => { a.regalo = v; })} />
@@ -99,7 +141,7 @@ export function VistaTragamonedas() {
         </Nota>
       </Tarjeta>
 
-      <Nota>Tamaño recomendado de la fuente en OBS: 1200 × 500.</Nota>
+      <Nota>{dado ? 'Tamaño recomendado de la fuente en OBS: 1200 × 500 (o 1000 × 500).' : 'Tamaño recomendado de la fuente en OBS: 1200 × 500.'}</Nota>
     </>
   );
 }

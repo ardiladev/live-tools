@@ -7,9 +7,11 @@
 // La escena se acomoda sola a la forma de la fuente (jefe.css): ancha y baja (1920 × 300) =
 // franja con el monstruo a un lado; más cuadrada (1280 × 720, 1080 × 1080) = el monstruo en
 // grande arriba de la barra. Reglas en motor.ts.
+// Con `md: 'mascota'` el mismo widget es la «Mascota del LIVE» (Mascota.tsx, reglas en
+// motorMascota.ts): los dos motores existen y la configuración decide cuál recibe los eventos.
 // =============================================================================
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PildoraEstado } from '../../componentes/PildoraEstado';
 import { useCifraAnimada } from '../../hooks/useCifraAnimada';
 import { useMotor } from '../../hooks/useMotor';
@@ -17,9 +19,11 @@ import { useReiniciarAnimacion } from '../../hooks/useReiniciarAnimacion';
 import { useRondaReloj } from '../../hooks/useRondaReloj';
 import { useWidget } from '../../hooks/useWidget';
 import { formatoReloj } from '../../nucleo/reloj';
-import type { FaseJefe } from './config';
+import type { ConfigJefe, FaseJefe } from './config';
+import { EscenaMascota } from './Mascota';
+import { crearMotorMascota } from './motorMascota';
 import { Monstruo, etapaDe } from './Monstruo';
-import { crearMotorJefe, vidaDe } from './motor';
+import { crearMotorJefe, vidaDe, type EstadoJefe, type MotorJefe } from './motor';
 import './jefe.css';
 
 const CONTEO_MS = 450; // duración de la animación de la cifra
@@ -27,7 +31,28 @@ const formato = new Intl.NumberFormat('es-CO');
 
 export function Jefe() {
   const [estado, motor] = useMotor(crearMotorJefe);
-  const widget = useWidget({ alConfig: motor.aplicarConfig, alEvento: motor.alEvento });
+  const [mascota, motorMascota] = useMotor(crearMotorMascota);
+  const [esMascota, setEsMascota] = useState(false);
+  const modo = useRef(false);
+  const widget = useWidget<ConfigJefe>({
+    alConfig: (cfg) => {
+      modo.current = cfg.md === 'mascota';
+      setEsMascota(modo.current);
+      if (modo.current) motorMascota.aplicarConfig(cfg);
+      else motor.aplicarConfig(cfg);
+    },
+    alEvento: (evento) => (modo.current ? motorMascota.alEvento(evento) : motor.alEvento(evento)),
+  });
+
+  return (
+    <>
+      {esMascota ? <EscenaMascota estado={mascota} /> : <EscenaJefe estado={estado} motor={motor} />}
+      <PildoraEstado widget={widget} />
+    </>
+  );
+}
+
+function EscenaJefe({ estado, motor }: { estado: EstadoJefe; motor: MotorJefe }) {
   const lectura = useRondaReloj(estado.reloj);
   const placa = useRef<HTMLDivElement>(null);
   useReiniciarAnimacion(placa, 'sacudida', estado.sacudidas);
@@ -83,7 +108,6 @@ export function Jefe() {
           </div>
         </div>
       </main>
-      <PildoraEstado widget={widget} />
     </>
   );
 }

@@ -1622,6 +1622,8 @@
   .opciones-conteo .subtitulo { margin: 4px 0 0; }
   .etiqueta-bloque { color: var(--suave); font-size: 12.5px; font-weight: 500; }
   .lista-castigos .texto-fila:last-child { margin-bottom: 0; }
+  /* Mapa de aventura: tipo de casilla · texto · quitar. */
+  .texto-fila.casilla-mapa { grid-template-columns: 130px minmax(0, 1fr) 38px; }
   .opciones-conteo > button.enlace { justify-self: start; }
 
   /* Torneo por llaves: una columna por ronda con sus cruces. */

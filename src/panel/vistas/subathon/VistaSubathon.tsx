@@ -5,6 +5,8 @@
 // extensible) la meta. El reloj BASE se maneja aquí (Iniciar / Pausar / +5 min / Reiniciar) y
 // llega a OBS al instante; lo que suma el chat lo lleva el widget (el panel no lo ve).
 // (Port de la sección 3 de legado/js/panel/vistas/subathon.js.)
+// El Subathon tiene además el modo «Bomba de tiempo» (fase 4): la misma mecánica, pero los
+// regalos le quitan tiempo, los likes la enfrían y al llegar a 0 explota con un reto.
 // =============================================================================
 
 import { useState } from 'react';
@@ -12,14 +14,21 @@ import { useIntervalo } from '../../../hooks/useIntervalo';
 import { formatoReloj } from '../../../nucleo/reloj';
 import type { RelojRonda } from '../../../tipos/reloj';
 import { EditorEstilo } from '../../componentes/EditorEstilo';
+import { ListaTextos } from '../../componentes/ListaTextos';
 import { TarjetaWidget, type PruebaWidget } from '../../componentes/TarjetaWidget';
-import { Aviso, Campo, Casilla, Nota, numero, Tarjeta, useAviso } from '../../componentes/ui';
+import { Aviso, Campo, Casilla, Nota, numero, Segmentado, Tarjeta, useAviso } from '../../componentes/ui';
 import { useAjustesWidget } from '../../estado/almacen';
 import { subir } from '../../estado/sincronizar';
+import { asegurarCola } from '../cola/compartido';
+import { nubeActiva } from '../../../nucleo/nube';
 import {
-  baseMs, CINCO_MINUTOS_MS, META_MAX, MINUTOS_MAX, MINUTOS_MIN, minutosInicio, minutosTope, monedasMeta,
-  POR_DEFECTO, VARIANTES, type IdSubathon,
+  baseMs, BOMBA_SEGUNDOS_MAX, BOMBA_SEGUNDOS_MIN, bombaDe, CINCO_MINUTOS_MS, esBomba, MAX_RETOS_BOMBA, META_MAX, MINUTOS_MAX,
+  MINUTOS_MIN, minutosInicio, minutosTope, monedasMeta, POR_DEFECTO, POR_DEFECTO_BOMBA, VARIANTES,
+  type AjustesBomba, type IdSubathon,
 } from './config';
+
+const MODOS = [['subathon', 'Subathon'], ['bomba', 'Bomba de tiempo']] as const;
+const EJEMPLOS_RETOS = ['Bailar 30 s con los ojos cerrados', 'Hacer 10 sentadillas', 'Cantar el coro de una canción', 'Bailar en cámara lenta'];
 
 const TEXTOS = { listo: ['Listo para empezar', 'Iniciar'], corre: ['En marcha', 'Iniciar'], pausa: ['En pausa', 'Reanudar'] } as const;
 type EstadoBase = keyof typeof TEXTOS;
@@ -34,6 +43,9 @@ export function VistaSubathon({ id }: { id: IdSubathon }) {
   const [, setTic] = useState(0);
   useIntervalo(() => setTic((n) => (n + 1) % 1_000_000), 250);
 
+  const bomba = esBomba(id, cfg);
+  const b = bombaDe(cfg);
+  const cambiarBomba = (cambios: Partial<AjustesBomba>): void => cambiarCfg((a) => { a.bomba = { ...POR_DEFECTO_BOMBA, ...(a.bomba || {}), ...cambios }; });
   const inicio = minutosInicio(id, cfg);
   const topeMin = minutosTope(id, cfg);
   const meta = monedasMeta(id, cfg);
@@ -58,7 +70,11 @@ export function VistaSubathon({ id }: { id: IdSubathon }) {
   const porMoneda = Math.max(0, Number(cfg.segPorMoneda) || 0);
   const porLikes = Math.max(0, Number(cfg.segPorLikes) || 0);
 
-  const pruebas: PruebaWidget[] = [
+  const pruebas: PruebaWidget[] = bomba ? [
+    { texto: '+100 likes (la enfría)', evento: (n) => ({ tipo: 'like', usuario: n, cantidad: 100, total: 0, propios: 100 }) },
+    { texto: 'Rosa (la acelera)', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '5655', nombre: 'Rose', cantidad: 1, diamantes: 1, imagen: '' }) },
+    { texto: 'Regalo de 30', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '5780', nombre: 'Bouquet Flower', cantidad: 1, diamantes: 30, imagen: '' }) },
+  ] : [
     { texto: '+100 likes', evento: (n) => ({ tipo: 'like', usuario: n, cantidad: 100, total: 0, propios: 100 }) },
     { texto: 'Rosa (1 moneda)', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '5655', nombre: 'Rose', cantidad: 1, diamantes: 1, imagen: '' }) },
     { texto: 'Regalo de 30', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '5780', nombre: 'Bouquet Flower', cantidad: 1, diamantes: 30, imagen: '' }) },
@@ -69,12 +85,17 @@ export function VistaSubathon({ id }: { id: IdSubathon }) {
     <>
       <TarjetaWidget
         id={id}
-        titulo={TITULO}
+        titulo={bomba ? 'Bomba de tiempo' : TITULO}
         archivo={archivo}
-        forma={forma}
+        forma={bomba ? 'cuadrado' : forma}
         // El reloj, la ronda y "+5 min" cambian sin reiniciar la vista previa.
         sinRecargar={['t', 'ro', 'ex']}
-        campos={(
+        campos={bomba ? (
+          <>
+            <Campo etiqueta="Título:" valor={cfg.titulo} maxLength={30} alCambiar={(v) => cambiarCfg((a) => { a.titulo = v; })} />
+            <Campo etiqueta="Mecha (segundos):" tipo="number" valor={b.segundos} min={BOMBA_SEGUNDOS_MIN} max={BOMBA_SEGUNDOS_MAX} step={10} alCambiar={(v) => cambiarBomba({ segundos: v })} />
+          </>
+        ) : (
           <>
             <Campo etiqueta="Título:" valor={cfg.titulo} maxLength={30} alCambiar={(v) => cambiarCfg((a) => { a.titulo = v; })} />
             <Campo etiqueta="Tiempo inicial (minutos):" tipo="number" valor={cfg.minutos} min={MINUTOS_MIN} max={MINUTOS_MAX} step={5} alCambiar={(v) => cambiarCfg((a) => { a.minutos = v; })} />
@@ -83,6 +104,30 @@ export function VistaSubathon({ id }: { id: IdSubathon }) {
         )}
         personalizar={(
           <>
+            {id === 'subathon' ? (
+              <div className="opciones-conteo">
+                <h3 className="subtitulo">Modo de juego</h3>
+                <Segmentado
+                  etiqueta="Cómo se juega:"
+                  opciones={MODOS}
+                  valor={bomba ? 'bomba' : 'subathon'}
+                  alCambiar={(v) => {
+                    cambiarCfg((a) => {
+                      // El título de fábrica acompaña al modo («Subathon» ↔ «Bomba de tiempo»); uno propio se respeta.
+                      if (v === 'bomba' && a.titulo.trim() === VARIANTES.subathon.titulo) a.titulo = 'Bomba de tiempo';
+                      if (v === 'subathon' && a.titulo.trim() === 'Bomba de tiempo') a.titulo = VARIANTES.subathon.titulo;
+                      a.modo = v; a.reloj = { e: 'listo', fin: 0, r: 0 }; a.ronda = Date.now(); a.extraPanel = 0;
+                    });
+                    void subir(id);
+                  }}
+                />
+                <Nota>
+                  {bomba
+                    ? 'Bomba de tiempo: una bomba con la mecha encendida. Cada regalo le quita segundos y los likes la enfrían; si llega a 0, explota y sale un reto para la bailarina. Al cambiar de modo, el reloj se reinicia.'
+                    : 'Subathon: el público le suma tiempo al reloj con likes y regalos. Prueba la «Bomba de tiempo»: el mismo widget, pero los regalos la aceleran. Al cambiar de modo, el reloj se reinicia.'}
+                </Nota>
+              </div>
+            ) : null}
             <Casilla texto="Sonidos (regalos que suman tiempo y final)" marcada={cfg.sonido} alCambiar={(v) => cambiarCfg((a) => { a.sonido = v; })} />
             <EditorEstilo id={id} />
           </>
@@ -90,15 +135,17 @@ export function VistaSubathon({ id }: { id: IdSubathon }) {
         pruebas={pruebas}
       />
 
-      <Tarjeta titulo="Reloj" ancha>
+      <Tarjeta titulo={bomba ? 'Mecha' : 'Reloj'} ancha>
         <div className="reloj-panel">
           <div className="reloj-tiempo" role="timer" data-estado={estado}>{formatoReloj(Math.min(topeMin * 60000, Math.max(0, base)))}</div>
           <div className="reloj-estado">{`${TEXTOS[estado][0]} · sin contar lo que sume el chat`}</div>
         </div>
         <div className="fila-acciones separado-arriba">
-          <button className="principal" disabled={estado === 'corre'} onClick={() => aplicar({ reloj: iniciar(cfg.reloj) })}>{TEXTOS[estado][1]}</button>
+          <button className="principal" disabled={estado === 'corre'} onClick={() => aplicar({ reloj: iniciar(cfg.reloj) })}>
+            {bomba && estado === 'listo' ? 'Encender la mecha' : TEXTOS[estado][1]}
+          </button>
           <button disabled={estado !== 'corre'} onClick={() => aplicar({ reloj: pausar(cfg.reloj) })}>Pausar</button>
-          <button onClick={() => { aplicar({ extra: CINCO_MINUTOS_MS }); avisar('+5 min enviados a OBS (sin pasar del tope).'); }}>+5 min</button>
+          {!bomba ? <button onClick={() => { aplicar({ extra: CINCO_MINUTOS_MS }); avisar('+5 min enviados a OBS (sin pasar del tope).'); }}>+5 min</button> : null}
           <button
             onClick={() => aplicar({ reloj: { e: 'listo', fin: 0, r: 0 }, nuevaRonda: true })}
             title={conMeta
@@ -109,7 +156,14 @@ export function VistaSubathon({ id }: { id: IdSubathon }) {
           </button>
         </div>
         <Aviso aviso={aviso} />
-        <Nota>
+        {bomba ? (
+          <Nota>
+            Los botones llegan a OBS en uno o dos segundos. Reiniciar trae una bomba nueva con la mecha completa (y otro reto).{' '}
+            Lo que quitan los regalos y lo que enfrían los likes lo lleva el widget en OBS: la mecha de aquí no lo incluye.{' '}
+            Los regalos y likes cuentan con la mecha encendida o en pausa.
+          </Nota>
+        ) : null}
+        <Nota className={bomba ? 'hidden' : undefined}>
           Los botones llegan a OBS en uno o dos segundos. Reiniciar vuelve al tiempo inicial y borra todo lo sumado.{' '}
           El tiempo que suma el chat lo lleva el widget en OBS: el reloj de aquí no lo incluye, así que el de OBS siempre{' '}
           marca igual o más. El chat suma tiempo con el reloj en marcha o en pausa, nunca antes de iniciar ni después de terminar.
@@ -134,7 +188,34 @@ export function VistaSubathon({ id }: { id: IdSubathon }) {
         </Tarjeta>
       ) : null}
 
-      <Tarjeta titulo={conMeta ? 'Tiempo que suma el chat (después de la meta)' : 'Tiempo que suma el chat'} ancha>
+      {bomba ? (
+        <>
+          <Tarjeta titulo="Cómo se juega la bomba" ancha>
+            <div className="campos">
+              <Campo etiqueta="Segundos que quita cada moneda de regalo:" tipo="number" valor={b.quitaMoneda} min={0} step={0.5} alCambiar={(v) => cambiarBomba({ quitaMoneda: v })} />
+              <Campo etiqueta="Segundos que enfrían cada 100 likes:" tipo="number" valor={b.enfriaLikes} min={0} step={1} alCambiar={(v) => cambiarBomba({ enfriaLikes: v })} />
+              <Campo etiqueta="Monedas de un regalo sin precio:" tipo="number" valor={cfg.valorRegalo} min={0} step={1} alCambiar={(v) => cambiarCfg((a) => { a.valorRegalo = v; })} />
+            </div>
+            <p className="nota">
+              {`Una rosa (1 moneda) le quita ${textoTiempo(b.quitaMoneda)}; un regalo de 30 monedas, ${textoTiempo(b.quitaMoneda * 30)}; `
+                + `1.000 likes la enfrían ${textoTiempo(b.enfriaLikes * 10)}. La mecha nunca pasa de ${textoTiempo(b.segundos)} (la que tenía al encenderla).`}
+            </p>
+          </Tarjeta>
+          <Tarjeta titulo="Retos al explotar" ancha>
+            <ListaTextos lista={b.retos} alCambiar={(retos) => cambiarBomba({ retos })} max={MAX_RETOS_BOMBA} nombre="Reto" ejemplos={EJEMPLOS_RETOS} />
+            {b.retos.some((t) => t.trim()) && nubeActiva() ? (
+              <Casilla
+                texto="Mandar el reto también a la Cola de retos"
+                marcada={b.aCola}
+                alCambiar={(v) => { cambiarBomba({ aCola: v }); if (v) void asegurarCola(); }}
+              />
+            ) : null}
+            <Nota>Cuando la bomba explota sale uno de estos retos para la bailarina (el de cada bomba es fijo: el mismo en la vista previa y en OBS). Sin retos, solo dice «¡Explotó!».</Nota>
+          </Tarjeta>
+        </>
+      ) : null}
+
+      <Tarjeta titulo={conMeta ? 'Tiempo que suma el chat (después de la meta)' : 'Tiempo que suma el chat'} ancha oculta={bomba}>
         <div className="campos">
           <Campo etiqueta="Segundos por cada 100 likes:" tipo="number" valor={cfg.segPorLikes} min={0} step={1} alCambiar={(v) => cambiarCfg((a) => { a.segPorLikes = v; })} />
           <Campo etiqueta="Segundos por moneda de regalo:" tipo="number" valor={cfg.segPorMoneda} min={0} step={1} alCambiar={(v) => cambiarCfg((a) => { a.segPorMoneda = v; })} />
@@ -150,7 +231,7 @@ export function VistaSubathon({ id }: { id: IdSubathon }) {
         </Nota>
       </Tarjeta>
 
-      <Nota>{`Tamaño recomendado de la fuente en OBS: ${tamano}. Lo sumado se conserva si OBS recarga la fuente.`}</Nota>
+      <Nota>{`Tamaño recomendado de la fuente en OBS: ${bomba ? '600 × 600' : tamano}. Lo sumado se conserva si OBS recarga la fuente.`}</Nota>
     </>
   );
 }

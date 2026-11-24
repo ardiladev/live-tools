@@ -1,0 +1,182 @@
+/* ==========================================================================
+   mascota.css — Modo «Mascota del LIVE» del Jefe (Mascota.tsx)
+   La mascota arriba (cuadrada) y la placa de cristal abajo. Medidas en --u (1 % del lado
+   menor): recomendado 600 × 700 o 1080 × 1080. El color de la mascota llega en --mascota.
+   data-animo: normal | feliz | comiendo | dormida · data-nivel: 1 … 5.
+
+   Secciones: 1. Escena · 2. Dibujo · 3. Caras · 4. Adornos por nivel · 5. Placa · 6. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+.mascota-escena {
+  --u: min(1vw, 1vh);
+  --mascota: #FFC94D;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 1);
+  padding: calc(var(--u) * 3);
+  box-sizing: border-box;
+}
+.mascota-caja { position: relative; width: min(calc(var(--u) * 62), 86vw); aspect-ratio: 1; flex: none; }
+.mascota-dibujo { display: block; width: 100%; height: 100%; overflow: visible; }
+
+
+/* ---------- 2. Dibujo ---------- */
+/* Crece con el nivel (desde abajo): 1 = 62 %, 5 = 100 %. */
+.ma-cuerpo-total { transform-box: view-box; transform-origin: 100px 186px; transform: scale(var(--escala, .62)); transition: transform .9s cubic-bezier(.3, 1.5, .5, 1); }
+.mascota-escena[data-nivel="2"] { --escala: .72; }
+.mascota-escena[data-nivel="3"] { --escala: .82; }
+.mascota-escena[data-nivel="4"] { --escala: .91; }
+.mascota-escena[data-nivel="5"] { --escala: 1; }
+
+.ma-sombra { fill: rgba(0, 0, 0, .35); }
+.ma-cuerpo, .ma-ala, .ma-oreja { fill: var(--mascota); }
+.ma-cuerpo { stroke: rgba(0, 0, 0, .18); stroke-width: 1.5; }
+.ma-volumen { fill: url(#ma-cuerpo); pointer-events: none; }
+.ma-oreja-dentro { fill: #FF9EB5; opacity: .85; }
+.ma-panza { fill: #fff; opacity: .38; }
+.ma-pata { fill: #F59A3C; }
+.ma-ala { filter: brightness(.92); transform-box: fill-box; transform-origin: 50% 20%; }
+.ma-mejilla { fill: #FF7FA0; opacity: .35; transition: opacity .3s; }
+.ma-salto { transform-box: view-box; transform-origin: 100px 186px; animation: respirar 3.2s ease-in-out infinite; }
+
+
+/* ---------- 3. Caras ---------- */
+.ma-cara { display: none; }
+.mascota-escena[data-animo="normal"] .ma-cara-normal,
+.mascota-escena[data-animo="feliz"] .ma-cara-feliz,
+.mascota-escena[data-animo="comiendo"] .ma-cara-comiendo,
+.mascota-escena[data-animo="dormida"] .ma-cara-dormida { display: inline; }
+.ma-ojo { fill: #2A1E14; }
+.ma-brillo { fill: #fff; }
+.ma-ojos { transform-box: fill-box; transform-origin: center; animation: parpadear 4.6s infinite; }
+.ma-trazo { fill: none; stroke: #2A1E14; stroke-width: 3; stroke-linecap: round; }
+.ma-trazo.grueso { stroke-width: 4; }
+.ma-boca { fill: #5A2A1E; }
+.ma-lengua { fill: #FF7F95; }
+.ma-migas { fill: #C98A3A; }
+.ma-mordida { transform-box: fill-box; transform-origin: center; animation: masticar .35s ease-in-out infinite; }
+
+/* Feliz: mejillas encendidas y alitas que aletean. */
+.mascota-escena[data-animo="feliz"] .ma-mejilla { opacity: .8; }
+.mascota-escena[data-animo="feliz"] .ma-ala-izq { animation: aletear-izq .25s ease-in-out infinite; }
+.mascota-escena[data-animo="feliz"] .ma-ala-der { animation: aletear-der .25s ease-in-out infinite; }
+.mascota-escena[data-animo="comiendo"] .ma-salto { animation: rebote .45s ease-in-out infinite; }
+/* Dormida: respira lento, un poco más baja, con zetas. */
+.mascota-escena[data-animo="dormida"] .ma-salto { animation: dormir 4s ease-in-out infinite; }
+.ma-zetas { display: none; fill: #DDE6FF; font: 800 22px/1 var(--fuente, sans-serif); }
+.mascota-escena[data-animo="dormida"] .ma-zetas { display: inline; }
+.ma-zetas text { animation: zeta 3s ease-in-out infinite; }
+.ma-zetas text:nth-child(2) { animation-delay: 1s; font-size: 18px; }
+.ma-zetas text:nth-child(3) { animation-delay: 2s; font-size: 26px; }
+
+
+/* ---------- 4. Adornos por nivel ---------- */
+.ma-n2, .ma-n3, .ma-n4, .ma-n5 { display: none; }
+.mascota-escena:is([data-nivel="2"], [data-nivel="3"], [data-nivel="4"], [data-nivel="5"]) .ma-n2,
+.mascota-escena:is([data-nivel="3"], [data-nivel="4"], [data-nivel="5"]) .ma-n3,
+.mascota-escena:is([data-nivel="4"], [data-nivel="5"]) .ma-n4,
+.mascota-escena[data-nivel="5"] .ma-n5 { display: inline; }
+.ma-tallo { fill: none; stroke: #3F8F3A; stroke-width: 3; stroke-linecap: round; }
+.ma-hoja { fill: #5CC15A; }
+.ma-mono path, .ma-mono circle { fill: #E8508A; }
+.ma-mono circle { filter: brightness(.85); }
+.ma-capa { fill: #7A2E8E; opacity: .95; }
+.ma-corona path { fill: url(#ma-oro); stroke: #8A6A16; stroke-width: 1.2; stroke-linejoin: round; }
+.ma-corona circle { fill: #E8508A; }
+.mascota-escena[data-nivel="5"] .mascota-dibujo { filter: drop-shadow(0 0 18px rgba(255, 215, 106, .55)); }
+
+/* Corazones (likes) y estrellas (nivel nuevo): ocultos hasta que se reinician. */
+.ma-corazones path { fill: #FF5C8A; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.mascota-escena.corazones .ma-corazones path { animation: corazon 1.4s ease-out both; }
+.ma-estrellas path { fill: #FFE066; opacity: 0; transform-box: fill-box; transform-origin: center; }
+.mascota-escena.sube-nivel .ma-estrellas path { animation: estrella 1.6s ease-out both; animation-delay: calc(var(--i) * 60ms); }
+.mascota-escena.sube-nivel .ma-salto { animation: saltito .7s cubic-bezier(.3, 1.6, .5, 1); }
+.cartel-nivel {
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  z-index: 2;
+  padding: calc(var(--u) * .8) calc(var(--u) * 2.2);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #FFF1B8, #E4C257 50%, #B8891F);
+  color: #2A1E05;
+  font-weight: 800;
+  font-size: calc(var(--u) * 3.6);
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.mascota-escena.sube-nivel .cartel-nivel { animation: cartel-nivel 2.8s ease-out both; }
+
+
+/* ---------- 5. Placa ---------- */
+.mascota-placa {
+  display: grid;
+  gap: calc(var(--u) * 1.1);
+  width: min(calc(var(--u) * 80), 94vw);
+  padding: calc(var(--u) * 2) calc(var(--u) * 2.6);
+  box-sizing: border-box;
+}
+.mascota-placa .cabecera { display: flex; align-items: baseline; justify-content: space-between; gap: calc(var(--u) * 2); }
+.mascota-placa .nombre {
+  overflow: hidden;
+  color: var(--nitido);
+  font-weight: 800;
+  font-size: calc(var(--u) * 4.2);
+  text-overflow: ellipsis;
+  text-transform: var(--mayus);
+  letter-spacing: var(--espaciado-widget);
+  white-space: nowrap;
+}
+.mascota-placa .nivel { flex: none; color: var(--oro-texto); font-weight: 700; font-size: calc(var(--u) * 2.8); }
+.mascota-placa .barra { position: relative; height: calc(var(--u) * 4.4); overflow: hidden; border-radius: 999px; background: var(--cristal-claro); }
+.mascota-placa .relleno {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--mascota) 55%, transparent), var(--mascota));
+  box-shadow: 0 0 calc(var(--u) * 1.6) color-mix(in srgb, var(--mascota) 60%, transparent);
+}
+.mascota-placa .relleno.animado { transition: width .7s cubic-bezier(.2, .9, .3, 1); }
+.mascota-placa .cifra {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--nitido);
+  font-weight: 700;
+  font-size: calc(var(--u) * 2.4);
+  font-variant-numeric: tabular-nums;
+  text-shadow: var(--sombra-texto);
+}
+.mascota-placa .accion { min-height: 1.3em; color: var(--texto-sec); font-weight: 600; font-size: calc(var(--u) * 2.6); text-align: center; }
+
+
+/* ---------- 6. Animaciones ---------- */
+@keyframes respirar { 50% { transform: scale(1.025, .975); } }
+@keyframes dormir { 0%, 100% { transform: translateY(4px) scale(1.03, .95); } 50% { transform: translateY(4px) scale(1.06, .92); } }
+@keyframes rebote { 50% { transform: translateY(-4px) scale(1.03, .97); } }
+@keyframes saltito { 40% { transform: translateY(-18px) scale(.96, 1.06); } }
+@keyframes parpadear { 0%, 93%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.1); } }
+@keyframes masticar { 50% { transform: scaleY(.35); } }
+@keyframes aletear-izq { 50% { transform: rotate(-22deg); } }
+@keyframes aletear-der { 50% { transform: rotate(22deg); } }
+@keyframes zeta { 0% { opacity: 0; transform: translateY(6px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
+@keyframes corazon { 0% { opacity: 0; transform: scale(.4); } 25% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: translateY(-40px) scale(.9); } }
+@keyframes estrella { 0% { opacity: 0; transform: scale(.2) rotate(0); } 30% { opacity: 1; transform: scale(1.4) rotate(40deg); } 100% { opacity: 0; transform: scale(.6) rotate(120deg); } }
+@keyframes cartel-nivel {
+  0% { opacity: 0; transform: translate(-50%, -40%) scale(.6); }
+  15%, 80% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, 0) scale(.95); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ma-salto, .ma-ojos, .ma-mordida, .ma-ala, .ma-zetas text { animation: none !important; }
+}

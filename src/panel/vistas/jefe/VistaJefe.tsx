@@ -7,6 +7,8 @@
 // forma de la fuente; «Forma de la fuente en OBS» solo cambia la vista previa y el tamaño sugerido.
 // La tarjeta «Monstruo» elige cuál de los cinco (del menos al más amenazante); solo cambia el
 // dibujo, no las reglas.
+// Modo «Mascota del LIVE» (fase 4): el mismo widget, pero el público hace crecer a una mascota
+// (VistaMascota, abajo).
 // (Port de la sección 3 de legado/js/panel/vistas/jefe.js.)
 // =============================================================================
 
@@ -18,8 +20,42 @@ import { BotonesReloj, PanelReloj, useRelojDeRonda } from '../../componentes/pie
 import { TarjetaWidget, type PruebaWidget } from '../../componentes/TarjetaWidget';
 import { Campo, Casilla, Nota, numero, Segmentado, Tarjeta } from '../../componentes/ui';
 import { temaDe, useAjustesWidget, usarAlmacen } from '../../estado/almacen';
+import { subir } from '../../estado/sincronizar';
 import type { TextosReloj } from '../../piezas';
-import { ID, MINUTOS_MAX, MINUTOS_MIN, minutosDe, POR_DEFECTO, type FormaJefe } from './config';
+import {
+  esMascota, ID, mascotaDe, MINUTOS_MAX, MINUTOS_MIN, minutosDe, POR_DEFECTO, POR_DEFECTO_MASCOTA,
+  type AjustesJefe, type AjustesMascota, type FormaJefe,
+} from './config';
+
+const MODOS = [['jefe', 'Jefe del LIVE'], ['mascota', 'Mascota del LIVE']] as const;
+
+const PRUEBAS_MASCOTA: PruebaWidget[] = [
+  { texto: '+100 likes', evento: (n) => ({ tipo: 'like', usuario: n, cantidad: 100, total: 0, propios: 100 }) },
+  { texto: 'Regalo de 10', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '0', nombre: 'Regalo', cantidad: 1, diamantes: 10, imagen: '' }) },
+  { texto: 'Mensaje en el chat', evento: (n) => ({ tipo: 'chat', usuario: n, texto: '¡Hola!' }) },
+  { texto: 'Regalo de 100', evento: (n) => ({ tipo: 'regalo', usuario: n, giftId: '0', nombre: 'Regalo', cantidad: 1, diamantes: 100, imagen: '' }) },
+];
+
+/** Elegir entre el jefe y la mascota (el mismo widget y la misma URL). */
+function TarjetaModo({ cfg, cambiarCfg }: { cfg: AjustesJefe; cambiarCfg: (r: (a: AjustesJefe) => void) => void }) {
+  const mascota = esMascota(cfg);
+  return (
+    <div className="opciones-conteo">
+      <h3 className="subtitulo">Modo de juego</h3>
+      <Segmentado
+        etiqueta="Cómo se juega:"
+        opciones={MODOS}
+        valor={mascota ? 'mascota' : 'jefe'}
+        alCambiar={(v) => { cambiarCfg((a) => { a.modo = v; a.ronda = Date.now(); a.reloj = { e: 'listo', fin: 0, r: 0 }; }); void subir(ID); }}
+      />
+      <Nota>
+        {mascota
+          ? 'Mascota del LIVE: una mascota que crece con los regalos (le dan de comer), se alegra con los likes y se duerme si nadie escribe en el chat. Tiene 5 niveles, de Bebé a Leyenda.'
+          : 'Jefe del LIVE: el público le quita vida a un monstruo antes de que se acabe el tiempo. Prueba la «Mascota del LIVE»: el mismo widget, pero el público la hace crecer.'}
+      </Nota>
+    </div>
+  );
+}
 
 // Desde "Tiempo agotado", iniciar es empezar una raid nueva (vida llena).
 const TEXTOS: TextosReloj = {
@@ -66,6 +102,11 @@ const FORMAS = [['franja', 'Franja'], ['escenario', 'Escenario']] as const satis
 
 export function VistaJefe() {
   const [cfg, cambiarCfg] = useAjustesWidget(ID, POR_DEFECTO);
+  if (esMascota(cfg)) return <VistaMascota cfg={cfg} cambiarCfg={cambiarCfg} />;
+  return <VistaRaid cfg={cfg} cambiarCfg={cambiarCfg} />;
+}
+
+function VistaRaid({ cfg, cambiarCfg }: { cfg: AjustesJefe; cambiarCfg: (r: (a: AjustesJefe) => void) => void }) {
   const reloj = useRelojDeRonda({ id: ID, ajustes: cfg, cambiarAjustes: cambiarCfg, duracionS: Math.round(minutosDe(cfg) * 60), textos: TEXTOS });
   const escenario = cfg.forma === 'escenario';
 
@@ -100,6 +141,7 @@ export function VistaJefe() {
         )}
         personalizar={(
           <>
+            <TarjetaModo cfg={cfg} cambiarCfg={cambiarCfg} />
             <Casilla texto="Los ataques solo cuentan con el reloj en marcha" marcada={cfg.soloConReloj} alCambiar={(v) => cambiarCfg((a) => { a.soloConReloj = v; })} />
             <Casilla texto="Sonidos (últimos segundos, victoria y tiempo agotado)" marcada={cfg.sonido} alCambiar={(v) => cambiarCfg((a) => { a.sonido = v; })} />
             <EditorEstilo id={ID} />
@@ -146,6 +188,63 @@ export function VistaJefe() {
       {escenario
         ? <Nota>Tamaño recomendado de la fuente en OBS: 1280 × 720 o 1080 × 1080, con el monstruo en grande arriba de la barra. El widget se acomoda solo a la forma de la fuente. El daño de la raid se conserva si OBS recarga la fuente.</Nota>
         : <Nota>Tamaño recomendado de la fuente en OBS: 1920 × 300, arriba de la escena. El daño de la raid se conserva si OBS recarga la fuente.</Nota>}
+    </>
+  );
+}
+
+
+/** Modo «Mascota del LIVE»: nombre, color, cuánto crece y cuándo se duerme. */
+function VistaMascota({ cfg, cambiarCfg }: { cfg: AjustesJefe; cambiarCfg: (r: (a: AjustesJefe) => void) => void }) {
+  const m = mascotaDe(cfg);
+  const cambiar = (cambios: Partial<AjustesMascota>): void => cambiarCfg((a) => { a.mascota = { ...POR_DEFECTO_MASCOTA, ...(a.mascota || {}), ...cambios }; });
+  const partes: string[] = [];
+  if (m.porLike) partes.push(`${numero(Math.ceil(m.puntosNivel / m.porLike))} likes`);
+  if (m.porMoneda) partes.push(`${numero(Math.ceil(m.puntosNivel / m.porMoneda))} monedas en regalos`);
+
+  return (
+    <>
+      <TarjetaWidget
+        id={ID}
+        titulo="Mascota del LIVE"
+        archivo="jefe.html"
+        forma="vertical"
+        sinRecargar={['ro', 'ti', 'mc', 'hp', 'dl', 'dr', 'zz']}
+        campos={(
+          <>
+            <Campo etiqueta="Nombre de la mascota:" valor={m.nombre} maxLength={30} alCambiar={(v) => cambiar({ nombre: v })} />
+            <Campo etiqueta="Color:" tipo="color" valor={m.color} alCambiar={(v) => cambiar({ color: v })} />
+            <Campo etiqueta="Puntos para subir de nivel:" tipo="number" valor={m.puntosNivel} min={1} step={100} alCambiar={(v) => cambiar({ puntosNivel: v })} />
+          </>
+        )}
+        personalizar={(
+          <>
+            <TarjetaModo cfg={cfg} cambiarCfg={cambiarCfg} />
+            <Casilla texto="Sonidos (comer y subir de nivel)" marcada={cfg.sonido} alCambiar={(v) => cambiarCfg((a) => { a.sonido = v; })} />
+            <EditorEstilo id={ID} />
+          </>
+        )}
+        pruebas={PRUEBAS_MASCOTA}
+      />
+
+      <Tarjeta titulo="Cómo crece" ancha>
+        <div className="campos">
+          <Campo etiqueta="Puntos por like:" tipo="number" valor={m.porLike} min={0} step={1} alCambiar={(v) => cambiar({ porLike: v })} />
+          <Campo etiqueta="Puntos por moneda de regalo:" tipo="number" valor={m.porMoneda} min={0} step={1} alCambiar={(v) => cambiar({ porMoneda: v })} />
+          <Campo etiqueta="Monedas de un regalo sin precio:" tipo="number" valor={cfg.valorRegalo} min={0} step={1} alCambiar={(v) => cambiarCfg((a) => { a.valorRegalo = v; })} />
+          <Campo etiqueta="Segundos sin chat para dormirse (0 = nunca):" tipo="number" valor={m.sueno} min={0} step={10} alCambiar={(v) => cambiar({ sueno: v })} />
+        </div>
+        <p className="nota">{partes.length ? `Cada nivel pide ${partes.join(' o ')} (o una mezcla).` : 'Con los puntos en 0, la mascota no crece.'}</p>
+        <div className="fila-acciones separado-arriba">
+          <button onClick={() => { cambiarCfg((a) => { a.ronda = Date.now(); }); void subir(ID); }} title="La mascota vuelve a ser bebé (nivel 1)">Volver a empezar</button>
+        </div>
+        <Nota>
+          Los regalos le dan de comer (y la despiertan), los likes la ponen feliz y un mensaje en el chat la despierta. Niveles: Bebé, Pequeña,{' '}
+          Juguetona (con moño), Grande (con capa) y Leyenda (con corona); con cada uno se ve más grande. El panel no ve sus puntos: los lleva el widget{' '}
+          en OBS y se conservan si OBS recarga la fuente.
+        </Nota>
+      </Tarjeta>
+
+      <Nota>Tamaño recomendado de la fuente en OBS: 600 × 700 (o 1080 × 1080).</Nota>
     </>
   );
 }

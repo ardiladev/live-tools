@@ -7,6 +7,10 @@
 //   sin precio · tv = texto de victoria · sr = solo con el reloj en marcha (1/0) · s = sonido (1/0)
 //   mo = monstruo: gelaton | golem | dragon | rey (sin `mo` = bestia, el de siempre; ver
 //        monstruos/catalogo.ts)
+//   md = 'mascota': MASCOTA DEL LIVE (2026-11-24, fase 4; reglas en motorMascota.ts): en vez de quitar
+//        vida, el público la hace crecer. Con ella, hp = puntos por nivel, dl = puntos por like,
+//        dr = puntos por moneda, mc = color de la mascota y zz = segundos sin chat para dormirse
+//        (0 = nunca). No usa reloj.
 // =============================================================================
 
 import type { RelojRonda } from '../../tipos/reloj';
@@ -24,6 +28,9 @@ export interface ConfigJefe extends ConfigBase {
   sr?: number;
   s?: number;
   mo?: string;
+  md?: 'mascota';
+  mc?: string;
+  zz?: number;
 }
 
 /** Fase del jefe: la del reloj, salvo 'escapo' (se acabó el tiempo) y 'vencido'. */

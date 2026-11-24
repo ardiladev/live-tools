@@ -14,6 +14,8 @@
 //        escribiendo en el chat y Hora feliz (ver src/nucleo/conteo.ts); cada equipo lleva entonces
 //        `k`: sus palabras para unirse por el chat. Sin ellas, como siempre: solo regalos.
 //   co, cs, rc = al terminar: corona, ruleta de castigos y Cola de retos (ver src/nucleo/final.ts)
+//   md = 'subasta': SUBASTA DE CANCIONES (2026-11-24, fase 4; Subasta.tsx): las mismas reglas, pero
+//        cada equipo es una canción y se ve como un tablero de subasta; ti = título del tablero.
 // =============================================================================
 
 import { normalizarPalabras, type ConfigConteo } from '../../nucleo/conteo';
@@ -44,6 +46,8 @@ export interface ConfigActivacion extends ConfigBase, ConfigConteo, ConfigFinal 
   ro?: number;
   s?: number;
   t?: RelojRonda;
+  md?: 'subasta';
+  ti?: string;
 }
 
 /** Un equipo ya normalizado (lo que usa el motor). */

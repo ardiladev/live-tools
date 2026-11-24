@@ -1,0 +1,162 @@
+/* ==========================================================================
+   bomba.css — Modo «Bomba de tiempo» del Subathon (Bomba.tsx)
+   La bomba en el centro (cuadrada, ocupa lo que permita la fuente), el título arriba y el
+   estado (o el reto, al explotar) abajo. Medidas en --u (1 % del lado menor): recomendado
+   600 × 600 o más. La fase llega en data-fase: listo | corre | pausa | fin.
+
+   Secciones: 1. Escena · 2. Bomba · 3. Mecha y chispa · 4. Fases · 5. Explosión · 6. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+.bomba-escena {
+  --u: min(1vw, 1vh);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 1.5);
+  padding: calc(var(--u) * 3);
+  box-sizing: border-box;
+  text-shadow: var(--sombra-texto);
+}
+.bomba-titulo {
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 5.2);
+  letter-spacing: .22em;
+  text-align: center;
+  text-transform: var(--mayus);
+}
+.bomba-caja {
+  position: relative;
+  flex: none;
+  width: min(calc(var(--u) * 64), 80vw);
+  aspect-ratio: 1;
+}
+.bomba-dibujo { display: block; width: 100%; height: 100%; overflow: visible; }
+.bomba-estado {
+  min-height: 1.2em;
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: calc(var(--u) * 3.2);
+  letter-spacing: var(--espaciado-widget);
+  text-align: center;
+  text-transform: var(--mayus);
+  opacity: .85;
+}
+
+/* La cuenta atrás sobre el cuerpo (su centro está en 140/300, 172/300). */
+.bomba-tiempo,
+.bomba-boom {
+  position: absolute;
+  top: 57.3%;
+  left: 46.7%;
+  color: #FFF8E6;
+  font-weight: 800;
+  font-size: calc(var(--u) * 11);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  transition: color .3s ease;
+}
+.bomba-boom { color: #FFE066; font-size: calc(var(--u) * 14); letter-spacing: .02em; }
+.bomba-boom:empty, .bomba-tiempo:empty { display: none; }
+
+
+/* ---------- 2. Bomba ---------- */
+.bo-sombra { fill: rgba(0, 0, 0, .45); }
+.bo-cuerpo {
+  fill: url(#bo-cuerpo);
+  stroke: var(--borde-color, #D4AF37);
+  stroke-opacity: .55;
+  stroke-width: 2.5;
+}
+.bo-reflejo { fill: #fff; opacity: .22; }
+.bo-tapa { fill: url(#bo-tapa); stroke: #5C4510; stroke-width: 1.5; }
+.bo-tapa-brillo { fill: #fff; opacity: .35; }
+.bo-bomba { transform-origin: 140px 172px; transform-box: view-box; }
+
+
+/* ---------- 3. Mecha y chispa ---------- */
+.bo-mecha,
+.bo-mecha-quemada { fill: none; stroke-linecap: round; stroke-width: 7; }
+.bo-mecha { stroke: #C9A36A; stroke-dasharray: 0 1000; }
+.bo-mecha-quemada { stroke: rgba(255, 255, 255, .08); stroke-dasharray: 2 6; }
+.bo-chispa { pointer-events: none; }
+.bo-chispa > * { transform-box: fill-box; transform-origin: center; }
+.bo-chispa circle { animation: parpadeo-chispa .16s steps(2) infinite; }
+.bo-destellos { stroke: #FFE066; stroke-width: 2.4; stroke-linecap: round; animation: girar-chispa .5s linear infinite; }
+/* Lista (sin encender) o en pausa: la chispa apagada o tenue. */
+.bomba-escena[data-fase="listo"] .bo-chispa { opacity: 0; }
+.bomba-escena[data-fase="pausa"] .bo-chispa { opacity: .4; }
+.bomba-escena[data-fase="pausa"] .bomba-tiempo { animation: parpadeo-bomba 1.4s ease-in-out infinite; }
+
+
+/* ---------- 4. Fases ---------- */
+/* Menos de 10 s: tiembla y el cuerpo se pone rojo. */
+.bomba-escena.urgente .bo-bomba { animation: temblor .14s linear infinite; }
+.bomba-escena.urgente .bo-cuerpo { stroke: #FF4D4D; stroke-opacity: 1; filter: drop-shadow(0 0 14px rgba(255, 60, 60, .85)); }
+.bomba-escena.urgente .bomba-tiempo { color: #FF6B6B; }
+/* Chispazo: cada regalo que la acelera. */
+.bomba-escena.chispazo .bo-chispa circle { animation: chispazo .5s ease-out, parpadeo-chispa .16s steps(2) infinite; }
+
+/* +0:03 (likes, enfría) · −0:12 (regalo, acelera) */
+.bomba-caja .sumas { position: absolute; top: 34%; right: -6%; }
+.bomba-caja .suma { font-size: calc(var(--u) * 6); }
+.bomba-caja .suma.resta { color: #FF9A3C; text-shadow: 0 0 14px rgba(255, 122, 0, .8), var(--sombra-texto); }
+.bomba-caja .suma.enfria { color: #9BE3FF; text-shadow: 0 0 14px rgba(80, 200, 255, .8), var(--sombra-texto); }
+
+
+/* ---------- 5. Explosión ---------- */
+.bo-explosion { display: none; }
+.bomba-escena[data-fase="fin"] .bo-bomba { animation: estallar .35s ease-in forwards; }
+.bomba-escena[data-fase="fin"] .bo-explosion { display: inline; }
+.bo-destello { fill: url(#bo-chispa); transform-box: fill-box; transform-origin: center; animation: destello-bomba 1.1s ease-out both; }
+.bo-rayo { fill: #FFD23F; opacity: 0; transform-box: view-box; animation: rayo .9s ease-out both; }
+.bo-humo { fill: #3A3A40; opacity: 0; transform-box: fill-box; transform-origin: center; animation: humo 2.6s ease-out forwards; }
+.bomba-escena[data-fase="fin"] .bomba-boom { animation: boom .7s cubic-bezier(.2, 1.6, .4, 1) both; }
+
+.bomba-reto {
+  display: grid;
+  justify-items: center;
+  gap: calc(var(--u) * .8);
+  max-width: 92vw;
+  padding: calc(var(--u) * 2) calc(var(--u) * 4);
+  text-align: center;
+  animation: reto-entra .6s .5s ease-out both;
+}
+.etiqueta-reto {
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 2.6);
+  letter-spacing: .24em;
+  text-transform: uppercase;
+}
+.texto-reto { color: var(--nitido); font-weight: 800; font-size: calc(var(--u) * 5); line-height: 1.15; }
+
+
+/* ---------- 6. Animaciones ---------- */
+@keyframes parpadeo-chispa { 50% { opacity: .65; transform: scale(.85); } }
+@keyframes girar-chispa { to { transform: rotate(360deg); } }
+@keyframes chispazo { 0% { transform: scale(2.6); } 100% { transform: scale(1); } }
+@keyframes temblor {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  25% { transform: translate(-2px, 1px) rotate(-1deg); }
+  75% { transform: translate(2px, -1px) rotate(1deg); }
+}
+@keyframes parpadeo-bomba { 50% { opacity: .45; } }
+@keyframes estallar { 60% { transform: scale(1.15); opacity: 1; } 100% { transform: scale(.2); opacity: 0; } }
+@keyframes destello-bomba { 0% { transform: scale(.1); opacity: 1; } 40% { opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+@keyframes rayo { 0% { opacity: 0; transform: scale(.2); } 25% { opacity: 1; } 100% { opacity: 0; transform: scale(1.25); } }
+@keyframes humo { 0% { opacity: 0; transform: scale(.3); } 25% { opacity: .85; } 100% { opacity: 0; transform: scale(1.8) translateY(-18%); } }
+@keyframes boom { from { transform: translate(-50%, -50%) scale(.2); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+@keyframes reto-entra { from { opacity: 0; transform: translateY(20%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bo-chispa circle, .bo-destellos, .bomba-escena.urgente .bo-bomba, .bo-humo, .bo-rayo { animation: none !important; }
+}

@@ -1,0 +1,136 @@
+/* ==========================================================================
+   mapa.css — Modo «Mapa de aventura» de la Bóveda (Mapa.tsx)
+   Arriba el título, el progreso y las monedas; en el centro el tablero (el camino en SVG que
+   se estira a lo ancho, y encima las paradas y la ficha, en % del tablero); abajo la pista o
+   el cartel de la casilla. Medidas en --u (el menor entre 1 % del ancho y 2,6 % del alto):
+   recomendado 1200 × 500.
+
+   Secciones: 1. Escena · 2. Camino · 3. Paradas · 4. Ficha · 5. Carteles · 6. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+.mapa-escena {
+  --u: min(1vw, 2.6vh);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--u) * 1);
+  padding: calc(var(--u) * 2) calc(var(--u) * 3);
+  box-sizing: border-box;
+  text-shadow: var(--sombra-texto);
+}
+.mapa-cabecera { display: flex; align-items: baseline; gap: calc(var(--u) * 2.4); }
+.mapa-titulo { color: var(--oro-texto); font-weight: 800; font-size: calc(var(--u) * 3); letter-spacing: .12em; text-transform: var(--mayus); }
+.mapa-progreso { flex: 1; color: var(--texto-sec); font-weight: 600; font-size: calc(var(--u) * 1.8); }
+.mapa-monedas { color: var(--nitido); font-weight: 800; font-size: calc(var(--u) * 2.2); font-variant-numeric: tabular-nums; }
+.mapa-tablero { position: relative; flex: 1; min-height: 0; }
+
+
+/* ---------- 2. Camino ---------- */
+.mapa-caminos { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.mapa-camino, .mapa-recorrido { fill: none; vector-effect: non-scaling-stroke; stroke-linecap: round; }
+.mapa-camino { stroke: rgba(255, 255, 255, .28); stroke-width: calc(var(--u) * .7); stroke-dasharray: calc(var(--u) * 1) calc(var(--u) * 1.2); }
+.mapa-recorrido {
+  stroke: var(--activo, #F3DFA2);
+  stroke-width: calc(var(--u) * 1);
+  filter: drop-shadow(0 0 calc(var(--u) * .6) rgba(212, 175, 55, .8));
+}
+
+
+/* ---------- 3. Paradas ---------- */
+.parada {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: calc(var(--u) * .3);
+  width: calc(var(--u) * 9);
+  transform: translate(-50%, calc(var(--u) * -2.8));
+}
+.icono-parada {
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 5.6);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(12, 12, 16, .82);
+  box-shadow: 0 0 0 calc(var(--u) * .3) var(--anillo, rgba(255, 255, 255, .35));
+  font-size: calc(var(--u) * 2.8);
+  line-height: 1;
+  transition: transform .4s, box-shadow .4s;
+}
+.tipo-p { --anillo: #6EE7A0; }
+.tipo-r { --anillo: #FF9A3C; }
+.tipo-t { --anillo: #B388FF; }
+.tipo-salida { --anillo: #C9CDD4; }
+.tipo-tesoro { --anillo: #D4AF37; }
+.tipo-tesoro .icono-parada { width: calc(var(--u) * 7.4); font-size: calc(var(--u) * 3.8); box-shadow: 0 0 0 calc(var(--u) * .35) var(--anillo), 0 0 calc(var(--u) * 3) rgba(212, 175, 55, .7); }
+.parada.pasada .icono-parada { opacity: .55; filter: grayscale(.4); }
+.parada.actual .icono-parada { transform: scale(1.18); box-shadow: 0 0 0 calc(var(--u) * .4) var(--anillo), 0 0 calc(var(--u) * 2.6) var(--anillo); }
+.numero-parada { color: var(--nitido); font-weight: 800; font-size: calc(var(--u) * 1.4); letter-spacing: .06em; }
+.texto-parada {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: calc(var(--u) * 1.2);
+  line-height: 1.2;
+  text-align: center;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.parada.pasada .texto-parada { opacity: .5; }
+
+
+/* ---------- 4. Ficha ---------- */
+.ficha-mapa {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 4.4);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #FFF4C2, #E4C257 50%, #8A6A16);
+  box-shadow: 0 calc(var(--u) * .4) calc(var(--u) * 1.2) rgba(0, 0, 0, .6), 0 0 0 calc(var(--u) * .25) #FFF1B8;
+  color: #4A3608;
+  font-size: calc(var(--u) * 2.4);
+  text-shadow: none;
+  transform: translate(-50%, calc(var(--u) * -7.2));
+  transition: left .9s cubic-bezier(.4, 1.3, .5, 1), top .9s cubic-bezier(.4, 1.3, .5, 1);
+  animation: flotar-ficha 1.8s ease-in-out infinite;
+}
+
+
+/* ---------- 5. Carteles ---------- */
+.pista-mapa { min-height: 1.3em; color: var(--texto-sec); font-weight: 600; font-size: calc(var(--u) * 1.8); text-align: center; }
+.cartel-mapa {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: calc(var(--u) * 1.6);
+  align-self: center;
+  max-width: 94%;
+  padding: calc(var(--u) * 1) calc(var(--u) * 3);
+  border-radius: 999px;
+  animation: cartel-mapa 4.6s ease-out both;
+}
+.cartel-mapa.tesoro { animation: aparece-mapa .8s cubic-bezier(.2, 1.4, .4, 1) both; box-shadow: 0 0 0 calc(var(--u) * .3) #D4AF37, 0 0 calc(var(--u) * 4) rgba(212, 175, 55, .7); }
+.cartel-mapa.tipo-t { box-shadow: 0 0 0 calc(var(--u) * .25) #B388FF; }
+.cartel-mapa.tipo-r { box-shadow: 0 0 0 calc(var(--u) * .25) #FF9A3C; }
+.cartel-mapa.tipo-p { box-shadow: 0 0 0 calc(var(--u) * .25) #6EE7A0; }
+.etiqueta-cartel { flex: none; color: var(--oro-texto); font-weight: 700; font-size: calc(var(--u) * 1.8); letter-spacing: .1em; text-transform: uppercase; }
+.texto-cartel { color: var(--nitido); font-weight: 800; font-size: calc(var(--u) * 2.6); }
+
+
+/* ---------- 6. Animaciones ---------- */
+@keyframes flotar-ficha { 50% { translate: 0 calc(var(--u) * -.6); } }
+@keyframes cartel-mapa { 0% { opacity: 0; transform: translateY(40%) scale(.9); } 8%, 88% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes aparece-mapa { from { opacity: 0; transform: scale(.6); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ficha-mapa { transition: none; animation: none; }
+  .cartel-mapa { animation-duration: .01s; animation-delay: 4.5s; }
+}

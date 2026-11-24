@@ -1,0 +1,144 @@
+/* ==========================================================================
+   dado.css — Modo «Dado del reto» del Tragamonedas (Dado.tsx)
+   El dado (cubo 3D de cristal con puntos de oro) a la izquierda y la lista de opciones a la
+   derecha; arriba el aviso y abajo la opción que salió. Medidas en --u (de tragamonedas.css:
+   el menor entre 1 % del ancho y 2,4 % del alto): recomendado 1200 × 500.
+   El giro: --gx y --gy (Dado.tsx suman vueltas en cada tiro y la transición lo hace rodar).
+
+   Secciones: 1. Escena · 2. Dado · 3. Opciones · 4. Resultado · 5. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+.escena-dado {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 1.6);
+  padding: calc(var(--u) * 2);
+  box-sizing: border-box;
+  transition: opacity .6s ease;
+}
+.oculta-dado { opacity: 0; }
+.mesa-dado { display: flex; align-items: center; gap: calc(var(--u) * 6); }
+
+
+/* ---------- 2. Dado ---------- */
+.caja-dado {
+  --lado: calc(var(--u) * 18);
+  position: relative;
+  width: var(--lado);
+  height: var(--lado);
+  perspective: calc(var(--u) * 90);
+}
+.dado {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(var(--gx, 0deg)) rotateY(var(--gy, 0deg));
+  transition: transform 2.2s cubic-bezier(.15, .7, .2, 1);
+}
+.dado.tirando { animation: brinco 2.2s ease-out; }
+.cara-dado {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 14%;
+  box-sizing: border-box;
+  border-radius: 18%;
+  background:
+    radial-gradient(circle at 30% 25%, rgba(255, 255, 255, .28), transparent 60%),
+    linear-gradient(160deg, #26262E, #0C0C10);
+  box-shadow: inset 0 0 0 calc(var(--u) * .3) var(--borde-color, #D4AF37), inset 0 0 calc(var(--u) * 3) rgba(0, 0, 0, .6);
+  backface-visibility: hidden;
+}
+.cara-1 { transform: translateZ(calc(var(--lado) / 2)); }
+.cara-2 { transform: rotateY(90deg) translateZ(calc(var(--lado) / 2)); }
+.cara-3 { transform: rotateX(90deg) translateZ(calc(var(--lado) / 2)); }
+.cara-4 { transform: rotateX(-90deg) translateZ(calc(var(--lado) / 2)); }
+.cara-5 { transform: rotateY(-90deg) translateZ(calc(var(--lado) / 2)); }
+.cara-6 { transform: rotateY(180deg) translateZ(calc(var(--lado) / 2)); }
+.cara-dado .punto {
+  align-self: center;
+  justify-self: center;
+  width: 62%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #FFF4C2, #E4C257 45%, #8A6A16);
+  box-shadow: 0 0 calc(var(--u) * .8) rgba(228, 194, 87, .6);
+}
+.sombra-dado {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: -18%;
+  height: 10%;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, .45);
+  filter: blur(calc(var(--u) * .8));
+}
+
+
+/* ---------- 3. Opciones ---------- */
+.opciones-dado { padding: calc(var(--u) * 2) calc(var(--u) * 3); min-width: calc(var(--u) * 34); }
+.titulo-dado {
+  margin-bottom: calc(var(--u) * 1.2);
+  color: var(--oro-texto);
+  font-weight: 700;
+  font-size: calc(var(--u) * 2.2);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+.opciones-dado ol { display: grid; gap: calc(var(--u) * .7); margin: 0; padding: 0; list-style: none; }
+.opciones-dado li {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+  padding: calc(var(--u) * .4) calc(var(--u) * .8);
+  border-radius: calc(var(--u) * 1);
+  color: var(--texto-sec);
+  font-weight: 600;
+  font-size: calc(var(--u) * 2.3);
+  transition: background .3s, color .3s;
+}
+.numero-dado {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: calc(var(--u) * 3);
+  aspect-ratio: 1;
+  border-radius: 22%;
+  background: rgba(255, 255, 255, .1);
+  color: var(--oro-texto);
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.7);
+}
+.opciones-dado li.salio { background: rgba(212, 175, 55, .22); color: var(--nitido); }
+.opciones-dado li.salio .numero-dado { background: linear-gradient(180deg, #FFF1B8, #E4C257 50%, #B8891F); color: #2A1E05; }
+
+
+/* ---------- 4. Resultado ---------- */
+.resultado-dado {
+  min-height: 1.2em;
+  color: var(--nitido);
+  font-weight: 800;
+  font-size: calc(var(--u) * 4.2);
+  letter-spacing: .04em;
+  text-align: center;
+  text-shadow: var(--sombra-texto);
+}
+.resultado-dado.recien { color: var(--activo); animation: aparece-resultado .6s cubic-bezier(.2, 1.5, .4, 1) both; }
+
+
+/* ---------- 5. Animaciones ---------- */
+@keyframes brinco { 20% { translate: 0 calc(var(--u) * -6); } 45% { translate: 0 0; } 60% { translate: 0 calc(var(--u) * -2); } 75% { translate: 0 0; } }
+@keyframes aparece-resultado { from { opacity: 0; transform: scale(.6); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .dado { transition-duration: .2s; }
+  .dado.tirando, .resultado-dado.recien { animation: none; }
+}

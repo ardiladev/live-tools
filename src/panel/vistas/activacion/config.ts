@@ -5,6 +5,8 @@
 // (la clave se llama `barras` desde la primera versión); al widget van solo los que están en
 // juego. Nada bloquea el envío: si bloqueara, el reloj tampoco llegaría a OBS. Los problemas se
 // avisan en la vista. (Port de las secciones 1 y 2 de legado/js/panel/vistas/activacion.js.)
+// Subasta de canciones (fase 4): `modo: 'subasta'` y `tituloSubasta` (OPCIONALES: sin tocarlos,
+// la configuración queda igual que siempre). Cada equipo es una canción.
 // =============================================================================
 
 import type { EstadoPanel } from '../../../tipos/panel';
@@ -47,7 +49,13 @@ export type AjustesActivacion = {
   reloj: RelojRonda;
   /** Los 4 equipos. */
   barras: EquipoAjustes[];
+  /** 'subasta' = Subasta de canciones (sin el campo, la barra de siempre). */
+  modo?: 'barra' | 'subasta';
+  tituloSubasta?: string;
 } & AjustesConteo & AjustesFinal;
+
+export const TITULO_SUBASTA = 'Subasta de canciones';
+export const esSubasta = (a: AjustesActivacion): boolean => a.modo === 'subasta';
 
 export const POR_DEFECTO: AjustesActivacion = {
   sonido: true,
@@ -101,6 +109,7 @@ export function configActivacion(estado: EstadoPanel): ConfigActivacion {
     eq, pr: preciosDelCatalogo(estado), ro: cfg.ronda, s: cfg.sonido ? 1 : 0, t: { ...cfg.reloj, d: duracionDe(cfg) },
     ...claveConteo(cfg), // módulos: solo si se cambiaron
     ...claveFinal(cfg, cfg.castigoACola ? idColaDe(estado) : ''),
+    ...(esSubasta(cfg) ? { md: 'subasta' as const, ti: textoLimpio(cfg.tituloSubasta ?? TITULO_SUBASTA).slice(0, 40) } : {}),
   };
 }
 

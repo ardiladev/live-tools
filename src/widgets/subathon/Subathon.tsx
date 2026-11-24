@@ -4,7 +4,8 @@
 //
 // Una píldora de cristal con el título, el reloj (siempre con horas), el estado y el "+1:30"
 // que sube cada vez que se suma tiempo. Reglas en motor.ts; estilos en subathon.css (y
-// extensible.css para la meta), portados tal cual.
+// extensible.css para la meta), portados tal cual. Con `md: 'bomba'` se ve la Bomba de tiempo
+// (Bomba.tsx): las mismas reglas, pero los regalos restan.
 // =============================================================================
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
@@ -13,6 +14,7 @@ import { useIntervalo } from '../../hooks/useIntervalo';
 import { useMotor } from '../../hooks/useMotor';
 import { useReiniciarAnimacion } from '../../hooks/useReiniciarAnimacion';
 import { useWidget } from '../../hooks/useWidget';
+import { Bomba } from './Bomba';
 import type { FaseSubathon } from './config';
 import { crearMotorSubathon, faseDe, formatoLargo, restanteDe, URGENTE_MS } from './motor';
 import './subathon.css';
@@ -45,6 +47,15 @@ export function Subathon({ extensible = false }: { extensible?: boolean }) {
     estado.pulsos > 0 && 'pulso', estado.metasLogradas > 0 && 'meta-lograda',
   ].filter(Boolean).join(' ');
   const cumplida = estado.monedas >= estado.meta;
+
+  if (estado.modo === 'bomba' && !extensible) {
+    return (
+      <>
+        <Bomba estado={estado} fase={fase} queda={queda} alQuitarFlotante={() => motor.quitarFlotante()} />
+        <PildoraEstado widget={widget} />
+      </>
+    );
+  }
 
   return (
     <>

@@ -7,10 +7,11 @@
 // Reglas en motor.ts; estilos en activacion.css (portado tal cual).
 // Cuadrantes y fichas se rehacen cuando cambia cuántos equipos hay (key con la cantidad), como
 // en el original.
+// Con `md: 'subasta'` se ve la «Subasta de canciones» (Subasta.tsx): mismo motor, otro dibujo.
 // Secciones: 1. Widget · 2. Cuadrante · 3. Ficha de un equipo
 // =============================================================================
 
-import { useEffect, useRef, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { FinalJuego } from '../../componentes/FinalJuego';
 import { conFotos, Fotos } from '../../componentes/Fotos';
 import { PildoraEstado } from '../../componentes/PildoraEstado';
@@ -21,7 +22,8 @@ import { useRondaReloj } from '../../hooks/useRondaReloj';
 import { useWidget } from '../../hooks/useWidget';
 import { formatoReloj } from '../../nucleo/reloj';
 import type { EstadoReloj } from '../../tipos/reloj';
-import type { EquipoActivacion } from './config';
+import type { ConfigActivacion, EquipoActivacion } from './config';
+import { Subasta } from './Subasta';
 import {
   ANCHO_ETIQUETA, anchos, avisoDe, crearMotorActivacion, quienGana, type EstadoActivacion, type MotorActivacion,
 } from './motor';
@@ -38,7 +40,14 @@ const formato = new Intl.NumberFormat('es-CO');
 
 export function Activacion() {
   const [estado, motor] = useMotor(crearMotorActivacion);
-  const widget = useWidget({ alConfig: motor.aplicarConfig, alEvento: motor.alEvento });
+  const [subasta, setSubasta] = useState<string | null>(null); // título de la subasta (null = la barra de siempre)
+  const widget = useWidget<ConfigActivacion>({
+    alConfig: (cfg) => {
+      motor.aplicarConfig(cfg);
+      setSubasta(cfg.md === 'subasta' ? String(cfg.ti ?? 'Subasta de canciones').slice(0, 40) : null);
+    },
+    alEvento: motor.alEvento,
+  });
   // El reloj se repinta cada 200 ms (setInterval: sigue aunque la página no se esté dibujando).
   const lectura = useRondaReloj(estado.reloj);
 
@@ -53,6 +62,15 @@ export function Activacion() {
   const aviso = avisoDe(estado, lectura, Date.now());
   const urgente = lectura.estado === 'corre' && lectura.restanteMs <= 10000;
   const n = equipos.length;
+
+  if (subasta !== null) {
+    return (
+      <>
+        <Subasta estado={estado} motor={motor} lectura={lectura} titulo={subasta} />
+        <PildoraEstado widget={widget} />
+      </>
+    );
+  }
 
   return (
     <>

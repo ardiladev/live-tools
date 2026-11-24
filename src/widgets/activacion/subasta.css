@@ -1,0 +1,151 @@
+/* ==========================================================================
+   subasta.css — Modo «Subasta de canciones» de la Barra de activación (Subasta.tsx)
+   Arriba el título y el reloj; en el centro el tablero (una fila por canción, ordenadas por lo
+   que llevan: cada fila se coloca con top = --puesto × alto de fila, así al pasarse una a otra
+   se deslizan); abajo el aviso o, al cerrar, «¡Se baila!». Medidas en --u (activacion.css:
+   el menor entre 1 % del ancho y 3,4 % del alto): recomendado 1200 × 700.
+   El color de cada canción llega en --color.
+
+   Secciones: 1. Escena · 2. Tablero · 3. Fila · 4. Se baila · 5. Animaciones
+   ========================================================================== */
+
+
+/* ---------- 1. Escena ---------- */
+.subasta-escena {
+  --u: min(1vw, 1.5vh);
+  --fila: calc(var(--u) * 10);
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 2);
+  padding: calc(var(--u) * 3);
+  box-sizing: border-box;
+  text-shadow: var(--sombra-texto);
+}
+.subasta-cabecera { display: flex; align-items: center; justify-content: space-between; gap: calc(var(--u) * 3); width: min(100%, calc(var(--u) * 110)); }
+.subasta-titulo {
+  color: var(--oro-texto);
+  font-weight: 800;
+  font-size: calc(var(--u) * 4);
+  letter-spacing: .14em;
+  text-transform: var(--mayus);
+}
+.subasta-reloj { display: flex; align-items: baseline; gap: calc(var(--u) * 1.4); padding: calc(var(--u) * .8) calc(var(--u) * 2.2); border-radius: 999px; }
+.subasta-reloj .tiempo { color: var(--nitido); font-weight: 800; font-size: calc(var(--u) * 4); font-variant-numeric: tabular-nums; }
+.subasta-reloj .estado-reloj { color: var(--texto-sec); font-weight: 600; font-size: calc(var(--u) * 1.8); text-transform: uppercase; letter-spacing: .12em; }
+.subasta-reloj.urgente .tiempo { color: var(--mal); animation: latido-subasta 1s ease-in-out infinite; }
+
+
+/* ---------- 2. Tablero ---------- */
+.tablero {
+  position: relative;
+  width: min(100%, calc(var(--u) * 110));
+  height: calc(var(--filas) * var(--fila) + var(--u) * 2);
+  margin: 0;
+  padding: var(--u) calc(var(--u) * 1.6);
+  box-sizing: border-box;
+  list-style: none;
+}
+
+
+/* ---------- 3. Fila ---------- */
+.fila-subasta {
+  position: absolute;
+  top: calc(var(--u) + var(--puesto) * var(--fila));
+  left: calc(var(--u) * 1.6);
+  right: calc(var(--u) * 1.6);
+  height: var(--fila);
+  display: grid;
+  grid-template-columns: calc(var(--u) * 4) calc(var(--u) * 7) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: calc(var(--u) * 1.6);
+  padding: 0 calc(var(--u) * 1.2);
+  border-radius: calc(var(--u) * 1.6);
+  transition: top .6s cubic-bezier(.3, 1.3, .5, 1), background .3s, opacity .4s;
+}
+.fila-subasta.lider { background: linear-gradient(90deg, color-mix(in srgb, var(--color) 26%, transparent), transparent 80%); }
+.fila-subasta.perdio { opacity: .4; }
+.puesto-subasta { color: var(--texto-sec); font-weight: 800; font-size: calc(var(--u) * 3.4); text-align: center; }
+.fila-subasta.lider .puesto-subasta { color: var(--activo); }
+.icono-subasta {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 7);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color) 30%, rgba(0, 0, 0, .4));
+  box-shadow: 0 0 0 calc(var(--u) * .3) var(--color);
+}
+.icono-subasta img { width: 70%; height: 70%; object-fit: contain; }
+.icono-subasta .inicial { color: var(--nitido); font-weight: 800; font-size: calc(var(--u) * 3.2); }
+.cuerpo-subasta { display: grid; gap: calc(var(--u) * .6); min-width: 0; }
+.nombre-cancion {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 1.2);
+  min-width: 0;
+  overflow: hidden;
+  color: var(--nitido);
+  font-weight: 800;
+  font-size: calc(var(--u) * 3);
+  white-space: nowrap;
+}
+.insignia-puja {
+  flex: none;
+  padding: calc(var(--u) * .2) calc(var(--u) * 1);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #FFF1B8, #E4C257 50%, #B8891F);
+  color: #2A1E05;
+  font-size: calc(var(--u) * 1.4);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-shadow: none;
+}
+.barra-subasta { height: calc(var(--u) * 1.3); overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, .1); }
+.relleno-subasta { display: block; height: 100%; border-radius: inherit; background: var(--color); box-shadow: 0 0 calc(var(--u)) var(--color); transition: width .6s cubic-bezier(.2, .9, .3, 1); }
+.detalle-subasta { overflow: hidden; color: var(--texto-sec); font-weight: 600; font-size: calc(var(--u) * 1.6); text-overflow: ellipsis; white-space: nowrap; }
+.monedas-subasta { color: var(--oro-texto); font-weight: 800; font-size: calc(var(--u) * 4); font-variant-numeric: tabular-nums; }
+.fila-subasta.golpe .icono-subasta { animation: golpe-subasta .45s ease-out; }
+.suma-subasta {
+  position: absolute;
+  right: calc(var(--u) * 2);
+  top: 0;
+  color: var(--activo);
+  font-weight: 800;
+  font-size: calc(var(--u) * 2.6);
+  animation: sube-subasta 1.2s ease-out forwards;
+}
+
+
+/* ---------- 4. Se baila ---------- */
+.aviso-subasta { min-height: 1.3em; color: var(--oro-texto); font-weight: 700; font-size: calc(var(--u) * 2.8); text-align: center; }
+.se-baila {
+  display: grid;
+  justify-items: center;
+  gap: calc(var(--u) * .6);
+  padding: calc(var(--u) * 2) calc(var(--u) * 5);
+  box-shadow: 0 0 0 calc(var(--u) * .3) var(--color), 0 0 calc(var(--u) * 5) color-mix(in srgb, var(--color) 60%, transparent);
+  animation: se-baila .8s cubic-bezier(.2, 1.4, .4, 1) both;
+}
+.martillo { font-size: calc(var(--u) * 5); line-height: 1; animation: martillazo .9s .3s ease-in-out 2; transform-origin: 80% 80%; }
+.etiqueta-se-baila { color: var(--oro-texto); font-weight: 700; font-size: calc(var(--u) * 2.4); letter-spacing: .24em; text-transform: uppercase; }
+.cancion-ganadora { color: var(--nitido); font-weight: 800; font-size: calc(var(--u) * 6); line-height: 1.1; text-align: center; }
+.mejor-postor { color: var(--texto-sec); font-weight: 600; font-size: calc(var(--u) * 2); }
+
+
+/* ---------- 5. Animaciones ---------- */
+@keyframes latido-subasta { 50% { transform: scale(1.06); } }
+@keyframes golpe-subasta { 40% { transform: scale(1.15); } }
+@keyframes sube-subasta { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(calc(var(--u) * -5)); } }
+@keyframes se-baila { from { opacity: 0; transform: scale(.6); } }
+@keyframes martillazo { 50% { transform: rotate(-35deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fila-subasta { transition: none; }
+  .se-baila, .martillo, .suma-subasta, .fila-subasta.golpe .icono-subasta { animation: none; }
+}

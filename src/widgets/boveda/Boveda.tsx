@@ -4,7 +4,8 @@
 // Una placa con el candado, el título, la pista (con el secreto tapado) y la barra hacia la meta.
 // Al abrirse (data-estado="abierta"), el arco del candado sube y aparece el texto secreto en
 // letras de oro: el secreto NO se escribe en la página hasta entonces.
-// Reglas en motor.ts; estilos en boveda.css (portado tal cual).
+// Reglas en motor.ts; estilos en boveda.css (portado tal cual). Con `md: 'mapa'` se ve el «Mapa
+// de aventura» (Mapa.tsx): las mismas monedas mueven una ficha por un camino de casillas.
 // =============================================================================
 
 import { useRef } from 'react';
@@ -13,6 +14,7 @@ import { useCifraAnimada } from '../../hooks/useCifraAnimada';
 import { useMotor } from '../../hooks/useMotor';
 import { useReiniciarAnimacion } from '../../hooks/useReiniciarAnimacion';
 import { useWidget } from '../../hooks/useWidget';
+import { Mapa } from './Mapa';
 import { crearMotorBoveda } from './motor';
 import './boveda.css';
 
@@ -28,6 +30,15 @@ export function Boveda() {
 
   const porcentaje = estado.abierta ? 100 : Math.min(100, Math.floor((estado.monedas / estado.meta) * 100));
   const clases = ['boveda', 'cristal', estado.abriendo && 'abriendo', estado.golpes > 0 && 'golpe'].filter(Boolean).join(' ');
+
+  if (estado.modo === 'mapa') {
+    return (
+      <>
+        <Mapa estado={estado} alQuitarLlegada={motor.quitarLlegada} />
+        <PildoraEstado widget={widget} />
+      </>
+    );
+  }
 
   return (
     <>
