@@ -4,7 +4,7 @@
 // El conteo empieza en 0 cada vez que se abre la fuente en OBS. Un cambio en vivo no lo
 // borra (salvo que cambie el tipo de meta, porque entonces cuenta otra cosa). Si la persona
 // cambia la meta en el panel, manda la suya; si no, se respeta la que se duplicó en el LIVE.
-// Al alcanzarla: brillo + sonido y, tras 3,5 s con la barra llena, duplicar / volver a 0 / nada.
+// Al alcanzarla: brillo + sonido (+ confeti si cf = 1) y, tras 3,5 s con la barra llena, duplicar / volver a 0 / nada.
 // (Port de legado/js/widgets/meta.js.)
 // =============================================================================
 
@@ -33,6 +33,8 @@ export interface EstadoMeta {
   actual: number;
   /** Cuántas veces se alcanzó (reinicia la animación de brillo). */
   celebraciones: number;
+  /** Explosión de confeti al alcanzarla (clave cf). */
+  confeti: boolean;
 }
 
 export interface MotorMeta extends Observable<EstadoMeta> {
@@ -43,7 +45,7 @@ export interface MotorMeta extends Observable<EstadoMeta> {
 const esTipo = (t: unknown): t is TipoMeta => typeof t === 'string' && Object.hasOwn(TIPOS_META, t);
 
 export function crearMotorMeta(): MotorMeta {
-  const estado = crearEstadoObservable<EstadoMeta>({ tipo: 'likes', titulo: 'Meta', objetivo: 100, actual: 0, celebraciones: 0 });
+  const estado = crearEstadoObservable<EstadoMeta>({ tipo: 'likes', titulo: 'Meta', objetivo: 100, actual: 0, celebraciones: 0, confeti: false });
   let alAlcanzar = 'nada';
   let sonido = true;
   let objetivoConfigurado = 100; // el que puso la persona
@@ -71,6 +73,7 @@ export function crearMotorMeta(): MotorMeta {
         tipo: nuevoTipo,
         titulo: String(cfg.ti || 'Meta'),
         objetivo: cambioObjetivo ? nuevoObjetivo : e.objetivo,
+        confeti: Number(cfg.cf) === 1,
       }));
     },
 

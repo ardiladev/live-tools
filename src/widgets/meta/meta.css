@@ -87,7 +87,49 @@
 .meta.lograda { animation: brillo 1.2s ease-in-out 3; }
 @keyframes brillo { 50% { box-shadow: var(--resplandor-activo); } }
 
+/* ---------- Confeti al alcanzar la meta (Confeti.tsx, clave cf) ---------- */
+/* Punto de origen sin tamaño, centrado justo sobre la barra (va entre la etiqueta y la barra
+   en el flujo). Las piezas suben en abanico (desaceleran), luego caen girando y se desvanecen.
+   Solo se pinta mientras dura la explosión. */
+.confeti-meta {
+  position: relative;
+  z-index: 3;
+  align-self: center;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.pieza-confeti {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 2px;
+  opacity: 0;
+  animation-name: confeti-meta;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+@keyframes confeti-meta {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(.4) rotate(0);
+    animation-timing-function: cubic-bezier(.15, .7, .35, 1);   /* sale disparada y frena */
+  }
+  32% {
+    opacity: 1;
+    transform: translate(calc(var(--dx) * .7 - 50%), calc(var(--alto) - 50%)) scale(1) rotate(calc(var(--giro) * .35));
+    animation-timing-function: cubic-bezier(.45, 0, .8, .6);    /* la gravedad la jala */
+  }
+  80% { opacity: 1; }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--dx) - 50%), calc(var(--caida) - 50%)) scale(.9) rotate(var(--giro));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .relleno { transition: none; }
   .meta.lograda { animation: none; }
+  .confeti-meta { display: none; }
 }

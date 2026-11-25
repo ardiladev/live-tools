@@ -52,6 +52,7 @@ export function VistaMeta({ tipo }: { tipo: TipoMeta }) {
         personalizar={(
           <>
             <Casilla texto="Sonido al alcanzar la meta" marcada={cfg.sonido} alCambiar={(v) => cambiarCfg((a) => { a.sonido = v; })} />
+            <Casilla texto="Confeti al alcanzar la meta (sale del centro, sobre la barra)" marcada={cfg.confeti} alCambiar={(v) => cambiarCfg((a) => { a.confeti = v; })} />
             <EditorEstilo id={id} />
           </>
         )}

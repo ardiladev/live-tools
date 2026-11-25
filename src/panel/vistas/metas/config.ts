@@ -45,6 +45,8 @@ export type AjustesMeta = {
   colorPropio: boolean;
   alAlcanzar: AlAlcanzar | string;
   sonido: boolean;
+  /** Explosión de confeti sobre la barra al alcanzar la meta. */
+  confeti: boolean;
 };
 
 export const idMeta = (tipo: TipoMeta): string => `meta-${tipo}`;
@@ -53,7 +55,7 @@ export const idMeta = (tipo: TipoMeta): string => `meta-${tipo}`;
 export const POR_DEFECTO: Record<TipoMeta, AjustesMeta> = Object.fromEntries(
   (Object.keys(TIPOS) as TipoMeta[]).map((tipo) => [tipo, {
     objetivo: TIPOS[tipo].meta, titulo: TIPOS[tipo].etiqueta, color: TIPOS[tipo].color,
-    colorPropio: false, alAlcanzar: 'duplicar', sonido: true,
+    colorPropio: false, alAlcanzar: 'duplicar', sonido: true, confeti: false,
   }]),
 ) as Record<TipoMeta, AjustesMeta>;
 
@@ -66,6 +68,8 @@ export function configMeta(tipo: TipoMeta, estado: EstadoPanel): ConfigMeta {
     col: cfg.colorPropio ? cfg.color : '',
     al: cfg.alAlcanzar,
     s: cfg.sonido ? 1 : 0,
+    // Solo viaja encendido: sin la clave, el widget se comporta como antes (sin confeti).
+    ...(cfg.confeti ? { cf: 1 } : {}),
   };
 }
 

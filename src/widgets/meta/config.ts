@@ -6,6 +6,7 @@
 //   t = tipo (likes | follows | shares | monedas) · o = objetivo · ti = título
 //   col = color propio (#rrggbb; vacío = acento del estilo)
 //   al = al alcanzar la meta (duplicar | reiniciar | nada) · s = sonido (1/0)
+//   cf = confeti al alcanzar la meta (1 = sí; sin la clave = no, como antes)
 // =============================================================================
 
 import type { ConfigBase } from '../../tipos/widgets';
@@ -20,4 +21,5 @@ export interface ConfigMeta extends ConfigBase {
   col?: string;
   al?: AlAlcanzar | string;
   s?: number;
+  cf?: number;
 }
