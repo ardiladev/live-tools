@@ -11,7 +11,7 @@ import { EditorEstilo } from '../../componentes/EditorEstilo';
 import { TarjetaWidget, type PruebaWidget } from '../../componentes/TarjetaWidget';
 import { Campo, Casilla, Nota } from '../../componentes/ui';
 import { useAjustesWidget } from '../../estado/almacen';
-import { ACCIONES_AL_ALCANZAR, idMeta, POR_DEFECTO, TIPOS } from './config';
+import { ACCIONES_AL_ALCANZAR, DURACIONES_CONFETI, idMeta, POR_DEFECTO, TIPOS } from './config';
 
 const like = (cantidad: number) => (usuario: string): EventoLive => ({ tipo: 'like', usuario, cantidad, total: 0, propios: cantidad });
 
@@ -53,6 +53,9 @@ export function VistaMeta({ tipo }: { tipo: TipoMeta }) {
           <>
             <Casilla texto="Sonido al alcanzar la meta" marcada={cfg.sonido} alCambiar={(v) => cambiarCfg((a) => { a.sonido = v; })} />
             <Casilla texto="Confeti al alcanzar la meta (sale del centro, sobre la barra)" marcada={cfg.confeti} alCambiar={(v) => cambiarCfg((a) => { a.confeti = v; })} />
+            {cfg.confeti && (
+              <Campo etiqueta="El confeti sigue saliendo:" tipo="select" valor={cfg.segundosConfeti} opciones={DURACIONES_CONFETI} alCambiar={(v) => cambiarCfg((a) => { a.segundosConfeti = v; })} />
+            )}
             <EditorEstilo id={id} />
           </>
         )}

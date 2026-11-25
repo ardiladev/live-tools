@@ -1,17 +1,21 @@
 // =============================================================================
-// widgets/meta/Confeti.tsx — Pequeña explosión de confeti al alcanzar la meta
+// widgets/meta/Confeti.tsx — Chorro continuo de confeti al alcanzar la meta
 //
 // Se activa con la casilla «Confeti al alcanzar la meta» (clave `cf` de la config). Nace en el
-// centro, justo sobre la barra: las piezas salen disparadas hacia arriba y a los lados, y luego
-// caen girando hasta desvanecerse (keyframes en meta.css). Las piezas salen de piezasConfeti:
-// misma semilla = mismas piezas, así cada celebración es distinta pero repetible en las pruebas.
+// centro, justo sobre la barra: arranca con una explosión y, mientras `emitiendo` sea true, sigue
+// saliendo confeti en oleadas cortas (una cada OLA_MS). Cada pieza sube en abanico y luego cae
+// girando hasta desvanecerse (keyframes en meta.css). Cuando deja de emitir, las piezas que ya
+// están en el aire terminan su caída y entonces avisa (alTerminar).
+// Las piezas salen de piezasConfeti: misma semilla = mismas piezas (repetible en las pruebas).
 // Colores ya calculados o variables simples (sin color-mix(): OBS viejo lo pinta negro).
 // =============================================================================
 
-import { useEffect, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 
-/** Cuánto dura la explosión completa (la pieza más lenta termina antes de esto). */
-export const DURACION_CONFETI_MS = 2800;
+/** Cada cuánto sale una oleada nueva y cuántas piezas trae (la primera es la explosión). */
+export const OLA_MS = 110;
+export const PIEZAS_POR_OLA = 3;
+export const PIEZAS_EXPLOSION = 36;
 
 // El color de la meta (o el acento del estilo), oro claro y blanco.
 const TONOS = ['var(--color)', 'var(--color)', '#F3DFA2', '#FFFFFF'] as const;
@@ -31,8 +35,8 @@ export interface PiezaConfeti {
   tono: number;
 }
 
-/** Piezas de una explosión. Determinista: la misma `semilla` da siempre las mismas piezas. */
-export function piezasConfeti(semilla: number, cantidad = 44): PiezaConfeti[] {
+/** Piezas de una oleada. Determinista: la misma `semilla` da siempre las mismas piezas. */
+export function piezasConfeti(semilla: number, cantidad = PIEZAS_EXPLOSION): PiezaConfeti[] {
   let a = (semilla * 2654435761) >>> 0;
   const azar = (): number => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -50,25 +54,60 @@ export function piezasConfeti(semilla: number, cantidad = 44): PiezaConfeti[] {
       giro: Math.round(azar() * 900 - 450),
       ancho: 0.9 + azar() * 0.9,
       forma: azar() < 0.65 ? 0.4 : 1,
-      retraso: Math.round(azar() * 120) / 1000,
+      retraso: Math.round(azar() * 100) / 1000,
       duracion: 1.7 + Math.round(azar() * 900) / 1000,
       tono: Math.floor(azar() * TONOS.length),
     };
   });
 }
 
-/** Una explosión. Se monta con `key` = número de celebración y avisa al terminar. */
-export function Confeti({ semilla, alTerminar }: { semilla: number; alTerminar: () => void }) {
+interface PiezaViva extends PiezaConfeti {
+  id: number;
+  /** Hora (ms) a la que termina su caída: entonces se quita. */
+  fin: number;
+}
+
+/**
+ * Confeti de una celebración. Se monta con `key` = número de celebración.
+ * `emitiendo`: mientras sea true sigue saliendo; al pasar a false, se deja caer lo que queda.
+ */
+export function Confeti({ semilla, emitiendo, alTerminar }: { semilla: number; emitiendo: boolean; alTerminar: () => void }) {
+  const [piezas, setPiezas] = useState<PiezaViva[]>([]);
+  const ola = useRef(0);
+  const siguienteId = useRef(0);
+  const emite = useRef(emitiendo);
+  emite.current = emitiendo;
+
   useEffect(() => {
-    const t = setTimeout(alTerminar, DURACION_CONFETI_MS);
-    return () => clearTimeout(t);
-  }, [semilla]); // eslint-disable-line react-hooks/exhaustive-deps
+    const agregar = (cantidad: number) => {
+      const ahora = Date.now();
+      const nuevas = piezasConfeti(semilla * 10007 + ola.current++, cantidad).map((p) => ({
+        ...p, id: siguienteId.current++, fin: ahora + (p.retraso + p.duracion) * 1000 + 100,
+      }));
+      setPiezas((vivas) => [...vivas.filter((p) => p.fin > ahora), ...nuevas]);
+    };
+    agregar(PIEZAS_EXPLOSION);
+    const intervalo = setInterval(() => {
+      if (emite.current) { agregar(PIEZAS_POR_OLA); return; }
+      // Ya no emite: se quitan las que terminaron y, cuando no queda ninguna, se avisa.
+      const ahora = Date.now();
+      setPiezas((vivas) => {
+        const quedan = vivas.filter((p) => p.fin > ahora);
+        return quedan.length === vivas.length ? vivas : quedan;
+      });
+    }, OLA_MS);
+    return () => clearInterval(intervalo);
+  }, [semilla]);
+
+  useEffect(() => {
+    if (!emitiendo && piezas.length === 0) alTerminar();
+  }, [emitiendo, piezas.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="confeti-meta" aria-hidden="true">
-      {piezasConfeti(semilla).map((p, i) => (
+      {piezas.map((p) => (
         <span
-          key={i}
+          key={p.id}
           className="pieza-confeti"
           style={{
             width: `${p.ancho}vw`,

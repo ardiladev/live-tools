@@ -1,8 +1,8 @@
-// Pruebas de la Meta: el confeti solo se activa con cf = 1 y sus piezas son repetibles.
+// Pruebas de la Meta: el confeti solo se activa con cf = 1, dura cd segundos y sus piezas son repetibles.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EventoLive } from '../../tipos/eventos';
 import { piezasConfeti } from './Confeti';
-import { crearMotorMeta } from './motor';
+import { crearMotorMeta, SEGUNDOS_CONFETI, segundosConfeti } from './motor';
 
 const like = (cantidad: number): EventoLive => ({ tipo: 'like', usuario: 'Ana', cantidad, total: 0, propios: cantidad });
 
@@ -34,6 +34,19 @@ describe('confeti de la meta', () => {
     motor.aplicarConfig({ t: 'likes', o: 100, s: 0, cf: 1 });
     motor.aplicarConfig({ t: 'likes', o: 100, s: 0 });
     expect(motor.obtener().confeti).toBe(false);
+  });
+
+  it('cd: segundos que sigue saliendo (0 = mientras la meta esté llena; sin clave = 5)', () => {
+    expect(segundosConfeti(undefined)).toBe(SEGUNDOS_CONFETI);
+    expect(segundosConfeti(10)).toBe(10);
+    expect(segundosConfeti(0)).toBe(0);
+    expect(segundosConfeti('20')).toBe(20);
+    expect(segundosConfeti(9999)).toBe(300);
+    expect(segundosConfeti(-3)).toBe(SEGUNDOS_CONFETI);
+    expect(segundosConfeti('nada')).toBe(SEGUNDOS_CONFETI);
+    const motor = crearMotorMeta();
+    motor.aplicarConfig({ t: 'likes', o: 100, s: 0, cf: 1, cd: 0 });
+    expect(motor.obtener().segundosConfeti).toBe(0);
   });
 
   it('las piezas salen hacia arriba y son las mismas con la misma semilla', () => {

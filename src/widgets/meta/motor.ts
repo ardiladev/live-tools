@@ -4,7 +4,7 @@
 // El conteo empieza en 0 cada vez que se abre la fuente en OBS. Un cambio en vivo no lo
 // borra (salvo que cambie el tipo de meta, porque entonces cuenta otra cosa). Si la persona
 // cambia la meta en el panel, manda la suya; si no, se respeta la que se duplicó en el LIVE.
-// Al alcanzarla: brillo + sonido (+ confeti si cf = 1) y, tras 3,5 s con la barra llena, duplicar / volver a 0 / nada.
+// Al alcanzarla: brillo + sonido (+ confeti continuo si cf = 1, durante cd s) y, tras 3,5 s con la barra llena, duplicar / volver a 0 / nada.
 // (Port de legado/js/widgets/meta.js.)
 // =============================================================================
 
@@ -33,8 +33,10 @@ export interface EstadoMeta {
   actual: number;
   /** Cuántas veces se alcanzó (reinicia la animación de brillo). */
   celebraciones: number;
-  /** Explosión de confeti al alcanzarla (clave cf). */
+  /** Confeti al alcanzarla (clave cf). */
   confeti: boolean;
+  /** Cuántos segundos sigue saliendo el confeti (clave cd); 0 = mientras la meta esté llena. */
+  segundosConfeti: number;
 }
 
 export interface MotorMeta extends Observable<EstadoMeta> {
@@ -42,10 +44,19 @@ export interface MotorMeta extends Observable<EstadoMeta> {
   alEvento(evento: EventoLive): void;
 }
 
+/** Sin la clave cd, el confeti sale durante estos segundos. */
+export const SEGUNDOS_CONFETI = 5;
+/** cd: segundos (1–300) o 0 = mientras la meta esté llena; cualquier otra cosa, el valor por defecto. */
+export function segundosConfeti(cd: unknown): number {
+  const n = Number(cd);
+  if (cd === undefined || cd === null || cd === '' || !Number.isFinite(n) || n < 0) return SEGUNDOS_CONFETI;
+  return n === 0 ? 0 : Math.min(300, Math.max(1, Math.round(n)));
+}
+
 const esTipo = (t: unknown): t is TipoMeta => typeof t === 'string' && Object.hasOwn(TIPOS_META, t);
 
 export function crearMotorMeta(): MotorMeta {
-  const estado = crearEstadoObservable<EstadoMeta>({ tipo: 'likes', titulo: 'Meta', objetivo: 100, actual: 0, celebraciones: 0, confeti: false });
+  const estado = crearEstadoObservable<EstadoMeta>({ tipo: 'likes', titulo: 'Meta', objetivo: 100, actual: 0, celebraciones: 0, confeti: false, segundosConfeti: SEGUNDOS_CONFETI });
   let alAlcanzar = 'nada';
   let sonido = true;
   let objetivoConfigurado = 100; // el que puso la persona
@@ -74,6 +85,7 @@ export function crearMotorMeta(): MotorMeta {
         titulo: String(cfg.ti || 'Meta'),
         objetivo: cambioObjetivo ? nuevoObjetivo : e.objetivo,
         confeti: Number(cfg.cf) === 1,
+        segundosConfeti: segundosConfeti(cfg.cd),
       }));
     },
 

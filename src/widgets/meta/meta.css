@@ -89,8 +89,9 @@
 
 /* ---------- Confeti al alcanzar la meta (Confeti.tsx, clave cf) ---------- */
 /* Punto de origen sin tamaño, centrado justo sobre la barra (va entre la etiqueta y la barra
-   en el flujo). Las piezas suben en abanico (desaceleran), luego caen girando y se desvanecen.
-   Solo se pinta mientras dura la explosión. */
+   en el flujo). Cada pieza sube en abanico (desacelera), luego cae girando y se desvanece;
+   Confeti.tsx agrega oleadas nuevas mientras el confeti sigue saliendo.
+   Solo se pinta mientras hay confeti en el aire. */
 .confeti-meta {
   position: relative;
   z-index: 3;

@@ -7,6 +7,7 @@
 //   col = color propio (#rrggbb; vacío = acento del estilo)
 //   al = al alcanzar la meta (duplicar | reiniciar | nada) · s = sonido (1/0)
 //   cf = confeti al alcanzar la meta (1 = sí; sin la clave = no, como antes)
+//   cd = segundos que sigue saliendo el confeti (0 = mientras la meta esté llena; sin la clave = 5)
 // =============================================================================
 
 import type { ConfigBase } from '../../tipos/widgets';
@@ -22,4 +23,5 @@ export interface ConfigMeta extends ConfigBase {
   al?: AlAlcanzar | string;
   s?: number;
   cf?: number;
+  cd?: number;
 }

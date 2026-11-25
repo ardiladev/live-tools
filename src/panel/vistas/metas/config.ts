@@ -45,9 +45,21 @@ export type AjustesMeta = {
   colorPropio: boolean;
   alAlcanzar: AlAlcanzar | string;
   sonido: boolean;
-  /** Explosión de confeti sobre la barra al alcanzar la meta. */
+  /** Confeti sobre la barra al alcanzar la meta. */
   confeti: boolean;
+  /** Cuánto sigue saliendo: segundos ('5', '10'…) o '0' = mientras la meta esté llena. */
+  segundosConfeti: string;
 };
+
+export const DURACIONES_CONFETI: OpcionesSelect = [
+  ['3', '3 segundos'],
+  ['5', '5 segundos'],
+  ['10', '10 segundos'],
+  ['20', '20 segundos'],
+  ['30', '30 segundos'],
+  ['60', '1 minuto'],
+  ['0', 'Mientras la meta esté llena'],
+];
 
 export const idMeta = (tipo: TipoMeta): string => `meta-${tipo}`;
 
@@ -55,7 +67,7 @@ export const idMeta = (tipo: TipoMeta): string => `meta-${tipo}`;
 export const POR_DEFECTO: Record<TipoMeta, AjustesMeta> = Object.fromEntries(
   (Object.keys(TIPOS) as TipoMeta[]).map((tipo) => [tipo, {
     objetivo: TIPOS[tipo].meta, titulo: TIPOS[tipo].etiqueta, color: TIPOS[tipo].color,
-    colorPropio: false, alAlcanzar: 'duplicar', sonido: true, confeti: false,
+    colorPropio: false, alAlcanzar: 'duplicar', sonido: true, confeti: false, segundosConfeti: '5',
   }]),
 ) as Record<TipoMeta, AjustesMeta>;
 
@@ -69,7 +81,7 @@ export function configMeta(tipo: TipoMeta, estado: EstadoPanel): ConfigMeta {
     al: cfg.alAlcanzar,
     s: cfg.sonido ? 1 : 0,
     // Solo viaja encendido: sin la clave, el widget se comporta como antes (sin confeti).
-    ...(cfg.confeti ? { cf: 1 } : {}),
+    ...(cfg.confeti ? { cf: 1, cd: Number(cfg.segundosConfeti) || 0 } : {}),
   };
 }
 
