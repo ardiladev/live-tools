@@ -1,5 +1,5 @@
 /* ==========================================================================
-   marcador.css — Widget "Marcador" (marcador.html → src/widgets/marcador/Marcador.tsx)
+   marcador.css — Widget "Activador" (marcador.html → src/widgets/marcador/Marcador.tsx)
    Portado tal cual del diseño original (legado/css/widgets/marcador.css).
    Dos secciones, una encima de la otra: arriba, el reloj en una píldora de
    cristal pequeña y discreta; abajo, la fila de integrantes. Cada tarjeta es de
@@ -9,7 +9,12 @@
    acento del estilo. Las medidas usan --u (el menor entre 1 % del ancho y 4,5 %
    del alto): el marcador cabe entero en cualquier tamaño de fuente de OBS.
 
-   Secciones: 1. Escena · 2. Reloj · 3. Tarjetas · 4. Estados · 5. Animaciones
+   Activador: con `ta`, las tarjetas van .apagada (en gris, atenuadas) hasta que
+   llega su regalo; entonces .activa (color pleno, brillo que late, cuenta y una
+   barra que se vacía). Sin color-mix(): el brillo llega en --color-brillo.
+
+   Secciones: 1. Escena · 2. Reloj · 3. Tarjetas · 4. Estados · 5. Animaciones ·
+   6. Activador
    ========================================================================== */
 
 
@@ -147,5 +152,61 @@
 @keyframes parpadeo { 50% { opacity: .4; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .golpe, .reloj[data-estado="pausa"] .tiempo { animation: none; }
+  .golpe, .reloj[data-estado="pausa"] .tiempo, .integrante.activa { animation: none; }
+}
+
+
+/* ---------- 6. Activador ---------- */
+.integrante { --color-brillo: rgba(212, 175, 55, .55); }
+.integrante.apagada {
+  opacity: .45;
+  filter: grayscale(.85) brightness(.8);
+  transition: opacity .6s ease, filter .6s ease, box-shadow .5s ease;
+}
+.integrante.activa {
+  opacity: 1;
+  filter: none;
+  transition: opacity .25s ease, filter .25s ease;
+  animation: latido 1.6s ease-in-out infinite;
+}
+.integrante.activa::after { inset: 0 8% auto; height: 3px; }
+.integrante.activa.golpe { animation: golpe .5s ease-out, latido 1.6s ease-in-out infinite; }
+.activacion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * .35);
+  width: 100%;
+}
+.estado-activa {
+  color: var(--texto-sec);
+  font-weight: 700;
+  font-size: calc(var(--u) * .75);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.activa .estado-activa { color: var(--color); }
+.carga {
+  display: block;
+  width: 80%;
+  height: calc(var(--u) * .3);
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .12);
+}
+.carga > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color);
+  box-shadow: 0 0 8px var(--color);
+  transform-origin: left center;
+  transition: transform .25s linear;
+}
+
+@keyframes latido {
+  0%, 100% { box-shadow: var(--resplandor), 0 0 calc(var(--u) * 1.2) var(--color-brillo); }
+  50% { box-shadow: var(--resplandor), 0 0 calc(var(--u) * 2.6) var(--color-brillo); }
 }

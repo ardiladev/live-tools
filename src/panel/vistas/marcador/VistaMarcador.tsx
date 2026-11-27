@@ -1,8 +1,9 @@
 // =============================================================================
-// vistas/marcador/VistaMarcador.tsx — Juegos → Competencias → Marcador
+// vistas/marcador/VistaMarcador.tsx — Juegos → Competencias → Activador (antes "Marcador")
 //
-// Configura el widget marcador.html: de 1 a 6 integrantes (color opcional) y el reloj de la ronda
-// (Iniciar, Pausar, Reiniciar), que llega a OBS al instante.
+// Configura el widget marcador.html: de 1 a 6 integrantes (color opcional), los segundos que queda
+// activa cada una con su regalo, si se ve el puntaje y el reloj de la ronda (Iniciar, Pausar,
+// Reiniciar), que llega a OBS al instante.
 // (Port de la sección 3 de legado/js/panel/vistas/marcador.js.)
 // =============================================================================
 
@@ -17,8 +18,8 @@ import { FotoBailarina, SelectorBailarinas } from '../../componentes/Bailarinas'
 import { nombreRegalo, obtener, useAjustesWidget, usarAlmacen } from '../../estado/almacen';
 import { textoLimpio } from '../../piezas';
 import {
-  duracionDe, ID, MAX_INTEGRANTES, MAX_NOMBRE, nuevoIntegrante, POR_DEFECTO, problemasRegalos,
-  REGALOS_INICIALES, type AjustesMarcador, type IntegranteMarcadorAjustes,
+  duracionDe, ID, MAX_INTEGRANTES, MAX_NOMBRE, MAX_SEGUNDOS_ACTIVA, nuevoIntegrante, POR_DEFECTO, problemasRegalos,
+  REGALOS_INICIALES, segundosActivaDe, type AjustesMarcador, type IntegranteMarcadorAjustes,
 } from './config';
 
 const LISTA_REGALOS = 'regalos-marcador';
@@ -71,11 +72,29 @@ export function VistaMarcador() {
     <>
       <TarjetaWidget
         id={ID}
-        titulo="Marcador"
+        titulo="Activador"
         archivo="marcador.html"
         forma="horizontal"
         sinRecargar={['t', 'ro']}
-        campos={<Campo etiqueta="Título junto al reloj (opcional):" valor={cfg.titulo} maxLength={30} alCambiar={(v) => cambiarCfg((a) => { a.titulo = v; })} />}
+        campos={(
+          <>
+            <Campo etiqueta="Título junto al reloj (opcional):" valor={cfg.titulo} maxLength={30} alCambiar={(v) => cambiarCfg((a) => { a.titulo = v; })} />
+            <Campo
+              etiqueta="Segundos que queda activa con su regalo:"
+              tipo="number"
+              valor={cfg.segundosActiva}
+              min={1}
+              max={MAX_SEGUNDOS_ACTIVA}
+              step={1}
+              alCambiar={(v) => cambiarCfg((a) => { a.segundosActiva = v; })}
+            />
+            <Casilla texto="Mostrar el puntaje de cada bailarina" marcada={cfg.mostrarPuntos} alCambiar={(v) => cambiarCfg((a) => { a.mostrarPuntos = v; })} />
+            <Nota>
+              Cuando alguien envía el regalo de una, ella se enciende {segundosActivaDe(cfg)} s y luego se apaga sola;{' '}
+              si le llega otro mientras sigue encendida, la cuenta vuelve a empezar. El puntaje sigue sumando aunque esté oculto.
+            </Nota>
+          </>
+        )}
         personalizar={(
           <>
             <Casilla texto="Contar regalos solo con el reloj en marcha" marcada={cfg.soloConReloj} alCambiar={(v) => cambiarCfg((a) => { a.soloConReloj = v; })} />
@@ -94,13 +113,13 @@ export function VistaMarcador() {
         </div>
         <CampoDuracion etiqueta="Duración (segundos):" valor={cfg.duracion} duracionS={duracionS} alCambiar={(v) => cambiarCfg((a) => { a.duracion = v; })} />
         <Nota>
-          Iniciar, pausar y reiniciar llegan a OBS en uno o dos segundos. Reiniciar pone los puntos de todos en 0.{' '}
+          Iniciar, pausar y reiniciar llegan a OBS en uno o dos segundos. Reiniciar pone los puntos de todos en 0 y las apaga.{' '}
           Por defecto los regalos suman siempre, hasta reiniciar; en Personalizar puedes hacer que solo cuenten con el reloj en marcha.
         </Nota>
       </Tarjeta>
 
       <SelectorBailarinas
-        columnas={['En el marcador']}
+        columnas={['En el activador']}
         columnaDe={(id) => (cfg.integrantes.some((j) => j.bailarina === id) ? 0 : -1)}
         alElegir={(id, columna) => elegirBailarina(id, columna === 0)}
         aviso={avisoBailarinas.texto}
@@ -120,7 +139,7 @@ export function VistaMarcador() {
         <div className="aviso error" role="status">{problemas.join(' ')}</div>
         <button className="enlace separado-arriba" onClick={agregar} disabled={cfg.integrantes.length >= MAX_INTEGRANTES}>+ Agregar integrante</button>
         <Nota>
-          Cada regalo suma monedas × cantidad. TikTok no siempre manda el precio: entonces vale lo que pongas en «Monedas c/u».{' '}
+          Cada regalo la enciende y suma monedas × cantidad. TikTok no siempre manda el precio: entonces vale lo que pongas en «Monedas c/u».{' '}
           Si el ID no coincide, se busca por el nombre del regalo (como lo manda TikTok, en inglés). Con la casilla del color desmarcada,{' '}
           la tarjeta usa el acento del estilo. Busca los IDs en el <a href="#/regalos">Buscador de regalos</a>.
         </Nota>

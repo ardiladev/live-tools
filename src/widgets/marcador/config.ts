@@ -1,5 +1,5 @@
 // =============================================================================
-// widgets/marcador/config.ts — Configuración del widget "Marcador" (marcador.html)
+// widgets/marcador/config.ts — Configuración del widget "Activador" (marcador.html; antes "Marcador")
 //
 // Claves cortas (NO renombrar):
 //   ti = título junto al reloj
@@ -9,6 +9,8 @@
 //   t  = reloj { e, d, fin, r } · ro = ronda (al cambiar, puntos a 0)
 //   sr = solo cuenta con el reloj en marcha (1 = sí; por defecto también suma antes de empezar y
 //        en pausa; con el tiempo terminado nunca suma) · s = sonido (1/0)
+//   ta = segundos que queda ACTIVA una integrante cuando llega su regalo (1 a 3600; sin `ta` =
+//        el marcador de siempre, sin activación) · ps = 0 oculta el puntaje (por defecto se ve)
 // =============================================================================
 
 import { normalizarFotos } from '../../nucleo/fotos';
@@ -36,6 +38,16 @@ export interface ConfigMarcador extends ConfigBase {
   ro?: number;
   sr?: number;
   s?: number;
+  ta?: number;
+  ps?: number;
+}
+
+export const MAX_SEGUNDOS_ACTIVA = 3600;
+
+/** Segundos de activación de la config (0 = sin activación: el marcador de siempre). */
+export function segundosActiva(cfg: Pick<ConfigMarcador, 'ta'>): number {
+  const n = Math.round(Number(cfg.ta) || 0);
+  return n > 0 ? Math.min(MAX_SEGUNDOS_ACTIVA, n) : 0;
 }
 
 export interface IntegranteMarcador {

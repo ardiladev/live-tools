@@ -1,8 +1,9 @@
 // =============================================================================
-// vistas/marcador/config.ts — Ajustes del "Marcador" y configuración de su widget
+// vistas/marcador/config.ts — Ajustes del "Activador" (antes "Marcador") y configuración de su widget
 //
-// Una versión sencilla de la carrera: de 1 a 6 integrantes, cada uno con su nombre, color
-// (opcional), regalo y monedas por regalo; sin barras ni metas. El reloj de la ronda es el
+// De 1 a 6 integrantes, cada uno con su nombre, color (opcional), regalo y monedas por regalo;
+// sin barras ni metas. Cuando llega el regalo de una, queda activa `segundosActiva` segundos y
+// luego se apaga; el puntaje se puede ocultar (`mostrarPuntos`). El reloj de la ronda es el
 // mismo de la carrera. Se registra en sincronizar AL CARGAR; config() y validar() son PURAS.
 // (Port de las secciones 1 y 2 de legado/js/panel/vistas/marcador.js.)
 // =============================================================================
@@ -10,7 +11,7 @@
 import { idAleatorio } from '../../../nucleo/nube';
 import type { EstadoPanel } from '../../../tipos/panel';
 import type { RelojRonda } from '../../../tipos/reloj';
-import { MAX_INTEGRANTES, type ConfigMarcador } from '../../../widgets/marcador/config';
+import { MAX_INTEGRANTES, MAX_SEGUNDOS_ACTIVA, type ConfigMarcador } from '../../../widgets/marcador/config';
 import { claveFotos, completarParticipante } from '../../bailarinas';
 import { claveHoraFeliz } from '../../modulos';
 import { ajustesDe } from '../../estado/almacen';
@@ -18,7 +19,7 @@ import { registrar } from '../../estado/sincronizar';
 import { acotarDuracion, textoLimpio } from '../../piezas';
 import { COLORES, REGALOS_INICIALES } from '../carrera/config';
 
-export { MAX_INTEGRANTES, REGALOS_INICIALES };
+export { MAX_INTEGRANTES, MAX_SEGUNDOS_ACTIVA, REGALOS_INICIALES };
 export const ID = 'marcador';
 export const MAX_NOMBRE = 24;
 
@@ -41,6 +42,10 @@ export type AjustesMarcador = {
   /** Por defecto los regalos cuentan siempre, hasta reiniciar. */
   soloConReloj: boolean;
   sonido: boolean;
+  /** Segundos que queda activa una integrante cuando llega su regalo. */
+  segundosActiva: number;
+  /** Mostrar el puntaje en cada tarjeta. */
+  mostrarPuntos: boolean;
   reloj: RelojRonda;
   ronda: number;
   integrantes: IntegranteMarcadorAjustes[];
@@ -57,12 +62,20 @@ export const POR_DEFECTO: AjustesMarcador = {
   duracion: 300,
   soloConReloj: false,
   sonido: true,
+  segundosActiva: 30,
+  mostrarPuntos: true,
   reloj: { e: 'listo', fin: 0, r: 0 },
   ronda: 0,
   integrantes: [0, 1, 2, 3].map((i) => nuevoIntegrante(i, `m${i + 1}`)),
 };
 
 export const duracionDe = (a: AjustesMarcador): number => acotarDuracion(a.duracion, POR_DEFECTO.duracion);
+
+/** Segundos de activación, entre 1 y MAX_SEGUNDOS_ACTIVA (vacío o inválido = el valor por defecto). */
+export function segundosActivaDe(a: AjustesMarcador): number {
+  const n = Math.round(Number(a.segundosActiva));
+  return n > 0 ? Math.min(MAX_SEGUNDOS_ACTIVA, n) : POR_DEFECTO.segundosActiva;
+}
 
 export function configMarcador(estado: EstadoPanel): ConfigMarcador {
   const cfg = ajustesDe(estado, ID, POR_DEFECTO);
@@ -86,17 +99,19 @@ export function configMarcador(estado: EstadoPanel): ConfigMarcador {
     ro: cfg.ronda,
     sr: cfg.soloConReloj ? 1 : 0,
     s: cfg.sonido ? 1 : 0,
+    ta: segundosActivaDe(cfg),
+    ...(cfg.mostrarPuntos ? {} : { ps: 0 }),
   };
 }
 
 export const validarMarcador = (estado: EstadoPanel): string =>
-  (ajustesDe(estado, ID, POR_DEFECTO).integrantes.length ? '' : 'El marcador necesita al menos 1 integrante.');
+  (ajustesDe(estado, ID, POR_DEFECTO).integrantes.length ? '' : 'El activador necesita al menos 1 integrante.');
 
 /** Problemas de los regalos asignados (no impiden enviar la configuración). */
 export function problemasRegalos(lista: readonly IntegranteMarcadorAjustes[]): string[] {
   const problemas: string[] = [];
   lista.forEach((j, i) => {
-    if (!textoLimpio(j.giftId) && !textoLimpio(j.regalo)) problemas.push(`${textoLimpio(j.nombre) || `El integrante ${i + 1}`} no tiene regalo: no sumará puntos.`);
+    if (!textoLimpio(j.giftId) && !textoLimpio(j.regalo)) problemas.push(`${textoLimpio(j.nombre) || `El integrante ${i + 1}`} no tiene regalo: no se activará ni sumará puntos.`);
   });
   const ids = lista.map((j) => textoLimpio(j.giftId));
   new Set(ids.filter((id, i) => id && ids.indexOf(id) !== i))

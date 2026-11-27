@@ -75,7 +75,7 @@ export function VistaHoraFeliz() {
         </div>
         <Aviso aviso={aviso} />
         <Nota>
-          Vale en todos los juegos que cuentan regalos: Carrera, Marcador, Batalla, Barra de activación, Duelo VS, Jefe del LIVE,
+          Vale en todos los juegos que cuentan regalos: Carrera, Activador, Batalla, Barra de activación, Duelo VS, Jefe del LIVE,
           Bóveda, Subathon y Repertorio (y en los tap tap de las competencias). Llega a OBS en uno o dos segundos. El Registro de
           bailarinas sigue anotando las monedas reales, sin multiplicar.
         </Nota>

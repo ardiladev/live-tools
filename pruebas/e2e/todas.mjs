@@ -4,7 +4,7 @@
 // Corre, uno por uno:
 //   1. cada escenario de pruebas/paridad/*.json (los 16 widgets: textos, guardado, clases,
 //      capturas) con pruebas/herramientas/paridad.mjs;
-//   2. una comprobación por cada vista del panel (las 23) con pruebas/herramientas/panel.mjs:
+//   2. una comprobación por cada vista del panel (22: todas menos el marcador, hoy Activador) con pruebas/herramientas/panel.mjs:
 //      textos, ajustes guardados, configuración subida (Supabase interceptado) y la vista previa
 //      tras su primer botón de prueba.
 // Compara contra la versión vieja (legado/, npm run legado → :8080). La nueva puede ser el
@@ -22,10 +22,11 @@ import { readdirSync } from 'node:fs';
 const nuevo = (process.env.E2E_NUEVO || 'http://localhost:5173').replace(/\/$/, '');
 const ESTADO = ['--estado', 'pruebas/panel/estado.json'];
 
-// [vista, primer botón de prueba] (sin botón: solo la vista).
+// [vista, primer botón de prueba] (sin botón: solo la vista). El marcador ya no se compara: desde
+// el 2026-11-27 es el «Activador» (otro nombre y campos nuevos; sus reglas en motor.test.ts).
 const VISTAS = [
   ['ruleta', 'Probar 1 regalo'], ['ruleta-premium', 'Probar 1 regalo'], ['tragamonedas', 'Probar giro'],
-  ['carrera', 'Regalo al azar'], ['marcador', 'Regalo al azar'], ['batalla', 'Regalo al equipo A'],
+  ['carrera', 'Regalo al azar'], ['batalla', 'Regalo al equipo A'],
   ['activacion', 'Unirme al siguiente equipo'], ['cola-retos', 'Reto de prueba'], ['jefe', '+100 likes'],
   ['boveda', 'Regalo de 100'], ['subathon', '+100 likes'], ['extensible', '+100 likes'],
   ['repertorio', 'Regalo de 100'], ['meta-likes', '+50 likes'], ['meta-follows', '+1 seguidor'],

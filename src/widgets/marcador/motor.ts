@@ -1,5 +1,5 @@
 // =============================================================================
-// widgets/marcador/motor.ts — Reglas del "Marcador" (sin React)
+// widgets/marcador/motor.ts — Reglas del "Activador" (antes "Marcador"; sin React)
 //
 // Una versión sencilla de la carrera de regalos: cada integrante tiene asignado un regalo de
 // TikTok y, cuando alguien lo envía, su puntaje sube (precio × cantidad). Sin barras ni metas:
@@ -10,6 +10,10 @@
 //     con `sr` = 1 (solo con el reloj en marcha); en la vista previa cuentan aunque haya `sr`.
 //   - Puntos guardados en live-tools:marcador:<w> como { ro, p }; vuelven a 0 al cambiar `ro`.
 //   - Al terminar el tiempo: clase `final` en <body> (quien va primero queda destacado) y campana.
+//   - Activador (`ta` en la config): el regalo de una integrante, además de sumar, la deja ACTIVA
+//     `ta` segundos; otro regalo suyo mientras sigue activa vuelve a empezar la cuenta. Luego se
+//     apaga sola. Las horas de término se guardan con los puntos ({ ro, p, a }), así que si OBS
+//     recarga la fuente siguen activas las que lo estaban. `ps` = 0 oculta los puntajes.
 // (Port de legado/js/widgets/marcador.js.)
 // =============================================================================
 
@@ -20,7 +24,7 @@ import { leerReloj } from '../../nucleo/reloj';
 import { sonar } from '../../nucleo/sonido';
 import type { EventoLive, EventoRegalo } from '../../tipos/eventos';
 import type { LecturaReloj, RelojRonda } from '../../tipos/reloj';
-import { MAX_INTEGRANTES, normalizarIntegrante, type ConfigMarcador, type IntegranteMarcador } from './config';
+import { MAX_INTEGRANTES, normalizarIntegrante, segundosActiva, type ConfigMarcador, type IntegranteMarcador } from './config';
 
 export const CLAVE_PUNTOS = 'live-tools:marcador:';
 
@@ -30,8 +34,13 @@ export interface EstadoMarcador {
   reloj: RelojRonda;
   soloConReloj: boolean;
   sonido: boolean;
+  /** Segundos que queda activa una integrante con su regalo (0 = sin activación). */
+  segundosActiva: number;
+  mostrarPuntos: boolean;
   ronda: number | null;
   puntos: Record<string, number>;
+  /** id → hora (ms) en que se apaga. Las vencidas pueden seguir aquí: se comparan con la hora. */
+  activas: Record<string, number>;
   imagenesAprendidas: Record<string, string>;
   /** false = el último cambio de puntos vino de la configuración (los números saltan). */
   animarPuntos: boolean;
@@ -51,17 +60,28 @@ export interface MotorMarcador extends Observable<EstadoMarcador> {
 export function crearMotorMarcador(): MotorMarcador {
   const estado = crearEstadoObservable<EstadoMarcador>({
     titulo: '', integrantes: [], reloj: { e: 'listo', d: 300 }, soloConReloj: false, sonido: true,
-    ronda: null, puntos: {}, imagenesAprendidas: {}, animarPuntos: false, pintadas: 0, golpes: {},
+    segundosActiva: 0, mostrarPuntos: true, ronda: null, puntos: {}, activas: {}, imagenesAprendidas: {}, animarPuntos: false, pintadas: 0, golpes: {},
   });
   let claveGuardado = '';
   let estadoAnterior: LecturaReloj['estado'] | null = null;
 
-  function restaurarPuntos(ronda: number): Record<string, number> {
-    const guardado = leerGuardado<{ ro: number; p: Record<string, unknown> }>(claveGuardado);
-    if (guardado?.ro !== ronda) return {};
+  function restaurar(ronda: number): Pick<EstadoMarcador, 'puntos' | 'activas'> {
+    const guardado = leerGuardado<{ ro: number; p: Record<string, unknown>; a?: Record<string, unknown> }>(claveGuardado);
+    if (guardado?.ro !== ronda) return { puntos: {}, activas: {} };
     const puntos: Record<string, number> = {};
     for (const [id, valor] of Object.entries(guardado.p || {})) puntos[id] = Math.max(0, Number(valor) || 0);
-    return puntos;
+    const activas: Record<string, number> = {};
+    const ahora = Date.now();
+    for (const [id, fin] of Object.entries(guardado.a || {})) if (Number(fin) > ahora) activas[id] = Number(fin);
+    return { puntos, activas };
+  }
+
+  /** Guarda puntos y activaciones (estas solo en el modo activador y solo las que siguen vigentes). */
+  function guardar(e: Pick<EstadoMarcador, 'ronda' | 'puntos' | 'activas' | 'segundosActiva'>): void {
+    if (!e.segundosActiva) { escribirGuardado(claveGuardado, { ro: e.ronda, p: e.puntos }); return; }
+    const ahora = Date.now();
+    const a = Object.fromEntries(Object.entries(e.activas).filter(([, fin]) => fin > ahora));
+    escribirGuardado(claveGuardado, { ro: e.ronda, p: e.puntos, a });
   }
 
   let horaFeliz: HoraFeliz | undefined; // la Hora feliz que manda el panel (cfg.hf)
@@ -78,9 +98,11 @@ export function crearMotorMarcador(): MotorMarcador {
         reloj: cfg.t && typeof cfg.t === 'object' ? cfg.t : { e: 'listo', d: 300 },
         soloConReloj: cfg.sr === 1,
         sonido: cfg.s !== 0,
+        segundosActiva: segundosActiva(cfg),
+        mostrarPuntos: cfg.ps !== 0,
         titulo: String(cfg.ti || ''),
         ronda: rondaNueva ? nuevaRonda : e.ronda,
-        puntos: rondaNueva ? restaurarPuntos(nuevaRonda) : e.puntos,
+        ...(rondaNueva ? restaurar(nuevaRonda) : { puntos: e.puntos, activas: e.activas }),
         animarPuntos: false,
         pintadas: e.pintadas + 1,
       };
@@ -106,9 +128,11 @@ export function crearMotorMarcador(): MotorMarcador {
     // TikTok no siempre manda el precio: entonces vale lo configurado en el panel.
     const suma = (Number(evento.diamantes) || j.valor || 1) * Math.max(1, Number(evento.cantidad) || 1) * multiplicador(horaFeliz); // Hora feliz: x veces
     const puntos = { ...e.puntos, [j.id]: (e.puntos[j.id] || 0) + suma };
-    escribirGuardado(claveGuardado, { ro: e.ronda, p: puntos });
+    // Activador: queda encendida `segundosActiva` desde ahora (un regalo nuevo vuelve a empezar).
+    const activas = e.segundosActiva ? { ...e.activas, [j.id]: Date.now() + e.segundosActiva * 1000 } : e.activas;
+    guardar({ ...e, puntos, activas });
     estado.fijar({
-      ...e, puntos, imagenesAprendidas, animarPuntos: true,
+      ...e, puntos, activas, imagenesAprendidas, animarPuntos: true,
       // Con una imagen nueva, el original repinta todas las tarjetas.
       pintadas: imagenesAprendidas !== e.imagenesAprendidas ? e.pintadas + 1 : e.pintadas,
       golpes: { ...e.golpes, [j.id]: (e.golpes[j.id] || 0) + 1 },

@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // Pruebas del Marcador: con el tiempo terminado los regalos ya no suman (salvo los 3 s de gracia).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EventoRegalo } from '../../tipos/eventos';
@@ -17,7 +18,7 @@ function motorCon(t: RelojRonda, sr = 0) {
 }
 const puntos = (motor: ReturnType<typeof crearMotorMarcador>) => motor.obtener().puntos.m1 || 0;
 
-beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(T); });
+beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(T); localStorage.clear(); });
 afterEach(() => { vi.useRealTimers(); });
 
 describe('marcador: cuándo suma un regalo', () => {
@@ -51,6 +52,7 @@ describe('marcador: cuándo suma un regalo', () => {
     const listo = motorCon({ e: 'listo', d: 60 });
     listo.alEvento(rosa);
     expect(puntos(listo)).toBe(1);
+    localStorage.clear(); // otro widget, sin los puntos que guardó el anterior
     const pausa = motorCon({ e: 'pausa', d: 60, r: 20000 });
     pausa.alEvento(rosa);
     expect(puntos(pausa)).toBe(1);
@@ -68,5 +70,64 @@ describe('marcador: cuándo suma un regalo', () => {
     motor.aplicarConfig({ ti: '', j: [{ i: 'm1', n: 'Ana', g: '5655', gn: 'Rose', v: 1 }], t: { e: 'listo', d: 60 }, ro: 2, sr: 0, s: 0 });
     motor.alEvento(rosa);
     expect(puntos(motor)).toBe(1);
+  });
+});
+
+describe('activador: el regalo la enciende `ta` segundos', () => {
+  function activador(ta: number | undefined, ps?: number) {
+    const cfg: ConfigMarcador = { ti: '', j: [{ i: 'm1', n: 'Ana', g: '5655', gn: 'Rose', v: 1 }], t: { e: 'listo', d: 60 }, ro: 1, s: 0, ta, ps };
+    const motor = crearMotorMarcador();
+    motor.aplicarConfig(cfg);
+    return motor;
+  }
+
+  it('sin `ta` no hay activación (el marcador de siempre)', () => {
+    const motor = activador(undefined);
+    motor.alEvento(rosa);
+    expect(motor.obtener().segundosActiva).toBe(0);
+    expect(motor.obtener().activas).toEqual({});
+    expect(puntos(motor)).toBe(1);
+  });
+
+  it('con `ta` queda activa hasta ahora + ta y suma igual', () => {
+    const motor = activador(20);
+    motor.alEvento(rosa);
+    expect(motor.obtener().activas.m1).toBe(T + 20000);
+    expect(puntos(motor)).toBe(1);
+  });
+
+  it('otro regalo mientras sigue activa vuelve a empezar la cuenta', () => {
+    const motor = activador(20);
+    motor.alEvento(rosa);
+    vi.setSystemTime(T + 15000);
+    motor.alEvento(rosa);
+    expect(motor.obtener().activas.m1).toBe(T + 35000);
+  });
+
+  it('con el tiempo terminado no se enciende', () => {
+    const motor = crearMotorMarcador();
+    motor.aplicarConfig({ j: [{ i: 'm1', g: '5655' }], t: { e: 'corre', d: 60, fin: T - 10000 }, ro: 1, ta: 20 });
+    motor.alEvento(rosa);
+    expect(motor.obtener().activas).toEqual({});
+  });
+
+  it('`ps` = 0 oculta el puntaje; `ta` se limita a 1 hora', () => {
+    expect(activador(20, 0).obtener().mostrarPuntos).toBe(false);
+    expect(activador(20).obtener().mostrarPuntos).toBe(true);
+    expect(activador(99999).obtener().segundosActiva).toBe(3600);
+  });
+
+  it('si OBS recarga la fuente, la que estaba activa sigue activa (misma ronda)', () => {
+    const cfg: ConfigMarcador = { w: 'prueba-activador', j: [{ i: 'm1', g: '5655' }], t: { e: 'listo', d: 60 }, ro: 7, ta: 20 };
+    const antes = crearMotorMarcador();
+    antes.aplicarConfig(cfg);
+    antes.alEvento(rosa);
+    vi.setSystemTime(T + 5000);
+    const despues = crearMotorMarcador();
+    despues.aplicarConfig(cfg);
+    expect(despues.obtener().activas.m1).toBe(T + 20000);
+    const otraRonda = crearMotorMarcador();
+    otraRonda.aplicarConfig({ ...cfg, ro: 8 });
+    expect(otraRonda.obtener().activas).toEqual({});
   });
 });

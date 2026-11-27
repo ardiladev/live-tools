@@ -214,7 +214,7 @@ export function VistaBailarinas() {
         <Nota>
           Toca la foto para subir una y encuadrarla. El ID del activador se busca en el{' '}
           <a href="#/regalos">Buscador de regalos</a> (al escribirlo se completa su precio). Las bailarinas activas aparecen con una{' '}
-          palomita en la Barra de activación, el Duelo VS, la Batalla, la Carrera y el Marcador; las inactivas se guardan, pero no{' '}
+          palomita en la Barra de activación, el Duelo VS, la Batalla, la Carrera y el Activador; las inactivas se guardan, pero no{' '}
           juegan ni se anotan.
         </Nota>
       </Tarjeta>
